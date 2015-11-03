@@ -1,0 +1,439 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent"
+    android:layout_height="match_parent" android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:showIn="@layout/activity_display_sensor"
+    tools:context="rabidllamastudios.com.avigate.DisplaySensorActivity">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textStyle = "bold"
+        android:textSize = "18sp"
+        android:text="@string/tv_sensor_title_position"
+        android:id="@+id/tv_sensor_title_position"
+        />
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/tv_sensor_title_position"
+        android:id="@+id/tv_sensor_section_position"
+        android:paddingLeft="8dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingTop="8dp"
+            android:text="@string/tv_sensor_title_gps"
+            android:textStyle="bold"
+            android:id="@+id/tv_sensor_title_gps"
+            />
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_sensor_title_gps"
+            android:paddingLeft="24dp"
+            android:id="@+id/tv_sensor_section_gps">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/tv_sensor_label_gps"
+                android:id="@+id/tv_sensor_label_gps"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toRightOf="@id/tv_sensor_label_gps"
+                android:paddingLeft="8dp"
+                android:text="@string/tv_sensor_placeholder"
+                android:id="@+id/tv_sensor_value_gps"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/tv_sensor_value_gps"
+                android:text="@string/tv_sensor_label_bearing"
+                android:id="@+id/tv_sensor_label_bearing"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/tv_sensor_value_gps"
+                android:layout_toRightOf="@id/tv_sensor_label_bearing"
+                android:paddingLeft="8dp"
+                android:text="@string/tv_sensor_placeholder"
+                android:id="@+id/tv_sensor_value_bearing"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/tv_sensor_value_bearing"
+                android:text="@string/tv_sensor_label_altitude"
+                android:id="@+id/tv_sensor_label_altitude"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/tv_sensor_value_bearing"
+                android:layout_toRightOf="@id/tv_sensor_label_altitude"
+                android:paddingLeft="8dp"
+                android:text="@string/tv_sensor_placeholder"
+                android:id="@+id/tv_sensor_value_altitude"
+                />
+
+        </RelativeLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_sensor_section_gps"
+            android:paddingTop="8dp"
+            android:text="@string/tv_sensor_title_magnetic_field"
+            android:textStyle="bold"
+            android:id="@+id/tv_sensor_title_magnetic_field"
+            />
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_sensor_title_magnetic_field"
+            android:paddingLeft="24dp"
+            android:id="@+id/tv_sensor_section_compass">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/tv_sensor_label_magnetic_field_x"
+                android:id="@+id/tv_sensor_label_magnetic_field_x"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toRightOf="@id/tv_sensor_label_magnetic_field_x"
+                android:paddingLeft="8dp"
+                android:text="@string/tv_sensor_placeholder"
+                android:id="@+id/tv_sensor_value_magnetic_field_x"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/tv_sensor_label_magnetic_field_x"
+                android:text="@string/tv_sensor_label_magnetic_field_y"
+                android:id="@+id/tv_sensor_label_magnetic_field_y"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/tv_sensor_label_magnetic_field_x"
+                android:layout_toRightOf="@id/tv_sensor_label_magnetic_field_y"
+                android:paddingLeft="8dp"
+                android:text="@string/tv_sensor_placeholder"
+                android:id="@+id/tv_sensor_value_magnetic_field_y"
+                />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/tv_sensor_label_magnetic_field_y"
+                android:text="@string/tv_sensor_label_magnetic_field_z"
+                android:id="@+id/tv_sensor_label_magnetic_field_z"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/tv_sensor_label_magnetic_field_y"
+                android:layout_toRightOf="@id/tv_sensor_label_magnetic_field_z"
+                android:paddingLeft="8dp"
+                android:text="@string/tv_sensor_placeholder"
+                android:id="@+id/tv_sensor_value_magnetic_field_z"
+                />
+        </RelativeLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_sensor_section_compass"
+            android:text="@string/tv_sensor_title_orientation"
+            android:textStyle="bold"
+            android:paddingTop="8dp"
+            android:id="@+id/tv_sensor_title_orientation"
+            />
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_sensor_title_orientation"
+            android:paddingLeft="24dp"
+            android:id="@+id/tv_sensor_section_orientation">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/tv_sensor_label_orientation_x"
+                android:id="@+id/tv_sensor_label_orientation_x"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toRightOf="@id/tv_sensor_label_orientation_x"
+                android:paddingLeft="8dp"
+                android:text="@string/tv_sensor_placeholder"
+                android:id="@+id/tv_sensor_value_orientation_x"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/tv_sensor_label_orientation_x"
+                android:text="@string/tv_sensor_label_orientation_y"
+                android:id="@+id/tv_sensor_label_orientation_y"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/tv_sensor_label_orientation_x"
+                android:layout_toRightOf="@id/tv_sensor_label_orientation_y"
+                android:paddingLeft="8dp"
+                android:text="@string/tv_sensor_placeholder"
+                android:id="@+id/tv_sensor_value_orientation_y"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/tv_sensor_label_orientation_y"
+                android:text="@string/tv_sensor_label_orientation_z"
+                android:id="@+id/tv_sensor_label_orientation_z"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/tv_sensor_label_orientation_y"
+                android:layout_toRightOf="@id/tv_sensor_label_orientation_z"
+                android:paddingLeft="8dp"
+                android:text="@string/tv_sensor_placeholder"
+                android:id="@+id/tv_sensor_value_orientation_z"
+                />
+
+        </RelativeLayout>
+
+    </RelativeLayout>
+
+    <!--<TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/tv_sensor_section_position"
+        android:paddingTop="8dp"
+        android:text="@string/tv_sensor_title_velocity"
+        android:textStyle="bold"
+        android:textSize="16sp"
+        android:id="@+id/tv_sensor_title_velocity"
+        />
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tv_sensor_title_velocity"
+        android:paddingTop="8dp"
+        android:paddingLeft="16dp"
+        android:id="@+id/tv_sensor_section_velocity">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/tv_sensor_label_velocity"
+            android:id="@+id/tv_sensor_label_velocity"
+            />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toRightOf="@+id/tv_sensor_label_velocity"
+            android:paddingLeft="8dp"
+            android:text="@string/tv_sensor_placeholder"
+            android:id="@+id/tv_sensor_value_velocity"
+            />
+
+    </RelativeLayout>-->
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/tv_sensor_section_position"
+        android:paddingTop="8dp"
+        android:text="@string/tv_sensor_title_acceleration"
+        android:textStyle="bold"
+        android:textSize="16sp"
+        android:id="@+id/tv_sensor_title_acceleration"
+        />
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tv_sensor_title_acceleration"
+        android:paddingLeft="16dp"
+        android:id="@+id/tv_sensor_section_acceleration">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingTop="8dp"
+            android:text="@string/tv_sensor_title_linear_acceleration"
+            android:textStyle="bold"
+            android:id="@+id/tv_sensor_title_linear_acceleration"
+            />
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_sensor_title_linear_acceleration"
+            android:paddingLeft="24dp"
+            android:id="@+id/tv_sensor_section_linear_acceleration">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/tv_sensor_label_linear_acceleration_x"
+                android:id="@+id/tv_sensor_label_linear_acceleration_x"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toRightOf="@id/tv_sensor_label_linear_acceleration_x"
+                android:paddingLeft="8dp"
+                android:text="@string/tv_sensor_placeholder"
+                android:id="@+id/tv_sensor_value_linear_acceleration_x"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/tv_sensor_label_linear_acceleration_x"
+                android:text="@string/tv_sensor_label_linear_acceleration_y"
+                android:id="@+id/tv_sensor_label_linear_acceleration_y"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/tv_sensor_label_linear_acceleration_x"
+                android:layout_toRightOf="@id/tv_sensor_label_linear_acceleration_y"
+                android:paddingLeft="8dp"
+                android:text="@string/tv_sensor_placeholder"
+                android:id="@+id/tv_sensor_value_linear_acceleration_y"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/tv_sensor_label_linear_acceleration_y"
+                android:text="@string/tv_sensor_label_linear_acceleration_z"
+                android:id="@+id/tv_sensor_label_linear_acceleration_z"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/tv_sensor_value_linear_acceleration_y"
+                android:layout_toRightOf="@id/tv_sensor_label_linear_acceleration_z"
+                android:paddingLeft="8dp"
+                android:text="@string/tv_sensor_placeholder"
+                android:id="@+id/tv_sensor_value_linear_acceleration_z"
+                />
+
+        </RelativeLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_sensor_section_linear_acceleration"
+            android:paddingTop="8dp"
+            android:text="@string/tv_sensor_title_angular_acceleration"
+            android:textStyle="bold"
+            android:id="@+id/tv_sensor_title_angular_acceleration"
+            />
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_sensor_title_angular_acceleration"
+            android:paddingLeft="24dp"
+            android:id="@+id/tv_sensor_section_angular_acceleration">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/tv_sensor_label_angular_acceleration_x"
+                android:id="@+id/tv_sensor_label_angular_acceleration_x"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toRightOf="@id/tv_sensor_label_angular_acceleration_x"
+                android:paddingLeft="8dp"
+                android:text="@string/tv_sensor_placeholder"
+                android:id="@+id/tv_sensor_value_angular_acceleration_x"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/tv_sensor_label_angular_acceleration_x"
+                android:text="@string/tv_sensor_label_angular_acceleration_y"
+                android:id="@+id/tv_sensor_label_angular_acceleration_y"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/tv_sensor_label_angular_acceleration_x"
+                android:layout_toRightOf="@id/tv_sensor_label_angular_acceleration_y"
+                android:paddingLeft="8dp"
+                android:text="@string/tv_sensor_placeholder"
+                android:id="@+id/tv_sensor_value_angular_acceleration_y"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/tv_sensor_label_angular_acceleration_y"
+                android:text="@string/tv_sensor_label_angular_acceleration_z"
+                android:id="@+id/tv_sensor_label_angular_acceleration_z"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/tv_sensor_label_angular_acceleration_y"
+                android:layout_toRightOf="@id/tv_sensor_label_angular_acceleration_z"
+                android:paddingLeft="8dp"
+                android:text="@string/tv_sensor_placeholder"
+                android:id="@+id/tv_sensor_value_angular_acceleration_z"
+                />
+
+        </RelativeLayout>
+
+    </RelativeLayout>
+
+</RelativeLayout>
