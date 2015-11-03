@@ -10,5 +10,14 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/button_sensor_readings"
-        android:onClick="startSensorReadings"/>
+        android:onClick="startSensorReadings"
+        android:id="@+id/button_sensor_readings"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/button_sensor_readings"
+        android:text="@string/button_connectivity_test"
+        android:onClick="startConnectivityTest"
+        android:id="@+id/button_connectivity_test"/>
 </RelativeLayout>

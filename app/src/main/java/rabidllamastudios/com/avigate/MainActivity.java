@@ -18,4 +18,10 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(this, DisplaySensorActivity.class);
         startActivity(intent);
     }
+
+    /** Called when the user clicks the Connectivity Test button */
+    public void startConnectivityTest(View view) {
+        Intent intent = new Intent(this, ConnectivityTestActivity.class);
+        startActivity(intent);
+    }
 }

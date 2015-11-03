@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">Avigate</string>
     <string name="button_sensor_readings">Sensor Readings</string>
+    <string name="button_connectivity_test">Connectivity Test</string>
     <string name="title_activity_display_sensor">Sensor Readings</string>
     <string name="tv_sensor_placeholder">No sensor data</string>
     <string name="tv_sensor_title_position">Position</string>
@@ -27,5 +28,6 @@
     <string name="tv_sensor_label_angular_acceleration_x">About X Axis:</string>
     <string name="tv_sensor_label_angular_acceleration_y">About Y Axis:</string>
     <string name="tv_sensor_label_angular_acceleration_z">About Z Axis:</string>
+    <string name="title_activity_connectivity_test">Connectivity Test Activity</string>
 
 </resources>
