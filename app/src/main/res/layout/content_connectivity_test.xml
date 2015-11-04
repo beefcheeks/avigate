@@ -10,4 +10,117 @@
     tools:showIn="@layout/activity_connectivity_test"
     tools:context="com.rabidllamastudios.avigate.ConnectivityTestActivity">
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/layout_linear_connect">
+
+        <EditText
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:hint="@string/et_connect_hint_server"
+            android:id="@+id/et_connect_hint_server"/>
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:visibility="gone"
+            android:id="@+id/tv_connect_value_server"/>
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="connectButtonPressed"
+            android:text="@string/button_connect"
+            android:id="@+id/button_connect"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/layout_linear_connect"
+        android:paddingTop="8dp"
+        android:id="@+id/layout_linear_connect_status">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/tv_connect_label_status"
+            android:id="@+id/tv_connect_label_status_server"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toRightOf="@id/tv_connect_label_status_server"
+            android:paddingLeft="8dp"
+            android:text="@string/tv_connect_value_placeholder"
+            android:id="@+id/tv_connect_value_status_server"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/layout_linear_connect_status"
+        android:paddingTop="16dp"
+        android:id="@+id/layout_linear_send">
+
+        <EditText
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:clickable="false"
+            android:cursorVisible="false"
+            android:focusable="false"
+            android:focusableInTouchMode="false"
+            android:hint="@string/et_connect_hint_topic"
+            android:id="@+id/et_connect_hint_topic"/>
+
+        <EditText
+            android:layout_weight="2"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:clickable="false"
+            android:cursorVisible="false"
+            android:focusable="false"
+            android:focusableInTouchMode="false"
+            android:hint="@string/et_connect_hint_message"
+            android:id="@+id/et_connect_hint_message"/>
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:enabled="false"
+            android:onClick="sendButtonPressed"
+            android:text="@string/button_send"
+            android:id="@+id/button_send"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/layout_linear_send"
+        android:paddingTop="8dp"
+        android:id="@+id/layout_linear_send_status">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/tv_connect_label_status"
+            android:id="@+id/tv_connect_label_status_send"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toRightOf="@id/tv_connect_label_status_send"
+            android:paddingLeft="8dp"
+            android:id="@+id/tv_connect_value_status_send"/>
+
+    </LinearLayout>
+
 </RelativeLayout>
