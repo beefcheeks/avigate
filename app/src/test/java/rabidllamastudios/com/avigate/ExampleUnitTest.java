@@ -1,4 +1,4 @@
-package rabidllamastudios.com.avigate;
+package com.rabidllamastudios.avigate;
 
 import org.junit.Test;
 

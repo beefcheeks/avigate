@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="rabidllamastudios.com.avigate" >
+    package="com.rabidllamastudios.avigate" >
 
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
@@ -10,7 +10,7 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme" >
-        <activity android:name=".MainActivity" >
+        <activity android:name="com.rabidllamastudios.avigate.MainActivity" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -18,22 +18,22 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".DisplaySensorActivity"
+            android:name="com.rabidllamastudios.avigate.DisplaySensorActivity"
             android:label="@string/title_activity_display_sensor"
-            android:parentActivityName=".MainActivity"
+            android:parentActivityName="com.rabidllamastudios.avigate.MainActivity"
             android:theme="@style/AppTheme.NoActionBar" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="rabidllamastudios.com.avigate.MainActivity" />
+                android:value="com.rabidllamastudios.avigate.MainActivity" />
         </activity>
         <activity
-            android:name=".ConnectivityTestActivity"
+            android:name="com.rabidllamastudios.avigate.ConnectivityTestActivity"
             android:label="@string/title_activity_connectivity_test"
-            android:parentActivityName=".MainActivity"
+            android:parentActivityName="com.rabidllamastudios.avigate.MainActivity"
             android:theme="@style/AppTheme.NoActionBar" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="rabidllamastudios.com.avigate.MainActivity" />
+                android:value="com.rabidllamastudios.avigate.MainActivity" />
         </activity>
     </application>
 

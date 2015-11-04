@@ -1,8 +1,7 @@
-package rabidllamastudios.com.avigate;
+package com.rabidllamastudios.avigate;
 
 import android.Manifest;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -11,8 +10,6 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.widget.TextView;
@@ -35,8 +32,6 @@ public class DisplaySensorActivity extends AppCompatActivity implements SensorEv
 
     private double[] gpsVector;
 
-    private final int PERMISSIONS_REQUEST_READ_LOCATION_FINE = 0;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -46,57 +41,47 @@ public class DisplaySensorActivity extends AppCompatActivity implements SensorEv
         setTitle(R.string.title_activity_display_sensor);
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        startLocationService();
+
+        startLocationCheck();
         startSensors();
     }
 
-    public void startLocationService() {
+    public boolean hasLocationPermissions() {
         //check location permissions
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
-                //to-do warn user why permission is needed
-            } else {
-                //If the user hasn't set the permission, prompt them
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSIONS_REQUEST_READ_LOCATION_FINE);
-                //If the user accepts location permissions, check the user's location
-                if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                    checkLocation();
+        PermissionsCheck permCheck = new PermissionsCheck();
+        return permCheck.hasPermission(this, Manifest.permission.ACCESS_FINE_LOCATION, permCheck.PERMISSIONS_REQUEST_READ_LOCATION_FINE);
+    }
+
+    public void startLocationCheck() {
+        if (hasLocationPermissions()) {
+            gpsVector = new double[4];
+            locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+            locationListener = new LocationListener() {
+                @Override
+                public void onLocationChanged(Location location) {
+                    updateLocation(location);
                 }
-            }
-        } else {
-            //If the user has previously accepted location permissions, check location
-            checkLocation();
+
+                @Override
+                public void onStatusChanged(String provider, int status, Bundle extras) {
+
+                }
+
+                @Override
+                public void onProviderEnabled(String provider) {
+
+                }
+
+                @Override
+                public void onProviderDisabled(String provider) {
+
+                }
+            };
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
         }
     }
 
-    public void checkLocation() {
-        gpsVector = new double[4];
-        locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-        locationListener = new LocationListener() {
-            @Override
-            public void onLocationChanged(Location location) {
-                updateLocation(location);
-            }
-
-            @Override
-            public void onStatusChanged(String provider, int status, Bundle extras) {
-
-            }
-
-            @Override
-            public void onProviderEnabled(String provider) {
-
-            }
-
-            @Override
-            public void onProviderDisabled(String provider) {
-
-            }
-        };
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
-    }
-
-    public void startSensors(){
+    public void startSensors() {
 
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
@@ -139,7 +124,7 @@ public class DisplaySensorActivity extends AppCompatActivity implements SensorEv
 
         coordinates.setText(String.valueOf(gpsVector[0]) + ", " + String.valueOf(gpsVector[1]));
 
-       if (location.hasBearing()) {
+        if (location.hasBearing()) {
             gpsVector[2] = location.getBearing();
             bearing.setText(String.valueOf(gpsVector[2]) + " °");
         } else {
@@ -206,42 +191,21 @@ public class DisplaySensorActivity extends AppCompatActivity implements SensorEv
     public void onPause() {
         super.onPause();
         mSensorManager.unregisterListener(this);
-        locationManager.removeUpdates(locationListener);
+        if (hasLocationPermissions()) {
+            locationManager.removeUpdates(locationListener);
+        }
     }
 
     @Override
     public void onResume() {
         super.onResume();
-
         mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
         mSensorManager.registerListener(this, mGyroscope, SensorManager.SENSOR_DELAY_NORMAL);
         mSensorManager.registerListener(this, mOrientation, SensorManager.SENSOR_DELAY_NORMAL);
         mSensorManager.registerListener(this, mCompass, SensorManager.SENSOR_DELAY_NORMAL);
-
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
-        switch (requestCode) {
-            case PERMISSIONS_REQUEST_READ_LOCATION_FINE: {
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-                    // permission was granted, yay! Do the
-                    // contacts-related task you need to do.
-
-                } else {
-
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
-                }
-                return;
-            }
-
-            // other 'case' lines to check for other
-            // permissions this app might request
+        if (hasLocationPermissions()) {
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
         }
     }
+
 }

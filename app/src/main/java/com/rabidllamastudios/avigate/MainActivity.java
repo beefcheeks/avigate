@@ -1,4 +1,4 @@
-package rabidllamastudios.com.avigate;
+package com.rabidllamastudios.avigate;
 
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;

@@ -1,4 +1,4 @@
-package rabidllamastudios.com.avigate;
+package com.rabidllamastudios.avigate;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;
