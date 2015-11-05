@@ -1,6 +1,7 @@
 package com.rabidllamastudios.avigate;
 
 import android.Manifest;
+import android.content.Context;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -15,7 +16,9 @@ import android.widget.TextView;
 
 import org.eclipse.paho.android.service.*;
 import org.eclipse.paho.client.mqttv3.IMqttActionListener;
+import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.IMqttToken;
+import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.MqttPersistenceException;
@@ -32,6 +35,9 @@ public class ConnectivityTestActivity extends AppCompatActivity {
     public MqttAndroidClient mqttClient = null;
     private TextView messageOutput;
     private ArrayList<String> subscribedTopics;
+    private MqttCallback callback;
+
+    private static final String DEFAULT_SERVER = "test.mosquitto.org";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,8 +51,31 @@ public class ConnectivityTestActivity extends AppCompatActivity {
         initializeLayout();
     }
 
+    public void initializeCallback (){
+        callback = new MqttCallback() {
+            @Override
+            public void connectionLost(Throwable cause) {
+                messageOutput.append("\n" + "Connection lost: " + cause.getMessage());
+                setLayoutBasedOnConnectionStatus(false);
+            }
+
+            @Override
+            public void messageArrived(String topic, MqttMessage message) {
+                messageOutput.append("\n" + "Received: " + topic + "/" + new String (message.getPayload()));
+            }
+
+            @Override
+            public void deliveryComplete(IMqttDeliveryToken token) {
+            }
+        };
+    }
+
     public void initializeLayout() {
         subscribedTopics = new ArrayList();
+
+        EditText serverField = (EditText) findViewById(R.id.et_connect_hint_server);
+        serverField.setText(DEFAULT_SERVER);
+        
         messageOutput = (TextView) findViewById(R.id.tv_connect_value_messages);
         messageOutput.setMovementMethod(new ScrollingMovementMethod());
 
@@ -55,7 +84,8 @@ public class ConnectivityTestActivity extends AppCompatActivity {
 
         topicFieldSubscribe.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -67,7 +97,8 @@ public class ConnectivityTestActivity extends AppCompatActivity {
             }
 
             @Override
-            public void afterTextChanged(Editable s) {}
+            public void afterTextChanged(Editable s) {
+            }
         });
     }
 
@@ -97,7 +128,6 @@ public class ConnectivityTestActivity extends AppCompatActivity {
 
         try {
             mqttClient.publish(topicText, message);
-            topicFieldPublish.setText("");
             messageField.setText("");
             messageOutput.append("\n" + "Published: " + topicText + "/" + messageText);
         } catch (MqttPersistenceException e) {
@@ -112,6 +142,7 @@ public class ConnectivityTestActivity extends AppCompatActivity {
 
     public void subscribeButtonPressed(View view) {
         Button subscribeButton = (Button) findViewById(R.id.button_subscribe);
+        EditText topicFieldPublish = (EditText) findViewById(R.id.et_connect_hint_topic_publish);
         EditText topicFieldSubscribe = (EditText) findViewById(R.id.et_connect_hint_topic_subscribe);
         String topicText = topicFieldSubscribe.getText().toString();
 
@@ -121,6 +152,9 @@ public class ConnectivityTestActivity extends AppCompatActivity {
                 subscribedTopics.remove(topicText);
                 messageOutput.append("\n" + "Unsubscribed from: " + topicText);
                 topicFieldSubscribe.setText("");
+                if (topicFieldPublish.getText().toString().equals(topicText)) {
+                    topicFieldPublish.setText("");
+                }
 
             } catch (MqttPersistenceException e) {
                 messageOutput.append("\n" + "Failed to unsubscribe from" + topicText + ", " + e.getMessage());
@@ -137,6 +171,7 @@ public class ConnectivityTestActivity extends AppCompatActivity {
                 subscribedTopics.add(topicText);
                 messageOutput.append("\n" + "Subscribed to: " + topicText);
                 topicFieldSubscribe.setText("");
+                topicFieldPublish.setText(topicText);
             } catch (MqttPersistenceException e) {
                 messageOutput.append("\n" + "Failed to subscribe to: " + topicText + ", " + e.getMessage());
                 e.printStackTrace();
@@ -161,7 +196,9 @@ public class ConnectivityTestActivity extends AppCompatActivity {
 
                     @Override
                     public void onSuccess(IMqttToken iMqttToken) {
-                        if(!messageOutput.getText().toString().equals("")) {
+                        initializeCallback();
+                        mqttClient.setCallback(callback);
+                        if (!messageOutput.getText().toString().equals("")) {
                             messageOutput.append("\n");
                         }
                         messageOutput.append("Client connected");
@@ -170,7 +207,7 @@ public class ConnectivityTestActivity extends AppCompatActivity {
 
                     @Override
                     public void onFailure(IMqttToken iMqttToken, Throwable throwable) {
-                        if(!messageOutput.getText().toString().equals("")) {
+                        if (!messageOutput.getText().toString().equals("")) {
                             messageOutput.append("\n");
                         }
                         messageOutput.append("Client connection failed: " + throwable.getMessage());
