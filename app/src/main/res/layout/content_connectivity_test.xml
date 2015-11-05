@@ -13,7 +13,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/layout_linear_connect">
+        android:id="@+id/layout_linear_connect_server">
 
         <EditText
             android:layout_weight="1"
@@ -42,32 +42,9 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/layout_linear_connect"
-        android:paddingTop="8dp"
-        android:id="@+id/layout_linear_connect_status">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/tv_connect_label_status"
-            android:id="@+id/tv_connect_label_status_server"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_toRightOf="@id/tv_connect_label_status_server"
-            android:paddingLeft="8dp"
-            android:text="@string/tv_connect_value_placeholder"
-            android:id="@+id/tv_connect_value_status_server"/>
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/layout_linear_connect_status"
-        android:paddingTop="16dp"
-        android:id="@+id/layout_linear_send">
+        android:layout_below="@+id/layout_linear_connect_server"
+        android:paddingTop="4dp"
+        android:id="@+id/layout_linear_connect_subscribe">
 
         <EditText
             android:layout_weight="1"
@@ -78,7 +55,52 @@
             android:focusable="false"
             android:focusableInTouchMode="false"
             android:hint="@string/et_connect_hint_topic"
-            android:id="@+id/et_connect_hint_topic"/>
+            android:id="@+id/et_connect_hint_topic_subscribe"/>
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:enabled="false"
+            android:onClick="subscribeButtonPressed"
+            android:text="@string/button_subscribe"
+            android:id="@+id/button_subscribe"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/layout_linear_connect_subscribe"
+        android:layout_above="@+id/layout_linear_connect_publish"
+        android:paddingTop="8dp"
+        android:id="@+id/layout_linear_connect_messages">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="fill_parent"
+            android:background="@color/colorGrayLight"
+            android:scrollbars = "vertical"
+            android:id="@+id/tv_connect_value_messages"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:paddingTop="8dp"
+        android:id="@+id/layout_linear_connect_publish">
+
+        <EditText
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:clickable="false"
+            android:cursorVisible="false"
+            android:focusable="false"
+            android:focusableInTouchMode="false"
+            android:hint="@string/et_connect_hint_topic"
+            android:id="@+id/et_connect_hint_topic_publish"/>
 
         <EditText
             android:layout_weight="2"
@@ -95,31 +117,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:enabled="false"
-            android:onClick="sendButtonPressed"
-            android:text="@string/button_send"
-            android:id="@+id/button_send"/>
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/layout_linear_send"
-        android:paddingTop="8dp"
-        android:id="@+id/layout_linear_send_status">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/tv_connect_label_status"
-            android:id="@+id/tv_connect_label_status_send"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_toRightOf="@id/tv_connect_label_status_send"
-            android:paddingLeft="8dp"
-            android:id="@+id/tv_connect_value_status_send"/>
+            android:onClick="publishButtonPressed"
+            android:text="@string/button_publish"
+            android:id="@+id/button_publish"/>
 
     </LinearLayout>
 

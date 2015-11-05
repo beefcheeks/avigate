@@ -5,7 +5,9 @@
     <string name="button_connectivity_test">Connectivity Test</string>
     <string name="button_connect">Connect</string>
     <string name="button_disconnect">Disconnect</string>
-    <string name="button_send">Send</string>
+    <string name="button_publish">Publish</string>
+    <string name="button_subscribe">Subscribe</string>
+    <string name="button_unsubscribe">Unsubscribe</string>
 
     <string name="title_activity_display_sensor">Sensor Readings</string>
     <string name="title_activity_connectivity_test">Connectivity Test</string>
@@ -24,8 +26,6 @@
     <string name="tv_sensor_label_orientation_x">X Direction</string>
     <string name="tv_sensor_label_orientation_y">Y Direction</string>
     <string name="tv_sensor_label_orientation_z">Z Direction</string>
-<!--    <string name="tv_sensor_title_velocity">Velocity</string>
-    <string name="tv_sensor_label_velocity">Velocity Magnitude</string>-->
     <string name="tv_sensor_title_acceleration">Acceleration</string>
     <string name="tv_sensor_title_linear_acceleration">Linear Acceleration Reading (m/s/s)</string>
     <string name="tv_sensor_label_linear_acceleration_x">X Direction:</string>
@@ -35,9 +35,6 @@
     <string name="tv_sensor_label_angular_acceleration_x">About X Axis:</string>
     <string name="tv_sensor_label_angular_acceleration_y">About Y Axis:</string>
     <string name="tv_sensor_label_angular_acceleration_z">About Z Axis:</string>
-
-    <string name="tv_connect_label_status">Status:</string>
-    <string name="tv_connect_value_placeholder">Client disconnected</string>
 
     <string name="et_connect_hint_server">Server URL or IP</string>
     <string name="et_connect_hint_topic">Topic</string>

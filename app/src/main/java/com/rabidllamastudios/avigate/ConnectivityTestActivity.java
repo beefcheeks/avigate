@@ -4,6 +4,9 @@ import android.Manifest;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -17,12 +20,18 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.MqttPersistenceException;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
+import org.w3c.dom.Text;
 
+import java.util.ArrayList;
 import java.util.UUID;
+
+import javax.microedition.khronos.egl.EGLDisplay;
 
 public class ConnectivityTestActivity extends AppCompatActivity {
 
     public MqttAndroidClient mqttClient = null;
+    private TextView messageOutput;
+    private ArrayList<String> subscribedTopics;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,6 +41,34 @@ public class ConnectivityTestActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        initializeLayout();
+    }
+
+    public void initializeLayout() {
+        subscribedTopics = new ArrayList();
+        messageOutput = (TextView) findViewById(R.id.tv_connect_value_messages);
+        messageOutput.setMovementMethod(new ScrollingMovementMethod());
+
+        final Button subscribeButton = (Button) findViewById(R.id.button_subscribe);
+        EditText topicFieldSubscribe = (EditText) findViewById(R.id.et_connect_hint_topic_subscribe);
+
+        topicFieldSubscribe.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (subscribedTopics.contains(s.toString())) {
+                    subscribeButton.setText(getString(R.string.button_unsubscribe));
+                } else if (subscribeButton.getText().toString() == getString(R.string.button_unsubscribe)) {
+                    subscribeButton.setText(getString(R.string.button_subscribe));
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
     }
 
     public boolean hasWritePermissions() {
@@ -41,18 +78,17 @@ public class ConnectivityTestActivity extends AppCompatActivity {
 
     public void connectButtonPressed(View view) {
         Button connectionButton = (Button) findViewById(R.id.button_connect);
-        if (connectionButton.getText() == getString(R.string.button_connect)) {
+        if (connectionButton.getText().equals(getString(R.string.button_connect))) {
             connect();
-        } else if (connectionButton.getText() == getString(R.string.button_disconnect)) {
+        } else if (connectionButton.getText().equals(getString(R.string.button_disconnect))) {
             disconnect();
         }
     }
 
-    public void sendButtonPressed(View view) {
-        TextView sendStatus = (TextView) findViewById(R.id.tv_connect_value_status_send);
-
-        EditText topicField = (EditText) findViewById(R.id.et_connect_hint_topic);
+    public void publishButtonPressed(View view) {
+        EditText topicFieldPublish = (EditText) findViewById(R.id.et_connect_hint_topic_publish);
         EditText messageField = (EditText) findViewById(R.id.et_connect_hint_message);
+        String topicText = topicFieldPublish.getText().toString();
         String messageText = messageField.getText().toString();
 
         MqttMessage message = new MqttMessage(messageText.getBytes());
@@ -60,21 +96,58 @@ public class ConnectivityTestActivity extends AppCompatActivity {
         message.setRetained(false);
 
         try {
-            mqttClient.publish(topicField.getText().toString(), message);
-            sendStatus.setText("Message successfully sent!");
-            topicField.setText("");
+            mqttClient.publish(topicText, message);
+            topicFieldPublish.setText("");
             messageField.setText("");
-
+            messageOutput.append("\n" + "Published: " + topicText + "/" + messageText);
         } catch (MqttPersistenceException e) {
+            messageOutput.append("\n" + "Failed to publish:: " + topicText + "/" + messageText + ", " + e.getMessage());
             e.printStackTrace();
         } catch (MqttException e) {
+            messageOutput.append("\n" + "Failed to publish:: " + topicText + "/" + messageText + ", " + e.getMessage());
             e.printStackTrace();
         }
 
     }
 
+    public void subscribeButtonPressed(View view) {
+        Button subscribeButton = (Button) findViewById(R.id.button_subscribe);
+        EditText topicFieldSubscribe = (EditText) findViewById(R.id.et_connect_hint_topic_subscribe);
+        String topicText = topicFieldSubscribe.getText().toString();
+
+        if (subscribeButton.getText().toString().equals(getString(R.string.button_unsubscribe))) {
+            try {
+                mqttClient.unsubscribe(topicText);
+                subscribedTopics.remove(topicText);
+                messageOutput.append("\n" + "Unsubscribed from: " + topicText);
+                topicFieldSubscribe.setText("");
+
+            } catch (MqttPersistenceException e) {
+                messageOutput.append("\n" + "Failed to unsubscribe from" + topicText + ", " + e.getMessage());
+                e.printStackTrace();
+
+            } catch (MqttException e) {
+                messageOutput.append("\n" + "Failed to unsubscribe from" + topicText + ", " + e.getMessage());
+                e.printStackTrace();
+            }
+
+        } else {
+            try {
+                mqttClient.subscribe(topicFieldSubscribe.getText().toString(), 2);
+                subscribedTopics.add(topicText);
+                messageOutput.append("\n" + "Subscribed to: " + topicText);
+                topicFieldSubscribe.setText("");
+            } catch (MqttPersistenceException e) {
+                messageOutput.append("\n" + "Failed to subscribe to: " + topicText + ", " + e.getMessage());
+                e.printStackTrace();
+            } catch (MqttException e) {
+                messageOutput.append("\n" + "Failed to subscribe to: " + topicText + ", " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+    }
+
     public void connect() {
-        final TextView connectionStatus = (TextView) findViewById(R.id.tv_connect_value_status_server);
         if (hasWritePermissions()) {
             MemoryPersistence memPersist = new MemoryPersistence();
             String clientID = UUID.randomUUID().toString();
@@ -88,13 +161,19 @@ public class ConnectivityTestActivity extends AppCompatActivity {
 
                     @Override
                     public void onSuccess(IMqttToken iMqttToken) {
-                        connectionStatus.setText("Client connected");
+                        if(!messageOutput.getText().toString().equals("")) {
+                            messageOutput.append("\n");
+                        }
+                        messageOutput.append("Client connected");
                         setLayoutBasedOnConnectionStatus(true);
                     }
 
                     @Override
                     public void onFailure(IMqttToken iMqttToken, Throwable throwable) {
-                        connectionStatus.setText("Client connection failed: " + throwable.getMessage());
+                        if(!messageOutput.getText().toString().equals("")) {
+                            messageOutput.append("\n");
+                        }
+                        messageOutput.append("Client connection failed: " + throwable.getMessage());
                         throwable.printStackTrace();
                     }
                 });
@@ -103,17 +182,19 @@ public class ConnectivityTestActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
         } else {
-            connectionStatus.setText("Grant access to storage permissions to connect");
+            if(!messageOutput.getText().toString().equals("")) {
+                messageOutput.append("\n");
+            }
+            messageOutput.append("Grant access to storage permissions to connect");
         }
     }
 
     public void disconnect() {
-        final TextView connectionStatus = (TextView) findViewById(R.id.tv_connect_value_status_server);
         try {
             mqttClient.disconnect();
-            connectionStatus.setText(getString(R.string.tv_connect_value_placeholder));
+            messageOutput.append("\n" + "Client disconnected");
         } catch (MqttException e){
-            connectionStatus.setText("Client disconnected with error: " + e.getMessage());
+            messageOutput.append("\n" + "Client disconnected with error: " + e.getMessage());
             e.printStackTrace();
         }
         setLayoutBasedOnConnectionStatus(false);
@@ -121,11 +202,13 @@ public class ConnectivityTestActivity extends AppCompatActivity {
 
     private void setLayoutBasedOnConnectionStatus(boolean justConnected) {
         Button connectionButton = (Button) findViewById(R.id.button_connect);
-        Button sendButton = (Button) findViewById(R.id.button_send);
+        Button publishButton = (Button) findViewById(R.id.button_publish);
+        Button subscribeButton = (Button) findViewById(R.id.button_subscribe);
 
         EditText serverAddressField = (EditText) findViewById(R.id.et_connect_hint_server);
-        EditText topicField = (EditText) findViewById(R.id.et_connect_hint_topic);
+        EditText topicFieldPublish = (EditText) findViewById(R.id.et_connect_hint_topic_publish);
         EditText messageField = (EditText) findViewById(R.id.et_connect_hint_message);
+        EditText topicFieldSubscribe = (EditText) findViewById(R.id.et_connect_hint_topic_subscribe);
 
         TextView serverInfo = (TextView) findViewById(R.id.tv_connect_value_server);
 
@@ -135,17 +218,23 @@ public class ConnectivityTestActivity extends AppCompatActivity {
             serverInfo.setVisibility(View.VISIBLE);
             connectionButton.setText(getString(R.string.button_disconnect));
 
-            topicField.setClickable(true);
-            topicField.setCursorVisible(true);
-            topicField.setFocusable(true);
-            topicField.setFocusableInTouchMode(true);
+            topicFieldPublish.setClickable(true);
+            topicFieldPublish.setCursorVisible(true);
+            topicFieldPublish.setFocusable(true);
+            topicFieldPublish.setFocusableInTouchMode(true);
 
             messageField.setClickable(true);
             messageField.setCursorVisible(true);
             messageField.setFocusable(true);
             messageField.setFocusableInTouchMode(true);
 
-            sendButton.setEnabled(true);
+            topicFieldSubscribe.setClickable(true);
+            topicFieldSubscribe.setCursorVisible(true);
+            topicFieldSubscribe.setFocusable(true);
+            topicFieldSubscribe.setFocusableInTouchMode(true);
+
+            publishButton.setEnabled(true);
+            subscribeButton.setEnabled(true);
 
         } else {
             serverInfo.setText("");
@@ -153,23 +242,37 @@ public class ConnectivityTestActivity extends AppCompatActivity {
             serverAddressField.setVisibility(View.VISIBLE);
             connectionButton.setText(getString(R.string.button_connect));
 
-            topicField.setClickable(false);
-            topicField.setCursorVisible(false);
-            topicField.setFocusable(false);
-            topicField.setFocusableInTouchMode(false);
+            topicFieldPublish.setClickable(false);
+            topicFieldPublish.setCursorVisible(false);
+            topicFieldPublish.setFocusable(false);
+            topicFieldPublish.setFocusableInTouchMode(false);
 
             messageField.setClickable(false);
             messageField.setCursorVisible(false);
             messageField.setFocusable(false);
             messageField.setFocusableInTouchMode(false);
 
-            sendButton.setEnabled(false);
+            topicFieldSubscribe.setClickable(false);
+            topicFieldSubscribe.setCursorVisible(false);
+            topicFieldSubscribe.setFocusable(false);
+            topicFieldSubscribe.setFocusableInTouchMode(false);
+
+            publishButton.setEnabled(false);
+            subscribeButton.setEnabled(false);
         }
     }
 
     @Override
     public void onPause() {
         super.onPause();
+        if(mqttClient != null) {
+            mqttClient.unregisterResources();
+            mqttClient.close();
+        }
+    }
+
+    public void onStop() {
+        super.onStop();
         if(mqttClient != null) {
             mqttClient.unregisterResources();
             mqttClient.close();
