@@ -1,7 +1,6 @@
 package com.rabidllamastudios.avigate;
 
 import android.Manifest;
-import android.content.Context;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -23,12 +22,9 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.MqttPersistenceException;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
-import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 import java.util.UUID;
-
-import javax.microedition.khronos.egl.EGLDisplay;
 
 public class ConnectivityTestActivity extends AppCompatActivity {
 

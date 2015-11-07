@@ -3,6 +3,7 @@
 
     <string name="button_sensor_readings">Sensor Readings</string>
     <string name="button_connectivity_test">Connectivity Test</string>
+    <string name="button_flight_visualizer">Flight Visualizer</string>
     <string name="button_connect">Connect</string>
     <string name="button_disconnect">Disconnect</string>
     <string name="button_publish">Publish</string>
@@ -39,5 +40,6 @@
     <string name="et_connect_hint_server">Server URL or IP</string>
     <string name="et_connect_hint_topic">Topic</string>
     <string name="et_connect_hint_message">Message</string>
+    <string name="title_activity_flight_visualizer">Orientation Visualizer</string>
 
 </resources>

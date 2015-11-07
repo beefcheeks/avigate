@@ -23,7 +23,7 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme" >
-        <activity android:name="com.rabidllamastudios.avigate.MainActivity" >
+        <activity android:name=".MainActivity" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -31,18 +31,18 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.rabidllamastudios.avigate.DisplaySensorActivity"
+            android:name=".DisplaySensorActivity"
             android:label="@string/title_activity_display_sensor"
-            android:parentActivityName="com.rabidllamastudios.avigate.MainActivity"
+            android:parentActivityName=".MainActivity"
             android:theme="@style/AppTheme.NoActionBar" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.rabidllamastudios.avigate.MainActivity" />
         </activity>
         <activity
-            android:name="com.rabidllamastudios.avigate.ConnectivityTestActivity"
+            android:name=".ConnectivityTestActivity"
             android:label="@string/title_activity_connectivity_test"
-            android:parentActivityName="com.rabidllamastudios.avigate.MainActivity"
+            android:parentActivityName=".MainActivity"
             android:theme="@style/AppTheme.NoActionBar" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
@@ -52,6 +52,15 @@
         <!-- MqttService -->
         <service android:name="org.eclipse.paho.android.service.MqttService" />
 
+        <activity
+            android:name=".FlightVisualizer"
+            android:label="@string/title_activity_flight_visualizer"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/AppTheme.NoActionBar" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.rabidllamastudios.avigate.MainActivity" />
+        </activity>
     </application>
 
 </manifest>

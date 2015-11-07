@@ -20,4 +20,13 @@
         android:text="@string/button_connectivity_test"
         android:onClick="startConnectivityTest"
         android:id="@+id/button_connectivity_test"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/button_connectivity_test"
+        android:text="@string/button_flight_visualizer"
+        android:onClick="startFlightVisualizer"
+        android:id="@+id/button_flight_visualizer"/>
+
 </RelativeLayout>

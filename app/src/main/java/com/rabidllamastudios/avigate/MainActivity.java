@@ -24,4 +24,10 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(this, ConnectivityTestActivity.class);
         startActivity(intent);
     }
+
+    /** Called when the user clicks the Flight Visualizer button */
+    public void startFlightVisualizer(View view) {
+        Intent intent = new Intent(this, FlightVisualizer.class);
+        startActivity(intent);
+    }
 }
