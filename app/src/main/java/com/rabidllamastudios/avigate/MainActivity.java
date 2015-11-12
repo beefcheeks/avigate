@@ -13,6 +13,18 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
     }
 
+    /** Called when the user clicks the Controller Module button */
+    public void startControllerModule(View view) {
+        Intent intent = new Intent(this, ControllerActivity.class);
+        startActivity(intent);
+    }
+
+    /** Called when the user clicks the Craft Module button */
+    public void startCraftModule(View view) {
+        Intent intent = new Intent(this, CraftActivity.class);
+        startActivity(intent);
+    }
+
     /** Called when the user clicks the Sensor Reading button */
     public void startSensorReadings(View view) {
         Intent intent = new Intent(this, DisplaySensorActivity.class);

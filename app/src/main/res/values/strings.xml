@@ -1,6 +1,9 @@
 <resources>
     <string name="app_name">Avigate</string>
 
+    <string name="button_module_craft">Craft Module</string>
+    <string name="button_module_controller">Controller Module</string>
+
     <string name="button_sensor_readings">Sensor Readings</string>
     <string name="button_connectivity_test">Connectivity Test</string>
     <string name="button_flight_visualizer">Flight Visualizer</string>
@@ -13,25 +16,54 @@
     <string name="title_activity_display_sensor">Sensor Readings</string>
     <string name="title_activity_connectivity_test">Connectivity Test</string>
 
-    <string name="tv_sensor_placeholder">No sensor data</string>
+    <string name="tv_main_title_modules">Flight Modules</string>
+    <string name="tv_main_title_concept">Proof of Concept</string>
+    
+    <string name="tv_craft_title_connection">Connection</string>
+    <string name="tv_craft_label_connection">Connection status:</string>
+    <string name="tv_craft_label_latency">Latency: </string>
+
+    <string name="tv_craft_title_orientation">Orientation</string>
+    <string name="tv_craft_label_pitch">Pitch:</string>
+    <string name="tv_craft_label_yaw">Yaw:</string>
+    <string name="tv_craft_label_roll">Roll:</string>
+
+    <string name="tv_craft_title_position">Position</string>
+    <string name="tv_craft_label_gps_coordinates">GPS coordinates:</string>
+    <string name="tv_craft_label_gps_accuracy">GPS accuracy:</string>
+    <string name="tv_craft_label_bearing">Bearing:</string>
+    <string name="tv_craft_label_barometer">Barometer:</string>
+
+    <string name="tv_craft_title_microcontroller">Microcontroller</string>
+    <string name="tv_craft_label_motor">Motor:</string>
+    <string name="tv_craft_label_servos">Servos:</string>
+
+    <string name="tv_placeholder_disconnected">Disconnected</string>
+    <string name="tv_placeholder_latency">Infinite</string>
+    <string name="tv_placeholder_sensor">No sensor data</string>
+
     <string name="tv_sensor_title_position">Position</string>
     <string name="tv_sensor_title_gps">GPS Readings</string>
     <string name="tv_sensor_label_gps">Coordinates:</string>
     <string name="tv_sensor_label_bearing">Bearing:</string>
     <string name="tv_sensor_label_altitude">Altitude:</string>
+
     <string name="tv_sensor_title_magnetic_field">Magnetic Field (uT)</string>
     <string name="tv_sensor_label_magnetic_field_x">X Direction:</string>
     <string name="tv_sensor_label_magnetic_field_y">Y Direction</string>
     <string name="tv_sensor_label_magnetic_field_z">Z Direction:</string>
+
     <string name="tv_sensor_title_orientation">Orientation</string>
     <string name="tv_sensor_label_orientation_x">X Direction</string>
     <string name="tv_sensor_label_orientation_y">Y Direction</string>
     <string name="tv_sensor_label_orientation_z">Z Direction</string>
+
     <string name="tv_sensor_title_acceleration">Acceleration</string>
     <string name="tv_sensor_title_linear_acceleration">Linear Acceleration Reading (m/s/s)</string>
     <string name="tv_sensor_label_linear_acceleration_x">X Direction:</string>
     <string name="tv_sensor_label_linear_acceleration_y">Y Direction:</string>
     <string name="tv_sensor_label_linear_acceleration_z">Z Direction:</string>
+
     <string name="tv_sensor_title_angular_acceleration">Angular Acceleration Readings (rad/sec)</string>
     <string name="tv_sensor_label_angular_acceleration_x">About X Axis:</string>
     <string name="tv_sensor_label_angular_acceleration_y">About Y Axis:</string>
@@ -41,5 +73,7 @@
     <string name="et_connect_hint_topic">Topic</string>
     <string name="et_connect_hint_message">Message</string>
     <string name="title_activity_flight_visualizer">Orientation Visualizer</string>
+    <string name="title_activity_craft">Craft Module</string>
+    <string name="title_activity_controller">Controller Module</string>
 
 </resources>
