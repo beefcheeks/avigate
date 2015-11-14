@@ -14,16 +14,16 @@ import org.rajawali3d.math.vector.Vector3;
 import org.rajawali3d.renderer.RajawaliRenderer;
 
 /**
+ * TODO write javadoc stuff for future class
  * Created by Ryan on 11/5/15.
  */
 public class FlightRenderer extends RajawaliRenderer {
 
-    private DirectionalLight directionalLight;
-    private Matrix4 cameraOffsetMatrix;
-    private Object3D aircraftObject;
-    private Quaternion newQuaternion;
+    private Matrix4 mCameraOffsetMatrix;
+    private Object3D mAircraftObject;
+    private Quaternion mNewQuaternion;
 
-    private double RADIUS = 40;
+    private static final double RADIUS = 40;
 
     public FlightRenderer(Context context) {
         super(context);
@@ -33,22 +33,22 @@ public class FlightRenderer extends RajawaliRenderer {
 
     public void initScene() {
         //Create position matrix for camera
-        cameraOffsetMatrix = Matrix4.createTranslationMatrix(0, 0, -RADIUS);
+        mCameraOffsetMatrix = Matrix4.createTranslationMatrix(0, 0, -RADIUS);
         //Create new Quaternion for reference in later method
-        newQuaternion = new Quaternion();
+        mNewQuaternion = new Quaternion();
 
         //Create directional light source in scene
-        directionalLight = new DirectionalLight(-100f, -50f, -100f);
+        DirectionalLight directionalLight = new DirectionalLight(-100f, -50f, -100f);
         directionalLight.setColor(1.0f, 1.0f, 1.0f);
         directionalLight.setPower(2);
         getCurrentScene().addLight(directionalLight);
 
         //Import custom object (e.g. aircraft) as focus
-        aircraftObject = importCustomObject(R.raw.eurofighter_obj);
-        getCurrentScene().addChild(aircraftObject);
+        mAircraftObject = importCustomObject(R.raw.eurofighter_obj);
+        getCurrentScene().addChild(mAircraftObject);
 
         //Set camera position and orientation
-        getCurrentCamera().setPosition(cameraOffsetMatrix.getTranslation());
+        getCurrentCamera().setPosition(mCameraOffsetMatrix.getTranslation());
         getCurrentCamera().setRotation(Vector3.Axis.Y, 180);
 
         try {
@@ -59,7 +59,7 @@ public class FlightRenderer extends RajawaliRenderer {
 
     }
 
-    /* Note: the following settings must be checked when exporting an obj file for use in this app:
+    /** Note: the following settings must be checked when exporting an obj file for use in this app:
      * Apply Modifiers
      * Include Normals
      * Include UVs
@@ -69,7 +69,8 @@ public class FlightRenderer extends RajawaliRenderer {
      *
      * In addition to the correct export settings, you must rename the output files:
      * <original object file name>_obj
-     * <original mtl file name>_mtl */
+     * <original mtl file name>_mtl
+     */
     public Object3D importCustomObject(int rawFile) {
         LoaderOBJ objectLoader = new LoaderOBJ(mContext.getResources(), mTextureManager, rawFile);
         try {
@@ -80,25 +81,27 @@ public class FlightRenderer extends RajawaliRenderer {
         return objectLoader.getParsedObject();
     }
 
+    //TODO separate method for calibrating coordinate system transformation
     public void setAircraftOrientation(Quaternion inputQuaternion) {
         //check if aircraftObject has been initialized yet
-        while (aircraftObject == null) {}
+        //TODO don't use infinite while loop
+        while (mAircraftObject == null) {}
         //reset model coordinates
-        aircraftObject.setOrientation(newQuaternion);
+        mAircraftObject.setOrientation(mNewQuaternion);
         //transform model coordinates to phone coordinates
-        aircraftObject.rotate(Vector3.Y, 180);
-        aircraftObject.rotate(Vector3.X, -90);
+        mAircraftObject.rotate(Vector3.Y, 180);
+        mAircraftObject.rotate(Vector3.X, -90);
         // transform phone coordinates to real world coordinates
-        aircraftObject.rotate(inputQuaternion.inverse());
+        mAircraftObject.rotate(inputQuaternion.inverse());
         //transform real world coordinates to view world coordinates
-        aircraftObject.rotate(Vector3.X, 90);
+        mAircraftObject.rotate(Vector3.X, 90);
     }
 
     // Camera follows aircraft orientation on yaw and pitch axes
-    public void followAircraftWithCamera(Quaternion inputQuaternion) {
-        getCurrentCamera().setPosition(aircraftObject.getOrientation().toRotationMatrix().multiply(cameraOffsetMatrix).getTranslation());
+    public void followAircraftWithCamera() {
+        getCurrentCamera().setPosition(mAircraftObject.getOrientation().toRotationMatrix().multiply(mCameraOffsetMatrix).getTranslation());
         // TODO: redo camera orientation method, currently flickers slightly
-        getCurrentCamera().setLookAt(aircraftObject.getPosition());
+        getCurrentCamera().setLookAt(mAircraftObject.getPosition());
     }
 
     public void onOffsetsChanged(float x, float y, float z, float w, int i, int j) {}

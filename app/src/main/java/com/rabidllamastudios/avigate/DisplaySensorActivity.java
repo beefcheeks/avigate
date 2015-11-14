@@ -16,8 +16,8 @@ import android.widget.TextView;
 
 public class DisplaySensorActivity extends AppCompatActivity implements SensorEventListener {
 
-    private LocationManager locationManager;
-    private LocationListener locationListener;
+    private LocationManager mLocationManager;
+    private LocationListener mLocationListener;
     private SensorManager mSensorManager;
 
     private Sensor mAccelerometer;
@@ -25,12 +25,12 @@ public class DisplaySensorActivity extends AppCompatActivity implements SensorEv
     private Sensor mOrientation;
     private Sensor mCompass;
 
-    private float[] linearAccelerationVector;
-    private float[] angularAccelerationVector;
-    private float[] orientationVector;
-    private float[] magneticFieldVector;
+    private float[] mLinearAccelerationVector;
+    private float[] mAngularAccelerationVector;
+    private float[] mOrientationVector;
+    private float[] mMagneticFieldVector;
 
-    private double[] gpsVector;
+    private double[] mGpsVector;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +40,7 @@ public class DisplaySensorActivity extends AppCompatActivity implements SensorEv
         setSupportActionBar(toolbar);
         setTitle(R.string.title_activity_display_sensor);
 
+        assert getSupportActionBar() != null;
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         startLocationCheck();
@@ -54,9 +55,9 @@ public class DisplaySensorActivity extends AppCompatActivity implements SensorEv
 
     public void startLocationCheck() {
         if (hasLocationPermissions()) {
-            gpsVector = new double[4];
-            locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-            locationListener = new LocationListener() {
+            mGpsVector = new double[4];
+            mLocationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+            mLocationListener = new LocationListener() {
                 @Override
                 public void onLocationChanged(Location location) {
                     updateLocation(location);
@@ -77,7 +78,7 @@ public class DisplaySensorActivity extends AppCompatActivity implements SensorEv
 
                 }
             };
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+            mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, mLocationListener);
         }
     }
 
@@ -89,10 +90,10 @@ public class DisplaySensorActivity extends AppCompatActivity implements SensorEv
         mOrientation = mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
         mCompass = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
 
-        linearAccelerationVector = new float[3];
-        angularAccelerationVector = new float[3];
-        orientationVector = new float[3];
-        magneticFieldVector = new float[3];
+        mLinearAccelerationVector = new float[3];
+        mAngularAccelerationVector = new float[3];
+        mOrientationVector = new float[3];
+        mMagneticFieldVector = new float[3];
     }
 
     @Override
@@ -115,76 +116,79 @@ public class DisplaySensorActivity extends AppCompatActivity implements SensorEv
     }
 
     public void updateLocation(Location location) {
-        gpsVector[0] = location.getLatitude();
-        gpsVector[1] = location.getLongitude();
+        mGpsVector[0] = location.getLatitude();
+        mGpsVector[1] = location.getLongitude();
 
         TextView coordinates = (TextView) findViewById(R.id.tv_sensor_value_gps);
         TextView bearing = (TextView) findViewById(R.id.tv_sensor_value_bearing);
         TextView altitude = (TextView) findViewById(R.id.tv_sensor_value_altitude);
 
-        coordinates.setText(String.valueOf(gpsVector[0]) + ", " + String.valueOf(gpsVector[1]));
+        String gpsCoordinatesValue = String.valueOf(mGpsVector[0]) + ", " + String.valueOf(mGpsVector[1]);
+        coordinates.setText(gpsCoordinatesValue);
 
         if (location.hasBearing()) {
-            gpsVector[2] = location.getBearing();
-            bearing.setText(String.valueOf(gpsVector[2]) + " °");
+            mGpsVector[2] = location.getBearing();
+            String bearingValue = String.valueOf(mGpsVector[2] + " °");
+            bearing.setText(bearingValue);
         } else {
-            bearing.setText(getString(R.string.tv_sensor_placeholder));
+            bearing.setText(getString(R.string.tv_placeholder_sensor));
         }
 
         if (location.hasAltitude()) {
-            gpsVector[3] = location.getAltitude();
-            altitude.setText(String.valueOf(gpsVector[3]) + " m");
+            mGpsVector[3] = location.getAltitude();
+            String altitudeValue = String.valueOf(mGpsVector[3] + " m");
+            altitude.setText(altitudeValue);
         } else {
-            altitude.setText(getString(R.string.tv_sensor_placeholder));
+            altitude.setText(getString(R.string.tv_placeholder_sensor));
         }
     }
 
     public void updateLinearAccelerationValues(SensorEvent event) {
-        linearAccelerationVector[0] = event.values[0];
-        linearAccelerationVector[1] = event.values[1];
-        linearAccelerationVector[2] = event.values[2];
+        mLinearAccelerationVector[0] = event.values[0];
+        mLinearAccelerationVector[1] = event.values[1];
+        mLinearAccelerationVector[2] = event.values[2];
         TextView linearAccelerationX = (TextView) findViewById(R.id.tv_sensor_value_linear_acceleration_x);
         TextView linearAccelerationY = (TextView) findViewById(R.id.tv_sensor_value_linear_acceleration_y);
         TextView linearAccelerationZ = (TextView) findViewById(R.id.tv_sensor_value_linear_acceleration_z);
-        linearAccelerationX.setText(String.valueOf(linearAccelerationVector[0]));
-        linearAccelerationY.setText(String.valueOf(linearAccelerationVector[1]));
-        linearAccelerationZ.setText(String.valueOf(linearAccelerationVector[2]));
+        linearAccelerationX.setText(String.valueOf(mLinearAccelerationVector[0]));
+        linearAccelerationY.setText(String.valueOf(mLinearAccelerationVector[1]));
+        linearAccelerationZ.setText(String.valueOf(mLinearAccelerationVector[2]));
     }
 
     public void updateAngularAccelerationValues(SensorEvent event) {
-        angularAccelerationVector[0] = event.values[0];
-        angularAccelerationVector[1] = event.values[1];
-        angularAccelerationVector[2] = event.values[2];
+        mAngularAccelerationVector[0] = event.values[0];
+        mAngularAccelerationVector[1] = event.values[1];
+        mAngularAccelerationVector[2] = event.values[2];
         TextView angularAccelerationX = (TextView) findViewById(R.id.tv_sensor_value_angular_acceleration_x);
         TextView angularAccelerationY = (TextView) findViewById(R.id.tv_sensor_value_angular_acceleration_y);
         TextView angularAccelerationZ = (TextView) findViewById(R.id.tv_sensor_value_angular_acceleration_z);
-        angularAccelerationX.setText(String.valueOf(angularAccelerationVector[0]));
-        angularAccelerationY.setText(String.valueOf(angularAccelerationVector[1]));
-        angularAccelerationZ.setText(String.valueOf(angularAccelerationVector[2]));
+        angularAccelerationX.setText(String.valueOf(mAngularAccelerationVector[0]));
+        angularAccelerationY.setText(String.valueOf(mAngularAccelerationVector[1]));
+        angularAccelerationZ.setText(String.valueOf(mAngularAccelerationVector[2]));
     }
 
     public void updateOrientationValues(SensorEvent event) {
-        orientationVector[0] = event.values[0];
-        orientationVector[1] = event.values[1];
-        orientationVector[2] = event.values[2];
+        mOrientationVector[0] = event.values[0];
+        mOrientationVector[1] = event.values[1];
+        mOrientationVector[2] = event.values[2];
         TextView orientationX = (TextView) findViewById(R.id.tv_sensor_value_orientation_x);
         TextView orientationY = (TextView) findViewById(R.id.tv_sensor_value_orientation_y);
         TextView orientationZ = (TextView) findViewById(R.id.tv_sensor_value_orientation_z);
-        orientationX.setText(String.valueOf(orientationVector[0]));
-        orientationY.setText(String.valueOf(orientationVector[1]));
-        orientationZ.setText(String.valueOf(orientationVector[2]));
+        orientationX.setText(String.valueOf(mOrientationVector[0]));
+        orientationY.setText(String.valueOf(mOrientationVector[1]));
+        orientationZ.setText(String.valueOf(mOrientationVector[2]));
     }
 
     public void updateMagneticFieldValues(SensorEvent event) {
-        magneticFieldVector[0] = event.values[0];
-        magneticFieldVector[1] = event.values[1];
-        magneticFieldVector[2] = event.values[2];
+        mMagneticFieldVector[0] = event.values[0];
+        mMagneticFieldVector[1] = event.values[1];
+        mMagneticFieldVector[2] = event.values[2];
         TextView magneticFieldX = (TextView) findViewById(R.id.tv_sensor_value_magnetic_field_x);
         TextView magneticFieldY = (TextView) findViewById(R.id.tv_sensor_value_magnetic_field_y);
         TextView magneticFieldZ = (TextView) findViewById(R.id.tv_sensor_value_magnetic_field_z);
-        magneticFieldX.setText(String.valueOf(magneticFieldVector[0]));
-        magneticFieldY.setText(String.valueOf(magneticFieldVector[1]));
-        magneticFieldZ.setText(String.valueOf(magneticFieldVector[2]));
+        magneticFieldX.setText(String.valueOf(mMagneticFieldVector[0]));
+        magneticFieldY.setText(String.valueOf(mMagneticFieldVector[1]));
+        magneticFieldZ.setText(String.valueOf(mMagneticFieldVector[2]));
     }
 
     @Override
@@ -192,7 +196,7 @@ public class DisplaySensorActivity extends AppCompatActivity implements SensorEv
         super.onPause();
         mSensorManager.unregisterListener(this);
         if (hasLocationPermissions()) {
-            locationManager.removeUpdates(locationListener);
+            mLocationManager.removeUpdates(mLocationListener);
         }
     }
 
@@ -204,7 +208,7 @@ public class DisplaySensorActivity extends AppCompatActivity implements SensorEv
         mSensorManager.registerListener(this, mOrientation, SensorManager.SENSOR_DELAY_NORMAL);
         mSensorManager.registerListener(this, mCompass, SensorManager.SENSOR_DELAY_NORMAL);
         if (hasLocationPermissions()) {
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+            mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, mLocationListener);
         }
     }
 

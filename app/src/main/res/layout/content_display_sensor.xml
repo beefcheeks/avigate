@@ -54,7 +54,7 @@
                 android:layout_height="wrap_content"
                 android:layout_toRightOf="@id/tv_sensor_label_gps"
                 android:paddingLeft="8dp"
-                android:text="@string/tv_sensor_placeholder"
+                android:text="@string/tv_placeholder_sensor"
                 android:id="@+id/tv_sensor_value_gps"
                 />
 
@@ -72,7 +72,7 @@
                 android:layout_below="@+id/tv_sensor_value_gps"
                 android:layout_toRightOf="@id/tv_sensor_label_bearing"
                 android:paddingLeft="8dp"
-                android:text="@string/tv_sensor_placeholder"
+                android:text="@string/tv_placeholder_sensor"
                 android:id="@+id/tv_sensor_value_bearing"
                 />
 
@@ -90,7 +90,7 @@
                 android:layout_below="@+id/tv_sensor_value_bearing"
                 android:layout_toRightOf="@id/tv_sensor_label_altitude"
                 android:paddingLeft="8dp"
-                android:text="@string/tv_sensor_placeholder"
+                android:text="@string/tv_placeholder_sensor"
                 android:id="@+id/tv_sensor_value_altitude"
                 />
 
@@ -125,7 +125,7 @@
                 android:layout_height="wrap_content"
                 android:layout_toRightOf="@id/tv_sensor_label_magnetic_field_x"
                 android:paddingLeft="8dp"
-                android:text="@string/tv_sensor_placeholder"
+                android:text="@string/tv_placeholder_sensor"
                 android:id="@+id/tv_sensor_value_magnetic_field_x"
                 />
 
@@ -143,7 +143,7 @@
                 android:layout_below="@+id/tv_sensor_label_magnetic_field_x"
                 android:layout_toRightOf="@id/tv_sensor_label_magnetic_field_y"
                 android:paddingLeft="8dp"
-                android:text="@string/tv_sensor_placeholder"
+                android:text="@string/tv_placeholder_sensor"
                 android:id="@+id/tv_sensor_value_magnetic_field_y"
                 />
             <TextView
@@ -160,7 +160,7 @@
                 android:layout_below="@+id/tv_sensor_label_magnetic_field_y"
                 android:layout_toRightOf="@id/tv_sensor_label_magnetic_field_z"
                 android:paddingLeft="8dp"
-                android:text="@string/tv_sensor_placeholder"
+                android:text="@string/tv_placeholder_sensor"
                 android:id="@+id/tv_sensor_value_magnetic_field_z"
                 />
         </RelativeLayout>
@@ -194,7 +194,7 @@
                 android:layout_height="wrap_content"
                 android:layout_toRightOf="@id/tv_sensor_label_orientation_x"
                 android:paddingLeft="8dp"
-                android:text="@string/tv_sensor_placeholder"
+                android:text="@string/tv_placeholder_sensor"
                 android:id="@+id/tv_sensor_value_orientation_x"
                 />
 
@@ -212,7 +212,7 @@
                 android:layout_below="@id/tv_sensor_label_orientation_x"
                 android:layout_toRightOf="@id/tv_sensor_label_orientation_y"
                 android:paddingLeft="8dp"
-                android:text="@string/tv_sensor_placeholder"
+                android:text="@string/tv_placeholder_sensor"
                 android:id="@+id/tv_sensor_value_orientation_y"
                 />
 
@@ -230,50 +230,13 @@
                 android:layout_below="@id/tv_sensor_label_orientation_y"
                 android:layout_toRightOf="@id/tv_sensor_label_orientation_z"
                 android:paddingLeft="8dp"
-                android:text="@string/tv_sensor_placeholder"
+                android:text="@string/tv_placeholder_sensor"
                 android:id="@+id/tv_sensor_value_orientation_z"
                 />
 
         </RelativeLayout>
 
     </RelativeLayout>
-
-    <!--<TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/tv_sensor_section_position"
-        android:paddingTop="8dp"
-        android:text="@string/tv_sensor_title_velocity"
-        android:textStyle="bold"
-        android:textSize="16sp"
-        android:id="@+id/tv_sensor_title_velocity"
-        />
-
-    <RelativeLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/tv_sensor_title_velocity"
-        android:paddingTop="8dp"
-        android:paddingLeft="16dp"
-        android:id="@+id/tv_sensor_section_velocity">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/tv_sensor_label_velocity"
-            android:id="@+id/tv_sensor_label_velocity"
-            />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_toRightOf="@+id/tv_sensor_label_velocity"
-            android:paddingLeft="8dp"
-            android:text="@string/tv_sensor_placeholder"
-            android:id="@+id/tv_sensor_value_velocity"
-            />
-
-    </RelativeLayout>-->
 
     <TextView
         android:layout_width="wrap_content"
@@ -321,7 +284,7 @@
                 android:layout_height="wrap_content"
                 android:layout_toRightOf="@id/tv_sensor_label_linear_acceleration_x"
                 android:paddingLeft="8dp"
-                android:text="@string/tv_sensor_placeholder"
+                android:text="@string/tv_placeholder_sensor"
                 android:id="@+id/tv_sensor_value_linear_acceleration_x"
                 />
 
@@ -339,7 +302,7 @@
                 android:layout_below="@id/tv_sensor_label_linear_acceleration_x"
                 android:layout_toRightOf="@id/tv_sensor_label_linear_acceleration_y"
                 android:paddingLeft="8dp"
-                android:text="@string/tv_sensor_placeholder"
+                android:text="@string/tv_placeholder_sensor"
                 android:id="@+id/tv_sensor_value_linear_acceleration_y"
                 />
 
@@ -357,7 +320,7 @@
                 android:layout_below="@id/tv_sensor_value_linear_acceleration_y"
                 android:layout_toRightOf="@id/tv_sensor_label_linear_acceleration_z"
                 android:paddingLeft="8dp"
-                android:text="@string/tv_sensor_placeholder"
+                android:text="@string/tv_placeholder_sensor"
                 android:id="@+id/tv_sensor_value_linear_acceleration_z"
                 />
 
@@ -392,7 +355,7 @@
                 android:layout_height="wrap_content"
                 android:layout_toRightOf="@id/tv_sensor_label_angular_acceleration_x"
                 android:paddingLeft="8dp"
-                android:text="@string/tv_sensor_placeholder"
+                android:text="@string/tv_placeholder_sensor"
                 android:id="@+id/tv_sensor_value_angular_acceleration_x"
                 />
 
@@ -410,7 +373,7 @@
                 android:layout_below="@id/tv_sensor_label_angular_acceleration_x"
                 android:layout_toRightOf="@id/tv_sensor_label_angular_acceleration_y"
                 android:paddingLeft="8dp"
-                android:text="@string/tv_sensor_placeholder"
+                android:text="@string/tv_placeholder_sensor"
                 android:id="@+id/tv_sensor_value_angular_acceleration_y"
                 />
 
@@ -428,7 +391,7 @@
                 android:layout_below="@id/tv_sensor_label_angular_acceleration_y"
                 android:layout_toRightOf="@id/tv_sensor_label_angular_acceleration_z"
                 android:paddingLeft="8dp"
-                android:text="@string/tv_sensor_placeholder"
+                android:text="@string/tv_placeholder_sensor"
                 android:id="@+id/tv_sensor_value_angular_acceleration_z"
                 />
 

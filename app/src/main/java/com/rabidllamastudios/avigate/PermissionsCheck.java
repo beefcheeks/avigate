@@ -6,6 +6,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 
 /**
+ * The purpose of this class is to handle permissions, especially for the new system in 6.0
  * Created by Ryan on 11/3/15.
  */
 public class PermissionsCheck extends AppCompatActivity {
