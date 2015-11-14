@@ -80,6 +80,12 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.rabidllamastudios.avigate.MainActivity" />
         </activity>
+
+        <service
+            android:name=".CommunicationsService"
+            android:exported="false" >
+        </service>
+
     </application>
 
 </manifest>

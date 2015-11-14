@@ -26,9 +26,11 @@ dependencies {
     compile 'com.android.support:design:23.1.0'
 
     //3rd party libraries
+    compile group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1', transitive: false
     compile 'org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.0.2'
     compile (group: 'org.eclipse.paho', name: 'org.eclipse.paho.android.service', version: '1.0.2') {
         exclude module: 'support-v4'
     }
     compile 'org.rajawali3d:rajawali:1.0.306-SNAPSHOT@aar'
+
 }
