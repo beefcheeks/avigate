@@ -55,9 +55,8 @@ public class FlightVisualizer extends AppCompatActivity implements SensorEventLi
         if(event.sensor.getType() == Sensor.TYPE_ROTATION_VECTOR) {
             //when orientation updates, set phone quaternion equal to latest values
             mPhoneOrientationQuaternion.setAll(event.values[3], event.values[0], event.values[1], event.values[2]);
-            //update aircraft and camera with quaternion values
-            mFlightRenderer.setAircraftOrientation(mPhoneOrientationQuaternion);
-            mFlightRenderer.followAircraftWithCamera();
+            //update FlightRenderer with latest orientation quaternion values
+            mFlightRenderer.setAircraftOrientationQuaternion(mPhoneOrientationQuaternion);
         }
     }
 

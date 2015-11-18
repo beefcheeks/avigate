@@ -22,6 +22,7 @@ public class FlightRenderer extends RajawaliRenderer {
     private Matrix4 mCameraOffsetMatrix;
     private Object3D mAircraftObject;
     private Quaternion mNewQuaternion;
+    private Quaternion mAircraftOrientation;
 
     private static final double RADIUS = 40;
 
@@ -29,13 +30,15 @@ public class FlightRenderer extends RajawaliRenderer {
         super(context);
         this.mContext = context;
         setFrameRate(60);
+
+        mAircraftOrientation = new Quaternion();
+        mNewQuaternion = new Quaternion();
     }
 
     public void initScene() {
         //Create position matrix for camera
         mCameraOffsetMatrix = Matrix4.createTranslationMatrix(0, 0, -RADIUS);
         //Create new Quaternion for reference in later method
-        mNewQuaternion = new Quaternion();
 
         //Create directional light source in scene
         DirectionalLight directionalLight = new DirectionalLight(-100f, -50f, -100f);
@@ -71,7 +74,7 @@ public class FlightRenderer extends RajawaliRenderer {
      * <original object file name>_obj
      * <original mtl file name>_mtl
      */
-    public Object3D importCustomObject(int rawFile) {
+    private Object3D importCustomObject(int rawFile) {
         LoaderOBJ objectLoader = new LoaderOBJ(mContext.getResources(), mTextureManager, rawFile);
         try {
             objectLoader.parse();
@@ -81,27 +84,37 @@ public class FlightRenderer extends RajawaliRenderer {
         return objectLoader.getParsedObject();
     }
 
+    public void setAircraftOrientationQuaternion(Quaternion inputQuaternion) {
+        synchronized (mAircraftOrientation) {
+            mAircraftOrientation.setAll(inputQuaternion);
+        }
+    }
+
     //TODO separate method for calibrating coordinate system transformation
-    public void setAircraftOrientation(Quaternion inputQuaternion) {
-        //check if aircraftObject has been initialized yet
-        //TODO don't use infinite while loop
-        while (mAircraftObject == null) {}
-        //reset model coordinates
+    private void setAircraftOrientation() {
         mAircraftObject.setOrientation(mNewQuaternion);
         //transform model coordinates to phone coordinates
         mAircraftObject.rotate(Vector3.Y, 180);
         mAircraftObject.rotate(Vector3.X, -90);
         // transform phone coordinates to real world coordinates
-        mAircraftObject.rotate(inputQuaternion.inverse());
+        synchronized (mAircraftOrientation) {
+            mAircraftObject.rotate(mAircraftOrientation.invertAndCreate());
+        }
         //transform real world coordinates to view world coordinates
         mAircraftObject.rotate(Vector3.X, 90);
     }
 
     // Camera follows aircraft orientation on yaw and pitch axes
-    public void followAircraftWithCamera() {
+    private void followAircraftWithCamera() {
         getCurrentCamera().setPosition(mAircraftObject.getOrientation().toRotationMatrix().multiply(mCameraOffsetMatrix).getTranslation());
-        // TODO: redo camera orientation method, currently flickers slightly
         getCurrentCamera().setLookAt(mAircraftObject.getPosition());
+    }
+
+    @Override
+    public void onRender(final long elapsedTime, final double deltaTime) {
+        super.onRender(elapsedTime, deltaTime);
+        setAircraftOrientation();
+        followAircraftWithCamera();
     }
 
     public void onOffsetsChanged(float x, float y, float z, float w, int i, int j) {}

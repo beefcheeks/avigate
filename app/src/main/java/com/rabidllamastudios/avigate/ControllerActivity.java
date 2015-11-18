@@ -50,9 +50,8 @@ public class ControllerActivity extends AppCompatActivity {
             public void onReceive(Context context, Intent intent) {
                 Log.i("ControllerActivity", "Received OrientationPacket Intent");
                 OrientationPacket packet = new OrientationPacket(intent.getExtras());
-                //update aircraft and camera with quaternion values
-                flightRenderer.setAircraftOrientation(packet.mOrientation);
-                flightRenderer.followAircraftWithCamera();
+                //update FlightRenderer with quaternion values
+                flightRenderer.setAircraftOrientationQuaternion(packet.mOrientation);
 
             }
         };
