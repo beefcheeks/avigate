@@ -19,7 +19,8 @@ public class ConnectivityTestActivity extends AppCompatActivity {
     private MqttConnectionManager mMqttConnectionManager;
     private TextView mMessageOutput;
     private ArrayList<String> mSubscribedTopics;
-    private static final String DEFAULT_SERVER = "test.mosquitto.org";
+    private static final String DEFAULT_SERVER = "avigate.rabidllamastudios.com";
+    private static final int MQTT_PORT = 8883;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,7 +97,7 @@ public class ConnectivityTestActivity extends AppCompatActivity {
             if (connectionButton.getText().equals(getString(R.string.button_connect))) {
                 if (mMqttConnectionManager == null) {
                     final EditText serverAddressField = (EditText) findViewById(R.id.et_connect_hint_server);
-                    mMqttConnectionManager = new MqttConnectionManager(this, createMqttConnectionManagerCallback(), serverAddressField.getText().toString(), 1883);
+                    mMqttConnectionManager = new MqttConnectionManager(this, createMqttConnectionManagerCallback(), serverAddressField.getText().toString(), MQTT_PORT, true);
                 }
                 mMqttConnectionManager.start();
             } else if (connectionButton.getText().equals(getString(R.string.button_disconnect))) {

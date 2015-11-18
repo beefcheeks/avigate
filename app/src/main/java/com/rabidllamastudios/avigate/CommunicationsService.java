@@ -24,9 +24,9 @@ import java.util.List;
  * helper methods.
  */
 public class CommunicationsService extends Service {
-    private static final String MQTT_BROKER = "test.mosquitto.org";
+    private static final String MQTT_BROKER = "avigate.rabidllamastudios.com";
 
-    private static final int DEFAULT_PORT = 1883;
+    private static final int DEFAULT_PORT = 8883;
 
     private static final String PACKAGE_NAME = AvigateApplication.class.getPackage().getName();
     public static final String ACTION_CONFIGURE = PACKAGE_NAME + ".action.CONFIGURE";
@@ -88,7 +88,11 @@ public class CommunicationsService extends Service {
                 registerReceiver(mBroadcastReceiver, intentFilter);
 
                 if (mMqttConnectionManager == null) {
-                    mMqttConnectionManager = new MqttConnectionManager(this, createMqttConnectionManagerCallback(), MQTT_BROKER, DEFAULT_PORT);
+                    try {
+                        mMqttConnectionManager = new MqttConnectionManager(this, createMqttConnectionManagerCallback(), MQTT_BROKER, DEFAULT_PORT, true);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                     mMqttConnectionManager.start();
                 }
 
