@@ -86,8 +86,8 @@ public class ConnectivityTestActivity extends AppCompatActivity {
     }
 
     public boolean hasWritePermissions() {
-        PermissionsCheck permCheck = new PermissionsCheck();
-        return permCheck.hasPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE, permCheck.PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
+        PermissionsChecker permChecker = new PermissionsChecker(this, null);
+        return permChecker.hasPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, permChecker.PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
     }
 
     public void connectButtonPressed(View view) {
