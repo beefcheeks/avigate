@@ -11,6 +11,8 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import com.rabidllamastudios.avigate.model.ConnectionPacket;
+
 import org.json.JSONException;
 
 import java.util.ArrayList;
@@ -143,10 +145,14 @@ public class CommunicationsService extends Service {
                     Log.i("CommunicationsService","Subscribing to topic: " + topic);
                     mMqttConnectionManager.subscribe(mLocalDeviceType.name() + "/" + each);
                 }
+                Intent connectionIntent = new ConnectionPacket(true).toIntent();
+                sendBroadcast(connectionIntent);
             }
 
             @Override
             public void connectionLost() {
+                Intent connectionIntent = new ConnectionPacket(false).toIntent();
+                sendBroadcast(connectionIntent);
             }
 
             @Override

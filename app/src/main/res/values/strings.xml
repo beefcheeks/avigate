@@ -38,6 +38,7 @@
     <string name="tv_craft_label_motor">Motor:</string>
     <string name="tv_craft_label_servos">Servos:</string>
 
+    <string name="tv_placeholder_connected">Connected</string>
     <string name="tv_placeholder_disconnected">Disconnected</string>
     <string name="tv_placeholder_latency">Infinite</string>
     <string name="tv_placeholder_sensor">No sensor data</string>

@@ -89,8 +89,17 @@ public class CraftActivity extends AppCompatActivity {
         return new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
+                //If the intent is type connection packet, update corresponding textview value
+                if (intent.getAction().equals(ConnectionPacket.INTENT_ACTION)) {
+                    TextView connectionStatusTV = (TextView) findViewById(R.id.tv_craft_value_connect);
+                    ConnectionPacket connectionPacket = new ConnectionPacket(intent.getExtras());
+                    if (connectionPacket.isConnected()) {
+                        connectionStatusTV.setText(getResources().getString(R.string.tv_placeholder_connected));
+                    } else {
+                        connectionStatusTV.setText(getResources().getString(R.string.tv_placeholder_disconnected));
+                    }
                 //If the intent is type orientation packet, update corresponding textview values
-                if (intent.getAction().equals(OrientationPacket.INTENT_ACTION)) {
+                } else if (intent.getAction().equals(OrientationPacket.INTENT_ACTION)) {
                     TextView pitchTV = (TextView) findViewById(R.id.tv_craft_value_pitch);
                     TextView yawTV = (TextView) findViewById(R.id.tv_craft_value_yaw);
                     TextView rollTV = (TextView) findViewById(R.id.tv_craft_value_roll);
