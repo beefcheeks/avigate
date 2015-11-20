@@ -1,36 +1,28 @@
 package com.rabidllamastudios.avigate;
 
 import android.Manifest;
+import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.hardware.SensorManager;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.widget.TextView;
 
-public class DisplaySensorActivity extends AppCompatActivity implements SensorEventListener {
+import com.rabidllamastudios.avigate.model.AngularAccelerationPacket;
+import com.rabidllamastudios.avigate.model.GPSPacket;
+import com.rabidllamastudios.avigate.model.LinearAccelerationPacket;
+import com.rabidllamastudios.avigate.model.MagneticFieldPacket;
+import com.rabidllamastudios.avigate.model.OrientationPacket;
 
-    private LocationManager mLocationManager;
-    private LocationListener mLocationListener;
-    private SensorManager mSensorManager;
+public class DisplaySensorActivity extends AppCompatActivity {
 
-    private Sensor mAccelerometer;
-    private Sensor mGyroscope;
-    private Sensor mOrientation;
-    private Sensor mCompass;
-
-    private float[] mLinearAccelerationVector;
-    private float[] mAngularAccelerationVector;
-    private float[] mOrientationVector;
-    private float[] mMagneticFieldVector;
-
-    private double[] mGpsVector;
+    private BroadcastReceiver mBroadcastReceiver;
+    private Intent mSensorService;
+    //Sensor update rate in microseconds
+    private static final int SENSOR_UPDATE_RATE = SensorManager.SENSOR_DELAY_UI;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,173 +35,113 @@ public class DisplaySensorActivity extends AppCompatActivity implements SensorEv
         assert getSupportActionBar() != null;
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        startLocationCheck();
-        startSensors();
-    }
+        //Create broadcast receiver and listen for specific intents
+        mBroadcastReceiver = createBroadcastReceiver();
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(OrientationPacket.INTENT_ACTION);
+        intentFilter.addAction(LinearAccelerationPacket.INTENT_ACTION);
+        intentFilter.addAction(AngularAccelerationPacket.INTENT_ACTION);
+        intentFilter.addAction(MagneticFieldPacket.INTENT_ACTION);
+        intentFilter.addAction(GPSPacket.INTENT_ACTION);
+        registerReceiver(mBroadcastReceiver, intentFilter);
 
-    public boolean hasLocationPermissions() {
-        //check location permissions
-        PermissionsCheck permCheck = new PermissionsCheck();
-        return permCheck.hasPermission(this, Manifest.permission.ACCESS_FINE_LOCATION, permCheck.PERMISSIONS_REQUEST_READ_LOCATION_FINE);
-    }
+        //Configure the sensor service intent
+        mSensorService = SensorService.getConfiguredIntent(this, SENSOR_UPDATE_RATE);
 
-    public void startLocationCheck() {
-        if (hasLocationPermissions()) {
-            mGpsVector = new double[4];
-            mLocationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-            mLocationListener = new LocationListener() {
-                @Override
-                public void onLocationChanged(Location location) {
-                    updateLocation(location);
-                }
-
-                @Override
-                public void onStatusChanged(String provider, int status, Bundle extras) {
-
-                }
-
-                @Override
-                public void onProviderEnabled(String provider) {
-
-                }
-
-                @Override
-                public void onProviderDisabled(String provider) {
-
-                }
-            };
-            mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, mLocationListener);
-        }
-    }
-
-    public void startSensors() {
-
-        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
-        mGyroscope = mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
-        mOrientation = mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
-        mCompass = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
-
-        mLinearAccelerationVector = new float[3];
-        mAngularAccelerationVector = new float[3];
-        mOrientationVector = new float[3];
-        mMagneticFieldVector = new float[3];
-    }
-
-    @Override
-    public void onSensorChanged(SensorEvent event) {
-        Sensor sensor = event.sensor;
-        if (sensor.getType() == Sensor.TYPE_LINEAR_ACCELERATION) {
-            updateLinearAccelerationValues(event);
-        } else if (sensor.getType() == Sensor.TYPE_GYROSCOPE) {
-            updateAngularAccelerationValues(event);
-        } else if (sensor.getType() == Sensor.TYPE_ROTATION_VECTOR) {
-            updateOrientationValues(event);
-        } else if (sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
-            updateMagneticFieldValues(event);
-        }
-    }
-
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {
-
-    }
-
-    public void updateLocation(Location location) {
-        mGpsVector[0] = location.getLatitude();
-        mGpsVector[1] = location.getLongitude();
-
-        TextView coordinates = (TextView) findViewById(R.id.tv_sensor_value_gps);
-        TextView bearing = (TextView) findViewById(R.id.tv_sensor_value_bearing);
-        TextView altitude = (TextView) findViewById(R.id.tv_sensor_value_altitude);
-
-        String gpsCoordinatesValue = String.valueOf(mGpsVector[0]) + ", " + String.valueOf(mGpsVector[1]);
-        coordinates.setText(gpsCoordinatesValue);
-
-        if (location.hasBearing()) {
-            mGpsVector[2] = location.getBearing();
-            String bearingValue = String.valueOf(mGpsVector[2] + " °");
-            bearing.setText(bearingValue);
+        //Check permissions before starting the sensor service
+        PermissionsChecker permissionsChecker = new PermissionsChecker(this, createPermissionsCheckerCallback());
+        if (permissionsChecker.hasPermission(Manifest.permission.ACCESS_FINE_LOCATION, PermissionsChecker.PERMISSIONS_REQUEST_READ_LOCATION_FINE)) {
+            startService(mSensorService);
         } else {
-            bearing.setText(getString(R.string.tv_placeholder_sensor));
-        }
-
-        if (location.hasAltitude()) {
-            mGpsVector[3] = location.getAltitude();
-            String altitudeValue = String.valueOf(mGpsVector[3] + " m");
-            altitude.setText(altitudeValue);
-        } else {
-            altitude.setText(getString(R.string.tv_placeholder_sensor));
+            //TODO warn the user about permissions needed
         }
     }
 
-    public void updateLinearAccelerationValues(SensorEvent event) {
-        mLinearAccelerationVector[0] = event.values[0];
-        mLinearAccelerationVector[1] = event.values[1];
-        mLinearAccelerationVector[2] = event.values[2];
-        TextView linearAccelerationX = (TextView) findViewById(R.id.tv_sensor_value_linear_acceleration_x);
-        TextView linearAccelerationY = (TextView) findViewById(R.id.tv_sensor_value_linear_acceleration_y);
-        TextView linearAccelerationZ = (TextView) findViewById(R.id.tv_sensor_value_linear_acceleration_z);
-        linearAccelerationX.setText(String.valueOf(mLinearAccelerationVector[0]));
-        linearAccelerationY.setText(String.valueOf(mLinearAccelerationVector[1]));
-        linearAccelerationZ.setText(String.valueOf(mLinearAccelerationVector[2]));
+    // If the user allows location permissions, start the sensor service
+    private PermissionsCheckerCallback createPermissionsCheckerCallback() {
+        return new PermissionsCheckerCallback() {
+            @Override
+            public void permissionGranted(int permissionsConstant) {
+                if (permissionsConstant == PermissionsChecker.PERMISSIONS_REQUEST_READ_LOCATION_FINE) {
+                    startService(mSensorService);
+                }
+            }
+        };
     }
 
-    public void updateAngularAccelerationValues(SensorEvent event) {
-        mAngularAccelerationVector[0] = event.values[0];
-        mAngularAccelerationVector[1] = event.values[1];
-        mAngularAccelerationVector[2] = event.values[2];
-        TextView angularAccelerationX = (TextView) findViewById(R.id.tv_sensor_value_angular_acceleration_x);
-        TextView angularAccelerationY = (TextView) findViewById(R.id.tv_sensor_value_angular_acceleration_y);
-        TextView angularAccelerationZ = (TextView) findViewById(R.id.tv_sensor_value_angular_acceleration_z);
-        angularAccelerationX.setText(String.valueOf(mAngularAccelerationVector[0]));
-        angularAccelerationY.setText(String.valueOf(mAngularAccelerationVector[1]));
-        angularAccelerationZ.setText(String.valueOf(mAngularAccelerationVector[2]));
-    }
-
-    public void updateOrientationValues(SensorEvent event) {
-        mOrientationVector[0] = event.values[0];
-        mOrientationVector[1] = event.values[1];
-        mOrientationVector[2] = event.values[2];
-        TextView orientationX = (TextView) findViewById(R.id.tv_sensor_value_orientation_x);
-        TextView orientationY = (TextView) findViewById(R.id.tv_sensor_value_orientation_y);
-        TextView orientationZ = (TextView) findViewById(R.id.tv_sensor_value_orientation_z);
-        orientationX.setText(String.valueOf(mOrientationVector[0]));
-        orientationY.setText(String.valueOf(mOrientationVector[1]));
-        orientationZ.setText(String.valueOf(mOrientationVector[2]));
-    }
-
-    public void updateMagneticFieldValues(SensorEvent event) {
-        mMagneticFieldVector[0] = event.values[0];
-        mMagneticFieldVector[1] = event.values[1];
-        mMagneticFieldVector[2] = event.values[2];
-        TextView magneticFieldX = (TextView) findViewById(R.id.tv_sensor_value_magnetic_field_x);
-        TextView magneticFieldY = (TextView) findViewById(R.id.tv_sensor_value_magnetic_field_y);
-        TextView magneticFieldZ = (TextView) findViewById(R.id.tv_sensor_value_magnetic_field_z);
-        magneticFieldX.setText(String.valueOf(mMagneticFieldVector[0]));
-        magneticFieldY.setText(String.valueOf(mMagneticFieldVector[1]));
-        magneticFieldZ.setText(String.valueOf(mMagneticFieldVector[2]));
+    private BroadcastReceiver createBroadcastReceiver() {
+        return new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                //If the intent is type orientation packet, update corresponding textview values
+                if (intent.getAction().equals(OrientationPacket.INTENT_ACTION)) {
+                    TextView orientationXTV = (TextView) findViewById(R.id.tv_sensor_value_orientation_x);
+                    TextView orientationYTV = (TextView) findViewById(R.id.tv_sensor_value_orientation_y);
+                    TextView orientationZTV = (TextView) findViewById(R.id.tv_sensor_value_orientation_z);
+                    //y and z switched due to necessary coordinate system transformation
+                    OrientationPacket orientationPacket = new OrientationPacket(intent.getExtras());
+                    orientationXTV.setText(String.valueOf(orientationPacket.getOrientation().x));
+                    orientationYTV.setText(String.valueOf(orientationPacket.getOrientation().z));
+                    orientationZTV.setText(String.valueOf(orientationPacket.getOrientation().y));
+                //If the intent is type linear acceleration packet, update corresponding textivew values
+                } else if (intent.getAction().equals(LinearAccelerationPacket.INTENT_ACTION)) {
+                    TextView linearXTV = (TextView) findViewById(R.id.tv_sensor_value_linear_acceleration_x);
+                    TextView linearYTV = (TextView) findViewById(R.id.tv_sensor_value_linear_acceleration_y);
+                    TextView linearZTV = (TextView) findViewById(R.id.tv_sensor_value_linear_acceleration_z);
+                    //yaw and roll switched due to necessary coordinate system transformation
+                    LinearAccelerationPacket linearAccelerationPacket = new LinearAccelerationPacket(intent.getExtras());
+                    linearXTV.setText(String.valueOf(linearAccelerationPacket.getX()));
+                    linearYTV.setText(String.valueOf(linearAccelerationPacket.getZ()));
+                    linearZTV.setText(String.valueOf(linearAccelerationPacket.getY()));
+                //If the intent is type angular acceleration packet, update corresponding textview values
+                } else if (intent.getAction().equals(AngularAccelerationPacket.INTENT_ACTION)) {
+                    TextView angularXTV = (TextView) findViewById(R.id.tv_sensor_value_angular_acceleration_x);
+                    TextView angularYTV = (TextView) findViewById(R.id.tv_sensor_value_angular_acceleration_y);
+                    TextView angularZTV = (TextView) findViewById(R.id.tv_sensor_value_angular_acceleration_z);
+                    //yaw and roll switched due to necessary coordinate system transformation
+                    AngularAccelerationPacket angularAccelerationPacket = new AngularAccelerationPacket(intent.getExtras());
+                    angularXTV.setText(String.valueOf(angularAccelerationPacket.getX()));
+                    angularYTV.setText(String.valueOf(angularAccelerationPacket.getZ()));
+                    angularZTV.setText(String.valueOf(angularAccelerationPacket.getY()));
+                //If the intent is type magnetic field packet, update corresponding textview values
+                } else if (intent.getAction().equals(MagneticFieldPacket.INTENT_ACTION)) {
+                    TextView magneticXTV = (TextView) findViewById(R.id.tv_sensor_value_magnetic_field_x);
+                    TextView magneticYTV = (TextView) findViewById(R.id.tv_sensor_value_magnetic_field_y);
+                    TextView magneticZTV = (TextView) findViewById(R.id.tv_sensor_value_magnetic_field_z);
+                    //TODO determine if magnetic field data needs a coordinate transformation
+                    MagneticFieldPacket magneticFieldPacket = new MagneticFieldPacket(intent.getExtras());
+                    magneticXTV.setText(String.valueOf(magneticFieldPacket.getX()));
+                    magneticYTV.setText(String.valueOf(magneticFieldPacket.getY()));
+                    magneticZTV.setText(String.valueOf(magneticFieldPacket.getZ()));
+                //If the intent is type gps packet, update corresponding textview values
+                } else if (intent.getAction().equals(GPSPacket.INTENT_ACTION)) {
+                    TextView gpsCoordinatesTV = (TextView) findViewById(R.id.tv_sensor_value_gps);
+                    TextView gpsBearingTV = (TextView) findViewById(R.id.tv_sensor_value_bearing);
+                    TextView gpsAltitudeTV = (TextView) findViewById(R.id.tv_sensor_value_altitude);
+                    GPSPacket gpsPacket = new GPSPacket(intent.getExtras());
+                    String coordinates = String.valueOf(gpsPacket.getLatitude()) + " ," + String.valueOf(gpsPacket.getLongitude());
+                    gpsCoordinatesTV.setText(coordinates);
+                    if (gpsPacket.getBearing() == Double.NaN) {
+                        gpsBearingTV.setText(getResources().getString(R.string.tv_placeholder_sensor));
+                    } else {
+                        String bearing = String.valueOf(gpsPacket.getBearing()) + " °";
+                        gpsBearingTV.setText(bearing);
+                    }
+                    if (gpsPacket.getAltitude() == Double.NaN) {
+                        gpsAltitudeTV.setText(getResources().getString(R.string.tv_placeholder_sensor));
+                    } else {
+                        String altitude = String.valueOf(gpsPacket.getAltitude()) + " m";
+                        gpsAltitudeTV.setText(altitude);
+                    }
+                }
+            }
+        };
     }
 
     @Override
-    public void onPause() {
-        super.onPause();
-        mSensorManager.unregisterListener(this);
-        if (hasLocationPermissions()) {
-            mLocationManager.removeUpdates(mLocationListener);
-        }
+    public void onDestroy() {
+        stopService(mSensorService);
+        unregisterReceiver(mBroadcastReceiver);
+        super.onDestroy();
     }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
-        mSensorManager.registerListener(this, mGyroscope, SensorManager.SENSOR_DELAY_NORMAL);
-        mSensorManager.registerListener(this, mOrientation, SensorManager.SENSOR_DELAY_NORMAL);
-        mSensorManager.registerListener(this, mCompass, SensorManager.SENSOR_DELAY_NORMAL);
-        if (hasLocationPermissions()) {
-            mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, mLocationListener);
-        }
-    }
-
 }

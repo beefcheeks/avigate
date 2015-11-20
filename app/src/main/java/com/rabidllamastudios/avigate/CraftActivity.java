@@ -1,38 +1,33 @@
 package com.rabidllamastudios.avigate;
 
+import android.Manifest;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
+import android.content.IntentFilter;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.widget.TextView;
 
+import com.rabidllamastudios.avigate.model.ConnectionPacket;
+import com.rabidllamastudios.avigate.model.GPSPacket;
 import com.rabidllamastudios.avigate.model.OrientationPacket;
+import com.rabidllamastudios.avigate.model.PressurePacket;
 
-import org.rajawali3d.math.Quaternion;
-
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CraftActivity extends AppCompatActivity implements SensorEventListener {
+public class CraftActivity extends AppCompatActivity {
 
-    private SensorManager mSensorManager;
-    private Sensor mOrientation;
-    private Quaternion mPhoneOrientationQuaternion;
-
-    //Sensor update rate in ms
     //TODO adjust sensor rate with latency?
-    private static final int SENSOR_UPDATE_RATE_ORIENTATION = 50;
-    private long lastTime = -1;
-    private float avgTime;
+    //Sensor update rate in microseconds
+    private static final int SENSOR_UPDATE_RATE = SensorManager.SENSOR_DELAY_UI;
 
+    private BroadcastReceiver mBroadcastReceiver;
     private Intent mCommService;
+    private Intent mSensorService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,12 +39,23 @@ public class CraftActivity extends AppCompatActivity implements SensorEventListe
         assert getSupportActionBar() != null;
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        //Initialize sensors
-        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        mOrientation = mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
+        //Create broadcast receiver and listen for specific intents
+        mBroadcastReceiver = createBroadcastReceiver();
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(ConnectionPacket.INTENT_ACTION);
+        intentFilter.addAction(OrientationPacket.INTENT_ACTION);
+        intentFilter.addAction(GPSPacket.INTENT_ACTION);
+        intentFilter.addAction(PressurePacket.INTENT_ACTION);
+        registerReceiver(mBroadcastReceiver, intentFilter);
 
-        //Initialize phone orientation quaternion
-        mPhoneOrientationQuaternion = new Quaternion();
+        //Configure sensor service intent
+        mSensorService = SensorService.getConfiguredIntent(this, SENSOR_UPDATE_RATE);
+
+        //Check for location permissions before starting the sensor service
+        PermissionsChecker permissionsChecker = new PermissionsChecker(this, createPermissionsCheckerCallback());
+        if (permissionsChecker.hasPermission(Manifest.permission.ACCESS_FINE_LOCATION, PermissionsChecker.PERMISSIONS_REQUEST_READ_LOCATION_FINE)) {
+            startService(mSensorService);
+        }
 
         //Start the communications service.
         List<String> localSubs = new ArrayList<>();
@@ -59,54 +65,65 @@ public class CraftActivity extends AppCompatActivity implements SensorEventListe
         startService(mCommService);
     }
 
-    @Override
-    public void onSensorChanged(SensorEvent event) {
-        if(event.sensor.getType() == Sensor.TYPE_ROTATION_VECTOR) {
-            if (lastTime != -1) {
-                avgTime = 0.9f * avgTime + 0.1f * ((System.nanoTime() - lastTime)*0.000001f);
+    // If the user allows location permissions, start the sensor service
+    private PermissionsCheckerCallback createPermissionsCheckerCallback() {
+        return new PermissionsCheckerCallback() {
+            @Override
+            public void permissionGranted(int permissionsConstant) {
+                if (permissionsConstant == PermissionsChecker.PERMISSIONS_REQUEST_READ_LOCATION_FINE) {
+                    startService(mSensorService);
+                }
             }
-            long dur = System.nanoTime() - lastTime;
-            if (dur < SENSOR_UPDATE_RATE_ORIENTATION * 1000000) return;
-            lastTime = System.nanoTime();
-            Log.i("xmitter", "average sensor interval:" + avgTime);
-            //when orientation update is received, set phone quaternion equal to latest values
-            mPhoneOrientationQuaternion.setAll(event.values[3], event.values[0], event.values[1], event.values[2]);
-            Intent out = new OrientationPacket(mPhoneOrientationQuaternion).toIntent();
-            sendBroadcast(out);
-
-            TextView pitchTV = (TextView) findViewById(R.id.tv_craft_value_pitch);
-            TextView yawTV = (TextView) findViewById(R.id.tv_craft_value_yaw);
-            TextView rollTV = (TextView) findViewById(R.id.tv_craft_value_roll);
-
-            //Display orientation output in realtime
-            pitchTV.setText(NumberFormat.getInstance().format(mPhoneOrientationQuaternion.getPitch()));
-            //getRoll and getYaw switched due to non-standard phone orientation while in plane
-            yawTV.setText(NumberFormat.getInstance().format(mPhoneOrientationQuaternion.getRoll()));
-            rollTV.setText(NumberFormat.getInstance().format(mPhoneOrientationQuaternion.getYaw()));
-        }
-    }
-
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        mSensorManager.unregisterListener(this);
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        mSensorManager.registerListener(this, mOrientation, SENSOR_UPDATE_RATE_ORIENTATION*1000);
+        };
     }
 
     @Override
     public void onDestroy() {
         stopService(mCommService);
+        stopService(mSensorService);
+        unregisterReceiver(mBroadcastReceiver);
         super.onDestroy();
     }
 
+    private BroadcastReceiver createBroadcastReceiver() {
+        return new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                //If the intent is type orientation packet, update corresponding textview values
+                if (intent.getAction().equals(OrientationPacket.INTENT_ACTION)) {
+                    TextView pitchTV = (TextView) findViewById(R.id.tv_craft_value_pitch);
+                    TextView yawTV = (TextView) findViewById(R.id.tv_craft_value_yaw);
+                    TextView rollTV = (TextView) findViewById(R.id.tv_craft_value_roll);
+                    OrientationPacket orientationPacket = new OrientationPacket(intent.getExtras());
+                    //yaw and roll switched due to necessary coordinate system transformation
+                    pitchTV.setText(String.valueOf(orientationPacket.getOrientation().getPitch()));
+                    yawTV.setText(String.valueOf(orientationPacket.getOrientation().getRoll()));
+                    rollTV.setText(String.valueOf(orientationPacket.getOrientation().getYaw()));
+                //If the intent is type gps packet, update corresponding textview values
+                } else if (intent.getAction().equals(GPSPacket.INTENT_ACTION)) {
+                    TextView gpsCoordinatesTV = (TextView) findViewById(R.id.tv_craft_value_gps_coordinates);
+                    TextView gpsAccuracyTV = (TextView) findViewById(R.id.tv_craft_value_gps_accuracy);
+                    TextView gpsBearingTV = (TextView) findViewById(R.id.tv_craft_value_bearing);
+                    GPSPacket gpsPacket = new GPSPacket(intent.getExtras());
+                    String coordinates = String.valueOf(gpsPacket.getLatitude()) + " ," + String.valueOf(gpsPacket.getLongitude());
+                    String accuracy = String.valueOf(gpsPacket.getAccuracy()) + " m";
+                    gpsCoordinatesTV.setText(coordinates);
+                    gpsAccuracyTV.setText(accuracy);
+                    if (gpsPacket.getBearing() == Double.NaN) {
+                        gpsBearingTV.setText(getResources().getString(R.string.tv_placeholder_sensor));
+                    } else {
+                        String bearing = String.valueOf(gpsPacket.getBearing()) + " °";
+                        gpsBearingTV.setText(bearing);
+                    }
+                //If the intent type is pressure packet, update corresponding textview value
+                } else if (intent.getAction().equals(PressurePacket.INTENT_ACTION)) {
+                    TextView pressureTV = (TextView) findViewById(R.id.tv_craft_value_barometer);
+                    PressurePacket pressurePacket = new PressurePacket(intent.getExtras());
+                    String altitude = String.valueOf(pressurePacket.getPressure()) + " hPa";
+                    pressureTV.setText(altitude);
+                }
+            }
+        };
+    }
 
 }
