@@ -50,9 +50,6 @@
                 android:value="com.rabidllamastudios.avigate.MainActivity" />
         </activity>
 
-        <!-- MqttService -->
-        <service android:name="org.eclipse.paho.android.service.MqttService" />
-
         <activity
             android:name=".FlightVisualizer"
             android:label="@string/title_activity_flight_visualizer"
@@ -81,9 +78,16 @@
                 android:value="com.rabidllamastudios.avigate.MainActivity" />
         </activity>
 
+        <!-- MqttService -->
+        <service android:name="org.eclipse.paho.android.service.MqttService" />
         <service
             android:name=".CommunicationsService"
             android:exported="false" >
+        </service>
+        <service
+            android:name=".SensorService"
+            android:enabled="true"
+            android:exported="true" >
         </service>
 
     </application>
