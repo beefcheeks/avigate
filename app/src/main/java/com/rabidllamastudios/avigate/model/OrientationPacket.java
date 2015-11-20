@@ -15,7 +15,7 @@ public class OrientationPacket {
     public static final String PACKAGE_NAME = AvigateApplication.class.getPackage().getName();
     public static final String INTENT_ACTION = PACKAGE_NAME + ".action.ORIENTATION_DATA";
 
-    public Quaternion mOrientation;
+    private Quaternion mOrientation;
 
     public OrientationPacket(Quaternion orientation) {
         mOrientation = orientation;
@@ -26,11 +26,15 @@ public class OrientationPacket {
     }
 
     public Intent toIntent() {
-        Intent out = new Intent(INTENT_ACTION);
-        out.putExtra("w", mOrientation.w);
-        out.putExtra("x", mOrientation.x);
-        out.putExtra("y", mOrientation.y);
-        out.putExtra("z", mOrientation.z);
-        return out;
+        Intent intent = new Intent(INTENT_ACTION);
+        intent.putExtra("w", mOrientation.w);
+        intent.putExtra("x", mOrientation.x);
+        intent.putExtra("y", mOrientation.y);
+        intent.putExtra("z", mOrientation.z);
+        return intent;
+    }
+
+    public Quaternion getOrientation() {
+        return mOrientation;
     }
 }

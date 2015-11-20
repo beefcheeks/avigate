@@ -118,7 +118,7 @@ public class CommunicationsService extends Service {
         return null;
     }
 
-    public BroadcastReceiver createBroadcastReceiver(final DeviceType remoteDeviceType) {
+    private BroadcastReceiver createBroadcastReceiver(final DeviceType remoteDeviceType) {
         return new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -133,7 +133,7 @@ public class CommunicationsService extends Service {
         };
     }
 
-    public MqttConnectionManagerCallback createMqttConnectionManagerCallback(){
+    private MqttConnectionManagerCallback createMqttConnectionManagerCallback(){
         return new MqttConnectionManagerCallback() {
             @Override
             public void onConnect() {
