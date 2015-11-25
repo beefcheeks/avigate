@@ -4,6 +4,7 @@
     <string name="button_module_craft">Craft Module</string>
     <string name="button_module_controller">Controller Module</string>
 
+    <string name="button_arduino_test">Arduino Test</string>
     <string name="button_sensor_readings">Sensor Readings</string>
     <string name="button_connectivity_test">Connectivity Test</string>
     <string name="button_flight_visualizer">Flight Visualizer</string>
@@ -13,12 +14,18 @@
     <string name="button_subscribe">Subscribe</string>
     <string name="button_unsubscribe">Unsubscribe</string>
 
+    <string name="button_stop">Stop</string>
+    <string name="button_half_speed">Half Speed</string>
+    <string name="button_full_speed">Full Speed</string>
+
     <string name="title_activity_display_sensor">Sensor Readings</string>
     <string name="title_activity_connectivity_test">Connectivity Test</string>
 
     <string name="tv_main_title_modules">Flight Modules</string>
     <string name="tv_main_title_concept">Proof of Concept</string>
-    
+
+    <string name="tv_arduino_label_status">Arduino status: </string>
+
     <string name="tv_craft_title_connection">Connection</string>
     <string name="tv_craft_label_connection">Connection status:</string>
     <string name="tv_craft_label_latency">Latency: </string>
@@ -42,6 +49,7 @@
     <string name="tv_placeholder_disconnected">Disconnected</string>
     <string name="tv_placeholder_latency">Infinite</string>
     <string name="tv_placeholder_sensor">No sensor data</string>
+    <string name="tv_placeholder_zero">0</string>
 
     <string name="tv_sensor_title_position">Position</string>
     <string name="tv_sensor_title_gps">GPS Readings</string>
@@ -76,5 +84,7 @@
     <string name="title_activity_flight_visualizer">Orientation Visualizer</string>
     <string name="title_activity_craft">Craft Module</string>
     <string name="title_activity_controller">Controller Module</string>
+    <string name="title_activity_arduino_test">Arduino Test Activity</string>
+    <string name="title_activity_test_arduino">TestArduino</string>
 
 </resources>

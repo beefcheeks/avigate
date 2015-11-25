@@ -42,4 +42,10 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(this, FlightVisualizer.class);
         startActivity(intent);
     }
+
+    /** Called when the user clicks the Arduino Test button */
+    public void startArduinoTest(View view) {
+        Intent intent = new Intent(this, ArduinoTestActivity.class);
+        startActivity(intent);
+    }
 }
