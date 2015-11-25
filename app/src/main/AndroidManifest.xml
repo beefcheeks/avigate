@@ -1,19 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.rabidllamastudios.avigate" >
+    package="com.rabidllamastudios.avigate">
 
     <!-- GPS permission -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-
     <!-- Network state permission -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-
     <!-- Internet permission -->
     <uses-permission android:name="android.permission.INTERNET" />
-
     <!-- Write permission -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-
     <!-- Wake lock permission -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
@@ -26,8 +22,8 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme" >
-        <activity android:name=".MainActivity" >
+        android:theme="@style/AppTheme">
+        <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -38,7 +34,7 @@
             android:name=".DisplaySensorActivity"
             android:label="@string/title_activity_display_sensor"
             android:parentActivityName=".MainActivity"
-            android:theme="@style/AppTheme.NoActionBar" >
+            android:theme="@style/AppTheme.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.rabidllamastudios.avigate.MainActivity" />
@@ -47,17 +43,16 @@
             android:name=".ConnectivityTestActivity"
             android:label="@string/title_activity_connectivity_test"
             android:parentActivityName=".MainActivity"
-            android:theme="@style/AppTheme.NoActionBar" >
+            android:theme="@style/AppTheme.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.rabidllamastudios.avigate.MainActivity" />
         </activity>
-
         <activity
             android:name=".FlightVisualizer"
             android:label="@string/title_activity_flight_visualizer"
             android:parentActivityName=".MainActivity"
-            android:theme="@style/AppTheme.NoActionBar" >
+            android:theme="@style/AppTheme.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.rabidllamastudios.avigate.MainActivity" />
@@ -66,7 +61,7 @@
             android:name=".CraftActivity"
             android:label="@string/title_activity_craft"
             android:parentActivityName=".MainActivity"
-            android:theme="@style/AppTheme.NoActionBar" >
+            android:theme="@style/AppTheme.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.rabidllamastudios.avigate.MainActivity" />
@@ -75,7 +70,7 @@
             android:name=".ControllerActivity"
             android:label="@string/title_activity_controller"
             android:parentActivityName=".MainActivity"
-            android:theme="@style/AppTheme.NoActionBar" >
+            android:theme="@style/AppTheme.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.rabidllamastudios.avigate.MainActivity" />
@@ -92,10 +87,11 @@
 
         <!-- MqttService -->
         <service android:name="org.eclipse.paho.android.service.MqttService" />
+        <!-- CommunicationsService -->
         <service
             android:name=".CommunicationsService"
-            android:exported="false" >
-        </service>
+            android:exported="false" />
+        <!-- Sensor Service -->
         <service
             android:name=".SensorService"
             android:enabled="true"
@@ -104,9 +100,7 @@
         <service
             android:name=".UsbSerialService"
             android:enabled="true"
-            android:exported="true" >
-        </service>
-
+            android:exported="true" />
     </application>
 
 </manifest>
