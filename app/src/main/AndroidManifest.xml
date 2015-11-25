@@ -17,6 +17,9 @@
     <!-- Wake lock permission -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
+    <!-- USB host feature -->
+    <uses-feature android:name="android.hardware.usb.host" />
+
     <application
         android:name=".AvigateApplication"
         android:allowBackup="true"
@@ -86,6 +89,11 @@
         </service>
         <service
             android:name=".SensorService"
+            android:enabled="true"
+            android:exported="true" />
+        <!-- USB Serial Service -->
+        <service
+            android:name=".UsbSerialService"
             android:enabled="true"
             android:exported="true" >
         </service>
