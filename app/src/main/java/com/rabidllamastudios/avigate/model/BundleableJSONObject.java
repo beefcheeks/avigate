@@ -1,5 +1,6 @@
-package com.rabidllamastudios.avigate;
+package com.rabidllamastudios.avigate.model;
 
+import android.os.Build;
 import android.os.Bundle;
 
 import org.json.JSONException;
@@ -20,11 +21,21 @@ public class BundleableJSONObject extends JSONObject {
 
     public BundleableJSONObject(Bundle bundle) {
         Set<String> keys = bundle.keySet();
-        for (String key : keys) {
-            try {
-                this.put(key, JSONObject.wrap(bundle.get(key)));
-            } catch (JSONException e) {
-                //TODO Handle exception here
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            for (String key : keys) {
+                try {
+                    this.put(key, JSONObject.wrap(bundle.get(key)));
+                } catch (JSONException e) {
+                    //TODO Handle exception here
+                }
+            }
+        } else {
+            for (String key : keys) {
+                try {
+                    this.put(key, bundle.get(key));
+                } catch (JSONException e) {
+                    //TODO Handle exception here
+                }
             }
         }
     }
