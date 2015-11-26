@@ -21,16 +21,26 @@ import java.util.UUID;
 public class MqttConnectionManager {
 
     //Reconnect interval in ms
-    private static int RECONNECT_INTERVAL = 500;
+    private static final int RECONNECT_INTERVAL = 500;
     private MqttAndroidClient mMqttAndroidClient;
-    private MqttConnectionManagerCallback mMqttConnectionManagerCallback;
+    private Callback mMqttConnectionManagerCallback;
     private int mMqttQoS=0;
     private Thread mReconnectThread;
 
-    public MqttConnectionManager(Context inputContext, MqttConnectionManagerCallback callback, String serverAddress, int portNumber) {
+    public MqttConnectionManager(Context inputContext, Callback callback, String serverAddress, int portNumber) {
         String serverURL= "tcp://" + serverAddress + ":" + Integer.toString(portNumber);
         mMqttAndroidClient = new MqttAndroidClient(inputContext, serverURL, UUID.randomUUID().toString(), new MemoryPersistence());
         mMqttConnectionManagerCallback = callback;
+    }
+
+    /**
+     * Required for instantiating MqttConnectionManager class
+     * Notifies instantiating class of certain events via a callback
+     */
+    public interface Callback {
+        void onConnect();
+        void connectionLost();
+        void messageArrived(String topic, String message);
     }
 
     private void connect() {
@@ -39,7 +49,7 @@ public class MqttConnectionManager {
 
                 @Override
                 public void onSuccess(IMqttToken iMqttToken) {
-                    mMqttAndroidClient.setCallback(createMqttCallback());
+                    mMqttAndroidClient.setCallback(mMqttCallback);
                     mMqttConnectionManagerCallback.onConnect();
                     if (mReconnectThread != null) {
                         mReconnectThread.interrupt();
@@ -78,13 +88,13 @@ public class MqttConnectionManager {
 
     public void stop() {
         if (mMqttAndroidClient != null) {
-            if (mMqttAndroidClient.isConnected())
+            if (mMqttAndroidClient.isConnected()) {
                 unsubscribeAll();
             }
-        mMqttAndroidClient.unregisterResources();
-        mMqttAndroidClient.close();
-
-        mMqttAndroidClient = null;
+            mMqttAndroidClient.unregisterResources();
+            mMqttAndroidClient.close();
+            mMqttAndroidClient = null;
+        }
     }
 
     public void subscribe(String topic) {
@@ -107,29 +117,27 @@ public class MqttConnectionManager {
         this.unsubscribe("#");
     }
 
-    private MqttCallback createMqttCallback() {
-        return new MqttCallback() {
-            @Override
-            public void connectionLost(Throwable throwable) {
-                mMqttConnectionManagerCallback.connectionLost();
-                // Call connect so it will fail if there is no connection
-                connect();
-                if (throwable != null) {
-                    throwable.printStackTrace();
-                }
+    private final MqttCallback mMqttCallback = new MqttCallback() {
+        @Override
+        public void connectionLost(Throwable throwable) {
+            mMqttConnectionManagerCallback.connectionLost();
+            // Call connect so it will fail if there is no connection
+            connect();
+            if (throwable != null) {
+                throwable.printStackTrace();
             }
+        }
 
-            @Override
-            public void messageArrived(String s, MqttMessage mqttMessage) throws Exception {
-                mMqttConnectionManagerCallback.messageArrived(s, new String(mqttMessage.getPayload()));
-            }
+        @Override
+        public void messageArrived(String s, MqttMessage mqttMessage) throws Exception {
+            mMqttConnectionManagerCallback.messageArrived(s, new String(mqttMessage.getPayload()));
+        }
 
-            @Override
-            public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
+        @Override
+        public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
 
-            }
-        };
-    }
+        }
+    };
 
     private class ReconnectRunnable implements Runnable {
         @Override

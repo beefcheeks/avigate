@@ -74,8 +74,10 @@ public class CommunicationsService extends Service {
             if (ACTION_CONFIGURE.equals(action)) {
                 List<String> localSubs = new ArrayList<>();
                 List<String> remoteSubs = new ArrayList<>();
-                if (intent.hasExtra(SUBSCRIPTIONS_LOCAL)) localSubs = intent.getStringArrayListExtra(SUBSCRIPTIONS_LOCAL);
-                if (intent.hasExtra(SUBSCRIPTIONS_REMOTE)) remoteSubs = intent.getStringArrayListExtra(SUBSCRIPTIONS_REMOTE);
+                if (intent.hasExtra(SUBSCRIPTIONS_LOCAL))
+                    localSubs = intent.getStringArrayListExtra(SUBSCRIPTIONS_LOCAL);
+                if (intent.hasExtra(SUBSCRIPTIONS_REMOTE))
+                    remoteSubs = intent.getStringArrayListExtra(SUBSCRIPTIONS_REMOTE);
                 mLocalDeviceType = DeviceType.valueOf(intent.getStringExtra(LOCAL_DEVICE_TYPE));
 
                 if (mBroadcastReceiver != null) {
@@ -85,13 +87,13 @@ public class CommunicationsService extends Service {
                 mBroadcastReceiver = createBroadcastReceiver(mLocalDeviceType.getOpposite());
 
                 IntentFilter intentFilter = new IntentFilter();
-                    for (String each : localSubs) {
-                        intentFilter.addAction(each);
-                    }
+                for (String each : localSubs) {
+                    intentFilter.addAction(each);
+                }
                 registerReceiver(mBroadcastReceiver, intentFilter);
 
                 if (mMqttConnectionManager == null) {
-                    mMqttConnectionManager = new MqttConnectionManager(this, createMqttConnectionManagerCallback(), MQTT_BROKER, DEFAULT_PORT);
+                    mMqttConnectionManager = new MqttConnectionManager(this, mMqttConnectionManagerCallback, MQTT_BROKER, DEFAULT_PORT);
                     mMqttConnectionManager.start();
                 }
 
@@ -136,38 +138,36 @@ public class CommunicationsService extends Service {
         };
     }
 
-    private MqttConnectionManagerCallback createMqttConnectionManagerCallback(){
-        return new MqttConnectionManagerCallback() {
-            @Override
-            public void onConnect() {
-                mMqttConnectionManager.unsubscribeAll();
-                for (String each : mRemoteSubs) {
-                    String topic = mLocalDeviceType.name() + "/" + each;
-                    Log.i("CommunicationsService","Subscribing to topic: " + topic);
-                    mMqttConnectionManager.subscribe(mLocalDeviceType.name() + "/" + each);
-                }
-                Intent connectionIntent = new ConnectionPacket(true).toIntent();
-                sendBroadcast(connectionIntent);
+    private MqttConnectionManager.Callback mMqttConnectionManagerCallback = new MqttConnectionManager.Callback() {
+        @Override
+        public void onConnect() {
+            mMqttConnectionManager.unsubscribeAll();
+            for (String each : mRemoteSubs) {
+                String topic = mLocalDeviceType.name() + "/" + each;
+                Log.i("CommunicationsService", "Subscribing to topic: " + topic);
+                mMqttConnectionManager.subscribe(mLocalDeviceType.name() + "/" + each);
             }
+            Intent connectionIntent = new ConnectionPacket(true).toIntent();
+            sendBroadcast(connectionIntent);
+        }
 
-            @Override
-            public void connectionLost() {
-                Intent connectionIntent = new ConnectionPacket(false).toIntent();
-                sendBroadcast(connectionIntent);
-            }
+        @Override
+        public void connectionLost() {
+            Intent connectionIntent = new ConnectionPacket(false).toIntent();
+            sendBroadcast(connectionIntent);
+        }
 
-            @Override
-            public void messageArrived(String topic, String message) {
-                Log.i("CommunicationsService","Message arrived: " + message);
-                String[] topicSegments = topic.split("/");
-                Intent intent = new Intent(topicSegments[topicSegments.length-1]);
-                try {
-                    intent.putExtras(new BundleableJSONObject(message).toBundle());
-                } catch (JSONException jsonException) {
-                    //TODO implement exception handling
-                }
-                sendBroadcast(intent);
+        @Override
+        public void messageArrived(String topic, String message) {
+            Log.i("CommunicationsService", "Message arrived: " + message);
+            String[] topicSegments = topic.split("/");
+            Intent intent = new Intent(topicSegments[topicSegments.length - 1]);
+            try {
+                intent.putExtras(new BundleableJSONObject(message).toBundle());
+            } catch (JSONException jsonException) {
+                //TODO implement exception handling
             }
-        };
-    }
+            sendBroadcast(intent);
+        }
+    };
 }

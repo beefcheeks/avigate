@@ -63,27 +63,25 @@ public class ConnectivityTestActivity extends AppCompatActivity {
         });
     }
 
-    public MqttConnectionManagerCallback createMqttConnectionManagerCallback(){
-        return new MqttConnectionManagerCallback() {
-            @Override
-            public void connectionLost() {
-                mMessageOutput.append("\n" + "Connection lost");
-                mSubscribedTopics.clear();
-                setLayoutBasedOnConnectionStatus(false);
-            }
+    public MqttConnectionManager.Callback mMqttConnectionManagerCallback = new MqttConnectionManager.Callback() {
+        @Override
+        public void connectionLost() {
+            mMessageOutput.append("\n" + "Connection lost");
+            mSubscribedTopics.clear();
+            setLayoutBasedOnConnectionStatus(false);
+        }
 
-            @Override
-            public void onConnect() {
-                mMessageOutput.append("\n" + "Client connected");
-                setLayoutBasedOnConnectionStatus(true);
-            }
+        @Override
+        public void onConnect() {
+            mMessageOutput.append("\n" + "Client connected");
+            setLayoutBasedOnConnectionStatus(true);
+        }
 
-            @Override
-            public void messageArrived(String topic, String message) {
-                mMessageOutput.append("\n" + "Received: " + topic + "/" + message);
-            }
-        };
-    }
+        @Override
+        public void messageArrived(String topic, String message) {
+            mMessageOutput.append("\n" + "Received: " + topic + "/" + message);
+        }
+    };
 
     public boolean hasWritePermissions() {
         PermissionsChecker permChecker = new PermissionsChecker(this, null);
@@ -96,7 +94,7 @@ public class ConnectivityTestActivity extends AppCompatActivity {
             if (connectionButton.getText().equals(getString(R.string.button_connect))) {
                 if (mMqttConnectionManager == null) {
                     final EditText serverAddressField = (EditText) findViewById(R.id.et_connect_hint_server);
-                    mMqttConnectionManager = new MqttConnectionManager(this, createMqttConnectionManagerCallback(), serverAddressField.getText().toString(), 1883);
+                    mMqttConnectionManager = new MqttConnectionManager(this, mMqttConnectionManagerCallback, serverAddressField.getText().toString(), 1883);
                 }
                 mMqttConnectionManager.start();
             } else if (connectionButton.getText().equals(getString(R.string.button_disconnect))) {

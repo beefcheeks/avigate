@@ -49,7 +49,7 @@ public class DisplaySensorActivity extends AppCompatActivity {
         mSensorService = SensorService.getConfiguredIntent(this, SENSOR_UPDATE_RATE);
 
         //Check permissions before starting the sensor service
-        PermissionsChecker permissionsChecker = new PermissionsChecker(this, createPermissionsCheckerCallback());
+        PermissionsChecker permissionsChecker = new PermissionsChecker(this, mPermissionsCheckerCallback);
         if (permissionsChecker.hasPermission(Manifest.permission.ACCESS_FINE_LOCATION, PermissionsChecker.PERMISSIONS_REQUEST_READ_LOCATION_FINE)) {
             startService(mSensorService);
         } else {
@@ -58,16 +58,14 @@ public class DisplaySensorActivity extends AppCompatActivity {
     }
 
     // If the user allows location permissions, start the sensor service
-    private PermissionsCheckerCallback createPermissionsCheckerCallback() {
-        return new PermissionsCheckerCallback() {
-            @Override
-            public void permissionGranted(int permissionsConstant) {
-                if (permissionsConstant == PermissionsChecker.PERMISSIONS_REQUEST_READ_LOCATION_FINE) {
-                    startService(mSensorService);
-                }
+    private PermissionsChecker.Callback mPermissionsCheckerCallback = new PermissionsChecker.Callback() {
+        @Override
+        public void permissionGranted(int permissionsConstant) {
+            if (permissionsConstant == PermissionsChecker.PERMISSIONS_REQUEST_READ_LOCATION_FINE) {
+                startService(mSensorService);
             }
-        };
-    }
+        }
+    };
 
     private BroadcastReceiver createBroadcastReceiver() {
         return new BroadcastReceiver() {

@@ -16,9 +16,9 @@ public class PermissionsChecker extends AppCompatActivity {
     public static final int PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1;
 
     private final AppCompatActivity mContext;
-    private final PermissionsCheckerCallback mCallback;
+    private final Callback mCallback;
 
-    public PermissionsChecker(AppCompatActivity context, PermissionsCheckerCallback callback) {
+    public PermissionsChecker(AppCompatActivity context, Callback callback) {
         mContext = context;
         mCallback = callback;
     }
@@ -60,5 +60,12 @@ public class PermissionsChecker extends AppCompatActivity {
                 return;
             }
         }
+    }
+
+    /**
+     * This is the callback class for PermissionsChecker
+     */
+    public interface Callback {
+        void permissionGranted(int permissionsConstant);
     }
 }
