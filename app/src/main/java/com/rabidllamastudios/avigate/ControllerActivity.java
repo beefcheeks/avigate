@@ -1,15 +1,13 @@
 package com.rabidllamastudios.avigate;
 
-import android.app.ActionBar;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.ViewGroup;
+import android.view.View;
 
 import com.rabidllamastudios.avigate.model.OrientationPacket;
 
@@ -28,17 +26,11 @@ public class ControllerActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_controller);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
-        assert getSupportActionBar() != null;
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
+        setUIView();
         //Create 3d scene using rajawali 3d library
-        final RajawaliSurfaceView surface = new RajawaliSurfaceView(this);
+        RajawaliSurfaceView surface = (RajawaliSurfaceView) this.findViewById(R.id.rajwali_surface);
         surface.setFrameRate(60);
         surface.setRenderMode(IRajawaliSurface.RENDERMODE_WHEN_DIRTY);
-        addContentView(surface, new ActionBar.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT));
 
         //Create new flight renderer to handle aircraft and camera orientations
         final FlightRenderer flightRenderer = new FlightRenderer(this);
@@ -64,6 +56,24 @@ public class ControllerActivity extends AppCompatActivity {
         mCommService = CommunicationsService.getConfiguredIntent(this, localSubs, remoteSubs, CommunicationsService.DeviceType.CONTROLLER);
         startService(mCommService);
 
+    }
+
+    public void setUIView() {
+        final View decorView = getWindow().getDecorView();
+        decorView.setOnSystemUiVisibilityChangeListener (new View.OnSystemUiVisibilityChangeListener() {
+            @Override
+            public void onSystemUiVisibilityChange(int visibility) {
+                if ((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0) {
+                    decorView.setSystemUiVisibility(
+                            View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                                    | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                                    | View.SYSTEM_UI_FLAG_FULLSCREEN
+                                    | View.SYSTEM_UI_FLAG_IMMERSIVE);
+                }
+            }
+        });
     }
 
     @Override
