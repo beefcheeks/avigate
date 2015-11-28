@@ -33,6 +33,12 @@ public class SensorService extends Service implements SensorEventListener {
     private LocationListener mLocationListener;
     private SensorManager mSensorManager;
 
+    private Sensor mAccelerometer;
+    private Sensor mGyroscope;
+    private Sensor mOrientation;
+    private Sensor mCompass;
+    private Sensor mBarometer;
+
     private Quaternion mPhoneOrientationQuaternion;
 
     public SensorService() {
@@ -45,65 +51,73 @@ public class SensorService extends Service implements SensorEventListener {
     }
 
     @Override
+    public void onCreate() {
+        //Initialize phone orientation quaternion
+        mPhoneOrientationQuaternion = new Quaternion();
+
+        //Initialize mSensorManager and associated sensors
+        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
+        mGyroscope = mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+        mOrientation = mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
+        mCompass = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+        mBarometer = mSensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
+
+        //Initialize LocationManager and LocationListener
+        mLocationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        mLocationListener = new LocationListener() {
+            @Override
+            public void onLocationChanged(Location location) {
+                double[] gpsVector = new double[5];
+                gpsVector[0] = location.getLatitude();
+                gpsVector[1] = location.getLongitude();
+                gpsVector[2] = location.getAccuracy();
+                if (location.hasBearing()) {
+                    gpsVector[3] = location.getBearing();
+                } else {
+                    gpsVector[3] = Double.NaN;
+                }
+                if (location.hasAltitude()) {
+                    gpsVector[4] = location.getAltitude();
+                } else {
+                    gpsVector[4] = Double.NaN;
+                }
+                Intent gpsIntent = new GPSPacket(gpsVector[0], gpsVector[1], gpsVector[2], gpsVector[3], gpsVector[4]).toIntent();
+                sendBroadcast(gpsIntent);
+            }
+
+            @Override
+            public void onStatusChanged(String provider, int status, Bundle extras) {
+
+            }
+
+            @Override
+            public void onProviderEnabled(String provider) {
+
+            }
+
+            @Override
+            public void onProviderDisabled(String provider) {
+
+            }
+        };
+    }
+
+    @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent != null) {
-            //Initialize phone orientation quaternion
-            mPhoneOrientationQuaternion = new Quaternion();
             //Set sensor rate as specified in the intent extra, if none, set to default value
             int sensorRate = intent.getIntExtra(SENSOR_RATE, DEFAULT_SENSOR_RATE);
 
-            //Start motion sensors
-            mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-            Sensor accelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
-            Sensor gyroscope = mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
-            Sensor orientation = mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
-            Sensor compass = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
-            Sensor barometer = mSensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
+            //Set sensor refresh rate and start sensors
+            mSensorManager.registerListener(this, mAccelerometer, sensorRate);
+            mSensorManager.registerListener(this, mGyroscope, sensorRate);
+            mSensorManager.registerListener(this, mOrientation, sensorRate);
+            mSensorManager.registerListener(this, mCompass, sensorRate);
+            mSensorManager.registerListener(this, mBarometer, sensorRate);
 
-            mSensorManager.registerListener(this, accelerometer, sensorRate);
-            mSensorManager.registerListener(this, gyroscope, sensorRate);
-            mSensorManager.registerListener(this, orientation, sensorRate);
-            mSensorManager.registerListener(this, compass, sensorRate);
-            mSensorManager.registerListener(this, barometer, sensorRate);
-
-            //Start GPS
-            mLocationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-            mLocationListener = new LocationListener() {
-                @Override
-                public void onLocationChanged(Location location) {
-                    double[] gpsVector = new double[5];
-                    gpsVector[0] = location.getLatitude();
-                    gpsVector[1] = location.getLongitude();
-                    gpsVector[2] = location.getAccuracy();
-                    if (location.hasBearing()) {
-                        gpsVector[3] = location.getBearing();
-                    } else {
-                        gpsVector[3] = Double.NaN;
-                    }
-                    if (location.hasAltitude()) {
-                        gpsVector[4] = location.getAltitude();
-                    } else {
-                        gpsVector[4] = Double.NaN;
-                    }
-                    Intent gpsIntent = new GPSPacket(gpsVector[0], gpsVector[1], gpsVector[2], gpsVector[3], gpsVector[4]).toIntent();
-                    sendBroadcast(gpsIntent);
-                }
-
-                @Override
-                public void onStatusChanged(String provider, int status, Bundle extras) {
-
-                }
-
-                @Override
-                public void onProviderEnabled(String provider) {
-
-                }
-
-                @Override
-                public void onProviderDisabled(String provider) {
-
-                }
-            };
+            //TODO make GPS refresh rate configurable via Intent
+            //Start GPS using fastest rate (0)
             mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, mLocationListener);
 
         }

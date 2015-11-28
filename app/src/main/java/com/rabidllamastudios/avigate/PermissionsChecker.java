@@ -25,7 +25,7 @@ public class PermissionsChecker extends AppCompatActivity {
 
     public boolean hasPermission(String permission, int permissionsConstant) {
         //Pre-marshmallow users use different permissions system, return true
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP_MR1) return true;
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return true;
         //Check if marshmallow permissions have already been granted, if so, return true
         if (ContextCompat.checkSelfPermission(mContext, permission) == PackageManager.PERMISSION_GRANTED) return true;
         //Check if marshmallow permissions have been rejected, if so, return false
