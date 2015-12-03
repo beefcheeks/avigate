@@ -83,11 +83,21 @@
             <TextView
                 android:layout_width="0dp"
                 android:layout_weight="1"
+                android:layout_height="wrap_content" />
+
+            <EditText
+                android:layout_width="48dp"
                 android:layout_height="wrap_content"
+                android:focusable="false"
                 android:gravity="center_horizontal"
+                android:inputType="none"
                 android:textSize="20sp"
-                android:text="@string/tv_placeholder_zero"
-                android:id="@+id/tv_arduino_value_aileron" />
+                android:id="@+id/et_arduino_value_aileron" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -103,8 +113,8 @@
                 android:gravity="center_horizontal"
                 android:inputType="none"
                 android:textSize="20sp"
-                android:text="@string/et_pin_aileron"
-                android:id="@+id/et_pin_aileron" />
+                android:text="@string/et_arduino_value_pin_aileron"
+                android:id="@+id/et_arduino_value_pin_aileron" />
 
         </LinearLayout>
 
@@ -117,8 +127,7 @@
 
             <SeekBar android:id="@+id/seekbar_aileron"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:max="180"/>
+                android:layout_height="wrap_content" />
 
         </LinearLayout>
 
@@ -146,11 +155,21 @@
             <TextView
                 android:layout_width="0dp"
                 android:layout_weight="1"
+                android:layout_height="wrap_content" />
+
+            <EditText
+                android:layout_width="48dp"
                 android:layout_height="wrap_content"
+                android:focusable="false"
                 android:gravity="center_horizontal"
+                android:inputType="none"
                 android:textSize="20sp"
-                android:text="@string/tv_placeholder_zero"
-                android:id="@+id/tv_arduino_value_elevator" />
+                android:id="@+id/et_arduino_value_elevator" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -165,8 +184,9 @@
                 android:focusable="false"
                 android:gravity="center_horizontal"
                 android:inputType="none"
-                android:text="@string/et_pin_elevator"
-                android:id="@+id/et_pin_elevator" />
+                android:textSize="20sp"
+                android:text="@string/et_arduino_value_pin_elevator"
+                android:id="@+id/et_arduino_value_pin_elevator" />
 
         </LinearLayout>
 
@@ -179,8 +199,7 @@
 
             <SeekBar android:id="@+id/seekbar_elevator"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:max="180"/>
+                android:layout_height="wrap_content" />
 
         </LinearLayout>
 
@@ -208,11 +227,21 @@
             <TextView
                 android:layout_width="0dp"
                 android:layout_weight="1"
+                android:layout_height="wrap_content" />
+
+            <EditText
+                android:layout_width="48dp"
                 android:layout_height="wrap_content"
+                android:focusable="false"
                 android:gravity="center_horizontal"
+                android:inputType="none"
                 android:textSize="20sp"
-                android:text="@string/tv_placeholder_zero"
-                android:id="@+id/tv_arduino_value_rudder" />
+                android:id="@+id/et_arduino_value_rudder" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -227,8 +256,9 @@
                 android:focusable="false"
                 android:gravity="center_horizontal"
                 android:inputType="none"
-                android:text="@string/et_pin_rudder"
-                android:id="@+id/et_pin_rudder" />
+                android:textSize="20sp"
+                android:text="@string/et_arduino_value_pin_rudder"
+                android:id="@+id/et_arduino_value_pin_rudder" />
 
         </LinearLayout>
 
@@ -241,8 +271,7 @@
 
             <SeekBar android:id="@+id/seekbar_rudder"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:max="180"/>
+                android:layout_height="wrap_content" />
 
         </LinearLayout>
 
@@ -270,11 +299,21 @@
             <TextView
                 android:layout_width="0dp"
                 android:layout_weight="1"
+                android:layout_height="wrap_content" />
+
+            <EditText
+                android:layout_width="48dp"
                 android:layout_height="wrap_content"
+                android:focusable="false"
                 android:gravity="center_horizontal"
+                android:inputType="none"
                 android:textSize="20sp"
-                android:text="@string/tv_placeholder_zero"
-                android:id="@+id/tv_arduino_value_throttle" />
+                android:id="@+id/et_arduino_value_throttle" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -289,8 +328,9 @@
                 android:focusable="false"
                 android:gravity="center_horizontal"
                 android:inputType="none"
-                android:text="@string/et_pin_throttle"
-                android:id="@+id/et_pin_throttle"/>
+                android:textSize="20sp"
+                android:text="@string/et_arduino_value_pin_throttle"
+                android:id="@+id/et_arduino_value_pin_throttle"/>
 
         </LinearLayout>
 
@@ -303,8 +343,7 @@
 
             <SeekBar android:id="@+id/seekbar_throttle"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:max="180"/>
+                android:layout_height="wrap_content" />
 
         </LinearLayout>
 
@@ -325,9 +364,17 @@
             android:textColor="@color/colorWhite"
             android:textSize="28sp"
             android:text="@string/button_emergency_reset"
-            android:onClick="emergencyReset"
             android:id="@+id/button_emergency_reset"/>
 
     </RelativeLayout>
+
+    <org.florescu.android.rangeseekbar.RangeSeekBar
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        app:showLabels="false"
+        app:textAboveThumbsColor="@color/colorAccent"
+        android:visibility="invisible"
+        android:id="@+id/seekbar_range" />
 
 </RelativeLayout>

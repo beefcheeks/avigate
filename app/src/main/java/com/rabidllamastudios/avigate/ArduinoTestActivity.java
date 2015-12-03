@@ -11,13 +11,18 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.NumberPicker;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.rabidllamastudios.avigate.model.ServoPacket;
+
+import org.florescu.android.rangeseekbar.RangeSeekBar;
 
 /**
  * Created by Ryan Staatz
@@ -28,16 +33,26 @@ import com.rabidllamastudios.avigate.model.ServoPacket;
 public class ArduinoTestActivity extends AppCompatActivity implements NumberPicker.OnValueChangeListener {
 
     private static final int BAUD_RATE = 115200;
-    private static final int NUMPICK_MAX_VALUE = 16;
-    private static final int NUMPICK_MIN_VALUE = 0;
-    private static final int SERVO_NEUTRAL = 90;
+    private static final int PIN_MAX = 16;
+    private static final int PIN_MIN = 0;
+    private static final int SERVO_MAX = 180;
     private static final int SERVO_MIN = 0;
 
     private boolean mUsbSerialIsReady = false;
 
+    private int aileronMax = SERVO_MAX;
+    private int aileronMin = SERVO_MIN;
+    private int elevatorMax = SERVO_MAX;
+    private int elevatorMin = SERVO_MIN;
+    private int rudderMax = SERVO_MAX;
+    private int rudderMin = SERVO_MIN;
+    private int throttleMax = SERVO_MAX;
+    private int throttleMin = SERVO_MIN;
+
     private Intent mUsbSerialService;
     private IntentFilter mUsbIntentFilter;
     private IntentFilter mDeviceOutputIntentFilter;
+    private RangeSeekBar<Integer> mRangeSeekBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,15 +76,24 @@ public class ArduinoTestActivity extends AppCompatActivity implements NumberPick
         //Initialize mServoOutputFilter IntentFilter
         mDeviceOutputIntentFilter = new IntentFilter(ServoPacket.INTENT_ACTION_OUTPUT);
 
+        //Initialize mRangeSeekBar
+        mRangeSeekBar = (RangeSeekBar) findViewById(R.id.seekbar_range);
+
         //Initialize UI
-        configureSeekbar((SeekBar) findViewById(R.id.seekbar_aileron), SERVO_NEUTRAL, ServoPacket.ServoType.AILERON, (TextView) findViewById(R.id.tv_arduino_value_aileron));
-        configureSeekbar((SeekBar) findViewById(R.id.seekbar_elevator), SERVO_NEUTRAL, ServoPacket.ServoType.ELEVATOR, (TextView) findViewById(R.id.tv_arduino_value_elevator));
-        configureSeekbar((SeekBar) findViewById(R.id.seekbar_rudder), SERVO_NEUTRAL, ServoPacket.ServoType.RUDDER, (TextView) findViewById(R.id.tv_arduino_value_rudder));
-        configureSeekbar((SeekBar) findViewById(R.id.seekbar_throttle), SERVO_MIN, ServoPacket.ServoType.THROTTLE, (TextView) findViewById(R.id.tv_arduino_value_throttle));
-        configureEditText((EditText) findViewById(R.id.et_pin_aileron), ServoPacket.ServoType.AILERON);
-        configureEditText((EditText) findViewById(R.id.et_pin_elevator), ServoPacket.ServoType.ELEVATOR);
-        configureEditText((EditText) findViewById(R.id.et_pin_rudder), ServoPacket.ServoType.RUDDER);
-        configureEditText((EditText) findViewById(R.id.et_pin_throttle), ServoPacket.ServoType.THROTTLE);
+        int servoNeutral = (SERVO_MAX - SERVO_MIN)/2;
+        configureSeekbar(ServoPacket.ServoType.AILERON, servoNeutral, SERVO_MIN, SERVO_MAX);
+        configureSeekbar(ServoPacket.ServoType.ELEVATOR, servoNeutral, SERVO_MIN, SERVO_MAX);
+        configureSeekbar(ServoPacket.ServoType.RUDDER, servoNeutral, SERVO_MIN, SERVO_MAX);
+        configureSeekbar(ServoPacket.ServoType.THROTTLE, SERVO_MIN, SERVO_MIN, SERVO_MAX);
+        configurePinEditText(ServoPacket.ServoType.AILERON);
+        configurePinEditText(ServoPacket.ServoType.ELEVATOR);
+        configurePinEditText(ServoPacket.ServoType.RUDDER);
+        configurePinEditText(ServoPacket.ServoType.THROTTLE);
+        configureServoEditText(ServoPacket.ServoType.AILERON);
+        configureServoEditText(ServoPacket.ServoType.ELEVATOR);
+        configureServoEditText(ServoPacket.ServoType.RUDDER);
+        configureServoEditText(ServoPacket.ServoType.THROTTLE);
+        configureEmergencyResetButton();
     }
 
     @Override
@@ -103,31 +127,110 @@ public class ArduinoTestActivity extends AppCompatActivity implements NumberPick
     public void onValueChange(NumberPicker picker, int oldVal, int newVal) {}
 
     //Emergency reset button resets all sliders back to defaults
-    public void emergencyReset(View view) {
-        resetAllSeekbars();
+    private void configureEmergencyResetButton() {
+        Button emergencyResetButton = (Button) findViewById(R.id.button_emergency_reset);
+        //Resets all sliders to defaults - servos to neutral position, throttle to minimum position
+        emergencyResetButton.setOnClickListener(new Button.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                SeekBar aileronSeekBar = (SeekBar) findViewById(R.id.seekbar_aileron);
+                SeekBar elevatorSeekBar = (SeekBar) findViewById(R.id.seekbar_elevator);
+                SeekBar rudderSeekBar = (SeekBar) findViewById(R.id.seekbar_rudder);
+                SeekBar throttleSeekBar = (SeekBar) findViewById(R.id.seekbar_throttle);
+
+                aileronSeekBar.setProgress((aileronMax-aileronMin)/2);
+                elevatorSeekBar.setProgress((elevatorMax-elevatorMin)/2);
+                rudderSeekBar.setProgress((rudderMax-rudderMin)/2);
+                throttleSeekBar.setProgress(SERVO_MIN);
+            }
+        });
+        //Resets range for all servos to full range, then resets all sliders to defaults
+        emergencyResetButton.setOnLongClickListener(new Button.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                int servoNeutral = (SERVO_MAX - SERVO_MIN)/2;
+                configureSeekbar(ServoPacket.ServoType.AILERON, servoNeutral, SERVO_MIN, SERVO_MAX);
+                configureSeekbar(ServoPacket.ServoType.ELEVATOR, servoNeutral, SERVO_MIN, SERVO_MAX);
+                configureSeekbar(ServoPacket.ServoType.RUDDER, servoNeutral, SERVO_MIN, SERVO_MAX);
+                configureSeekbar(ServoPacket.ServoType.THROTTLE, SERVO_MIN, SERVO_MIN, SERVO_MAX);
+                return true;
+            }
+        });
     }
 
     //Configures the SeekBar and OnSeekBarChangeListener
-    private void configureSeekbar(SeekBar seekBar, int progressValue, final ServoPacket.ServoType servoType, final TextView textView) {
-        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                sendServoInput(servoType, progress);
-                textView.setText(String.valueOf(progress));
-            }
+    private void configureSeekbar(final ServoPacket.ServoType servoType, int startValue, final int minValue, final int maxValue) {
+        final EditText editText = getServoET(servoType);
+        SeekBar seekBar = getSeekBar(servoType);
+        if (editText != null && seekBar != null) {
+            seekBar.setMax(maxValue - minValue);
+            //Set editText here since onProgressChanged may not be called on setProgress
+            editText.setText(String.valueOf(startValue));
+            seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    int convertedValue = minValue + progress;
+                    sendServoInput(servoType, convertedValue);
+                    editText.setText(String.valueOf(convertedValue));
+                }
 
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {
 
-            }
+                }
 
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {
 
-            }
-        });
-        seekBar.setProgress(progressValue);
-        seekBar.setEnabled(false);
+                }
+            });
+            seekBar.setProgress(startValue - minValue);
+        }
+    }
+
+    //Takes a ServoType and returns the corresponding SeekBar
+    private SeekBar getSeekBar(ServoPacket.ServoType servoType) {
+        switch(servoType) {
+            case AILERON:
+                return (SeekBar) findViewById(R.id.seekbar_aileron);
+            case ELEVATOR:
+                return (SeekBar) findViewById(R.id.seekbar_elevator);
+            case RUDDER:
+                return (SeekBar) findViewById(R.id.seekbar_rudder);
+            case THROTTLE:
+                return (SeekBar) findViewById(R.id.seekbar_throttle);
+        }
+        return null;
+    }
+
+    //Takes a ServoType and returns the EditText that contains that ServoType's pin value
+    private EditText getPinET(ServoPacket.ServoType servoType) {
+        switch(servoType) {
+            case AILERON:
+                return (EditText) findViewById(R.id.et_arduino_value_pin_aileron);
+            case ELEVATOR:
+                return (EditText) findViewById(R.id.et_arduino_value_pin_elevator);
+            case RUDDER:
+                return (EditText) findViewById(R.id.et_arduino_value_pin_rudder);
+            case THROTTLE:
+                return (EditText) findViewById(R.id.et_arduino_value_pin_throttle);
+        }
+        return null;
+    }
+
+    //Takes a ServoType and return the EditText that contains that ServoType's servo value
+    private EditText getServoET(ServoPacket.ServoType servoType) {
+        switch(servoType) {
+            case AILERON:
+                return (EditText) findViewById(R.id.et_arduino_value_aileron);
+            case ELEVATOR:
+                return (EditText) findViewById(R.id.et_arduino_value_elevator);
+            case RUDDER:
+                return (EditText) findViewById(R.id.et_arduino_value_rudder);
+            case THROTTLE:
+                return (EditText) findViewById(R.id.et_arduino_value_throttle);
+        }
+        return null;
     }
 
     //Sets the servo value for a given servo type
@@ -141,32 +244,71 @@ public class ArduinoTestActivity extends AppCompatActivity implements NumberPick
     }
 
     //Configures the EditText field to be clickable and bring up a NumberPicker AlertDialog
-    private void configureEditText(final EditText editText, final ServoPacket.ServoType servoType) {
-        editText.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                configureServo(servoType, editText);
-            }
-        });
+    private void configurePinEditText(final ServoPacket.ServoType servoType) {
+        final EditText editText = getPinET(servoType);
+        if (editText != null ) {
+            editText.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    AlertDialog.Builder alertDialogBuilder = getNumPickAlertDialogBuilder(editText, servoType, true);
+                    alertDialogBuilder.setTitle("Set " + servoType.getStringValue() + " pin number");
+                    AlertDialog alertDialog = alertDialogBuilder.create();
+                    alertDialog.show();
+                }
+            });
+        }
     }
 
-    //Prompts the user with an AlertDialog to select a pin number for a given servo type
-    private void configureServo(final ServoPacket.ServoType servoType, final EditText editText) {
+    //Configures the EditText field to be clickable and bring up a NumberPicker AlertDialog
+    private void configureServoEditText(final ServoPacket.ServoType servoType) {
+        final EditText editText = getServoET(servoType);
+        if (editText != null ) {
+            editText.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    AlertDialog.Builder alertDialogBuilder = getNumPickAlertDialogBuilder(editText, servoType, false);
+                    alertDialogBuilder.setTitle("Set " + servoType.getStringValue() + " value");
+                    AlertDialog alertDialog = alertDialogBuilder.create();
+                    alertDialog.show();
+                }
+            });
+            editText.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    configureRangeAlertDialog(servoType);
+                    return true;
+                }
+            });
+        }
+    }
+
+    //Creates a customized AlertDialogBuilder that includes a NumberPicker
+    private AlertDialog.Builder getNumPickAlertDialogBuilder(final EditText editText, final ServoPacket.ServoType servoType, final boolean isPinDialog) {
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
-        alertDialogBuilder.setTitle("Set " + servoType.getStringValue() + " pin number");
-        alertDialogBuilder.setCancelable(true);
         final NumberPicker numberPicker = new NumberPicker(this);
-        numberPicker.setMinValue(NUMPICK_MIN_VALUE);
-        numberPicker.setMaxValue(NUMPICK_MAX_VALUE);
+        final int max = getServoMax(servoType);
+        final int min = getServoMin(servoType);
+        //If this is a servo pin AlertDialog, use the servo pin min and max constants
+        if (isPinDialog) {
+            numberPicker.setMaxValue(PIN_MAX);
+            numberPicker.setMinValue(PIN_MIN);
+        //If this is not a servo pin AlertDialog, use the corresponding servo value min and max vars
+       } else {
+            if (max != -1 && min != -1) {
+                numberPicker.setMaxValue(max);
+                numberPicker.setMinValue(min);
+            }
+        }
         numberPicker.setValue(Integer.parseInt(editText.getText().toString()));
         numberPicker.setOnValueChangedListener(this);
         numberPicker.setWrapSelectorWheel(false);
-        final FrameLayout parent = new FrameLayout(this);
-        parent.addView(numberPicker, new FrameLayout.LayoutParams(
+        //Create numPickFrameLayout to properly center numberPicker
+        final FrameLayout numPickFrameLayout = new FrameLayout(this);
+        numPickFrameLayout.addView(numberPicker, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.WRAP_CONTENT,
                 FrameLayout.LayoutParams.WRAP_CONTENT,
                 Gravity.CENTER));
-        alertDialogBuilder.setView(parent);
+        alertDialogBuilder.setView(numPickFrameLayout);
         alertDialogBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
@@ -176,14 +318,21 @@ public class ArduinoTestActivity extends AppCompatActivity implements NumberPick
         alertDialogBuilder.setPositiveButton("Set", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                int pinValue = numberPicker.getValue();
-                setServoPin(servoType, pinValue);
-                editText.setText(String.valueOf(pinValue));
+                int value = numberPicker.getValue();
+                //If this is a dialog to set the servo pin, then set the pin for the servo
+                if (isPinDialog) {
+                    setServoPin(servoType, value);
+                //If this is not a dialog to set the servo pin, then set the servo value instead
+                } else if (max != -1 && min != -1) {
+                    sendServoInput(servoType, value);
+                    SeekBar seekBar = getSeekBar(servoType);
+                    if (seekBar != null) seekBar.setProgress(value - min);
+                }
+                editText.setText(String.valueOf(value));
                 dialog.dismiss();
             }
         });
-        AlertDialog alertDialog = alertDialogBuilder.create();
-        alertDialog.show();
+        return alertDialogBuilder;
     }
 
     //Sets the pin number for a given servo type
@@ -196,16 +345,94 @@ public class ArduinoTestActivity extends AppCompatActivity implements NumberPick
         }
     }
 
-    //Resets all seekbar values to their default
-    private void resetAllSeekbars() {
-        SeekBar aileronSeekBar = (SeekBar) findViewById(R.id.seekbar_aileron);
-        SeekBar elevatorSeekBar = (SeekBar) findViewById(R.id.seekbar_elevator);
-        SeekBar rudderSeekBar = (SeekBar) findViewById(R.id.seekbar_rudder);
-        SeekBar throttleSeekBar = (SeekBar) findViewById(R.id.seekbar_throttle);
-        aileronSeekBar.setProgress(SERVO_NEUTRAL);
-        elevatorSeekBar.setProgress(SERVO_NEUTRAL);
-        rudderSeekBar.setProgress(SERVO_NEUTRAL);
-        throttleSeekBar.setProgress(SERVO_MIN);
+    //Prompts the user to set the value range for a given servo type
+    private void configureRangeAlertDialog (final ServoPacket.ServoType servoType) {
+        final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+        alertDialogBuilder.setTitle("Set " + servoType.getStringValue() + " range");
+        mRangeSeekBar.setRangeValues(SERVO_MIN, SERVO_MAX);
+        mRangeSeekBar.setSelectedMaxValue(getServoMax(servoType));
+        mRangeSeekBar.setSelectedMinValue(getServoMin(servoType));
+        //Remove the parent view from mRangeSeekBar to prevent a 'Parent Not Null error'
+        ViewGroup parent = (ViewGroup) mRangeSeekBar.getParent();
+        if (parent != null) {
+            parent.removeView(mRangeSeekBar);
+            mRangeSeekBar.setVisibility(View.VISIBLE);
+        }
+        alertDialogBuilder.setView(mRangeSeekBar);
+        alertDialogBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+        //Based on the mRangeSeekBar input, set the min and max values for the corresponding SeekBar
+        alertDialogBuilder.setPositiveButton("Set", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                int max = mRangeSeekBar.getSelectedMaxValue();
+                int min = mRangeSeekBar.getSelectedMinValue();
+                //Store the max and min in the corresponding int for the current servo type
+                switch (servoType) {
+                    case AILERON:
+                        aileronMax = max;
+                        aileronMin = min;
+                        break;
+                    case ELEVATOR:
+                        elevatorMax = max;
+                        elevatorMin = min;
+                        break;
+                    case RUDDER:
+                        rudderMax = max;
+                        rudderMin = min;
+                        break;
+                    case THROTTLE:
+                        throttleMax = max;
+                        throttleMin = min;
+                        break;
+                }
+                EditText editText = getServoET(servoType);
+                if (editText != null) {
+                    //If the current servo value is not within the new range, constrain it
+                    int currentServoValue = Integer.parseInt(editText.getText().toString());
+                    if (currentServoValue < min) currentServoValue = min;
+                    if (currentServoValue > max) currentServoValue = max;
+                    //configure the corresponding seekbar to use the new range and servo value
+                    configureSeekbar(servoType, currentServoValue, min, max);
+                    dialog.dismiss();
+                }
+            }
+        });
+        AlertDialog alertDialog = alertDialogBuilder.create();
+        alertDialog.show();
+    }
+
+    //Takes a servo packet and returns the corresponding current max range value
+    private int getServoMax(ServoPacket.ServoType servoType) {
+        switch (servoType) {
+            case AILERON:
+                return aileronMax;
+            case ELEVATOR:
+                return elevatorMax;
+            case RUDDER:
+                return rudderMax;
+            case THROTTLE:
+                return throttleMax;
+        }
+        return -1;
+    }
+    //Takes a servo packet and returns the corresponding current min range value
+    private int getServoMin(ServoPacket.ServoType servoType) {
+        switch (servoType) {
+            case AILERON:
+                return aileronMin;
+            case ELEVATOR:
+                return elevatorMin;
+            case RUDDER:
+                return rudderMin;
+            case THROTTLE:
+                return throttleMin;
+        }
+        return -1;
     }
 
     //Usb state notifications from UsbSerialService are received here.
@@ -217,7 +444,6 @@ public class ArduinoTestActivity extends AppCompatActivity implements NumberPick
                 statusTV.setText("USB ready");
             } else if (intent.getAction().equals(UsbSerialService.ACTION_USB_DISCONNECTED)) {
                 mUsbSerialIsReady = false;
-                setSeekbarEnabled(false);
                 statusTV.setText("USB disconnected");
                 TextView outputTV = (TextView) findViewById(R.id.tv_arduino_value_output);
                 outputTV.setText("");
@@ -247,7 +473,6 @@ public class ArduinoTestActivity extends AppCompatActivity implements NumberPick
                 if (servoPacket.isStatusReady() && !mUsbSerialIsReady) {
                     mUsbSerialIsReady = true;
                     configureAllServos();
-                    setSeekbarEnabled(true);
                 }
                 TextView outputTV = (TextView) findViewById(R.id.tv_arduino_value_output);
                 outputTV.setText(servoPacket.toJsonString());
@@ -258,10 +483,10 @@ public class ArduinoTestActivity extends AppCompatActivity implements NumberPick
     //Sends the configuration information for all output servos to the device
     private void configureAllServos() {
         if (mUsbSerialIsReady) {
-            EditText aileronET = (EditText) findViewById(R.id.et_pin_aileron);
-            EditText elevatorET = (EditText) findViewById(R.id.et_pin_elevator);
-            EditText rudderET = (EditText) findViewById(R.id.et_pin_rudder);
-            EditText throttleET = (EditText) findViewById(R.id.et_pin_throttle);
+            EditText aileronET = (EditText) findViewById(R.id.et_arduino_value_pin_aileron);
+            EditText elevatorET = (EditText) findViewById(R.id.et_arduino_value_pin_elevator);
+            EditText rudderET = (EditText) findViewById(R.id.et_arduino_value_pin_rudder);
+            EditText throttleET = (EditText) findViewById(R.id.et_arduino_value_pin_throttle);
             ServoPacket servoPacket = new ServoPacket();
             servoPacket.setServoPin(ServoPacket.ServoType.AILERON, Integer.parseInt(aileronET.getText().toString()));
             servoPacket.setServoPin(ServoPacket.ServoType.ELEVATOR, Integer.parseInt(elevatorET.getText().toString()));
@@ -269,27 +494,6 @@ public class ArduinoTestActivity extends AppCompatActivity implements NumberPick
             servoPacket.setServoPin(ServoPacket.ServoType.THROTTLE, Integer.parseInt(throttleET.getText().toString()));
             Intent servoConfigIntent = servoPacket.toIntent(ServoPacket.INTENT_ACTION_INPUT);
             sendBroadcast(servoConfigIntent);
-        }
-    }
-
-    //Enables or disables the seekbar based on the boolean value of the setToEnabled parameter
-    private void setSeekbarEnabled (boolean setToEnabled) {
-        SeekBar aileronSeekBar = (SeekBar) findViewById(R.id.seekbar_aileron);
-        SeekBar elevatorSeekBar = (SeekBar) findViewById(R.id.seekbar_elevator);
-        SeekBar rudderSeekBar = (SeekBar) findViewById(R.id.seekbar_rudder);
-        SeekBar throttleSeekBar = (SeekBar) findViewById(R.id.seekbar_throttle);
-
-        if (setToEnabled) {
-            aileronSeekBar.setEnabled(true);
-            elevatorSeekBar.setEnabled(true);
-            rudderSeekBar.setEnabled(true);
-            throttleSeekBar.setEnabled(true);
-        } else {
-            aileronSeekBar.setEnabled(false);
-            elevatorSeekBar.setEnabled(false);
-            rudderSeekBar.setEnabled(false);
-            throttleSeekBar.setEnabled(false);
-            resetAllSeekbars();
         }
     }
 

@@ -35,6 +35,7 @@ dependencies {
     compile (group: 'org.eclipse.paho', name: 'org.eclipse.paho.android.service', version: '1.0.2') {
         exclude module: 'support-v4'
     }
+    compile 'org.florescu.android.rangeseekbar:rangeseekbar-library:0.3.0'
     compile 'org.rajawali3d:rajawali:1.0.306-SNAPSHOT@aar'
 
 }
