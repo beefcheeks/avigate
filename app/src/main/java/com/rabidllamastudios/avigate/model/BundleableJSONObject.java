@@ -13,13 +13,13 @@ import java.util.Set;
  * This class is identical to a JSONObject, except it can convert between JSON and Bundle objects
  * Created by Ryan on 11/12/15.
  */
-public class BundleableJSONObject extends JSONObject {
+public class BundleableJsonObject extends JSONObject {
 
-    public BundleableJSONObject(String json) throws JSONException {
+    public BundleableJsonObject(String json) throws JSONException {
         super(json);
     }
 
-    public BundleableJSONObject(Bundle bundle) {
+    public BundleableJsonObject(Bundle bundle) {
         Set<String> keys = bundle.keySet();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             for (String key : keys) {

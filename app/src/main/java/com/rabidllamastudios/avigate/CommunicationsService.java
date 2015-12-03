@@ -11,7 +11,7 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import com.rabidllamastudios.avigate.model.BundleableJSONObject;
+import com.rabidllamastudios.avigate.model.BundleableJsonObject;
 import com.rabidllamastudios.avigate.model.ConnectionPacket;
 
 import org.json.JSONException;
@@ -131,7 +131,7 @@ public class CommunicationsService extends Service {
                 Bundle bundle = intent.getExtras();
                 if (bundle == null) return;
                 String topic = remoteDeviceType.name() + "/" + intent.getAction();
-                String message = new BundleableJSONObject(bundle).toString();
+                String message = new BundleableJsonObject(bundle).toString();
                 Log.i("CommunicationsService", "Sending broadcast: " + topic + "/" + message);
                 mMqttConnectionManager.publish(topic, message);
             }
@@ -163,7 +163,7 @@ public class CommunicationsService extends Service {
             String[] topicSegments = topic.split("/");
             Intent intent = new Intent(topicSegments[topicSegments.length - 1]);
             try {
-                intent.putExtras(new BundleableJSONObject(message).toBundle());
+                intent.putExtras(new BundleableJsonObject(message).toBundle());
             } catch (JSONException jsonException) {
                 //TODO implement exception handling
             }
