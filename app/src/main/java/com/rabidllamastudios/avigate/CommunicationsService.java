@@ -32,11 +32,11 @@ public class CommunicationsService extends Service {
     private static final int DEFAULT_PORT = 1883;
 
     private static final String PACKAGE_NAME = AvigateApplication.class.getPackage().getName();
-    public static final String ACTION_CONFIGURE = PACKAGE_NAME + ".action.CONFIGURE";
+    public static final String ACTION_CONFIGURE_COMM_SERVICE = PACKAGE_NAME + ".action.CONFIGURE_COMM_SERVICE";
 
-    public static final String SUBSCRIPTIONS_LOCAL = PACKAGE_NAME + ".extra.LOCAL";
-    public static final String SUBSCRIPTIONS_REMOTE = PACKAGE_NAME + ".extra.REMOTE";
-    public static final String LOCAL_DEVICE_TYPE = PACKAGE_NAME + ".extra.TYPE";
+    public static final String EXTRA_SUBSCRIPTIONS_LOCAL = PACKAGE_NAME + ".extra.LOCAL";
+    public static final String EXTRA_SUBSCRIPTIONS_REMOTE = PACKAGE_NAME + ".extra.REMOTE";
+    public static final String EXTRA_LOCAL_DEVICE_TYPE = PACKAGE_NAME + ".extra.TYPE";
 
     //TODO finish actions and extras
 
@@ -52,10 +52,10 @@ public class CommunicationsService extends Service {
 
     public static Intent getConfiguredIntent(Context context, List<String> localSubs, List<String> remoteSubs, DeviceType localDeviceType) {
         Intent intent = new Intent(context, CommunicationsService.class);
-        intent.setAction(ACTION_CONFIGURE);
-        intent.putStringArrayListExtra(SUBSCRIPTIONS_LOCAL, (ArrayList<String>) localSubs);
-        intent.putStringArrayListExtra(SUBSCRIPTIONS_REMOTE, (ArrayList<String>) remoteSubs);
-        intent.putExtra(LOCAL_DEVICE_TYPE, localDeviceType.name());
+        intent.setAction(ACTION_CONFIGURE_COMM_SERVICE);
+        intent.putStringArrayListExtra(EXTRA_SUBSCRIPTIONS_LOCAL, (ArrayList<String>) localSubs);
+        intent.putStringArrayListExtra(EXTRA_SUBSCRIPTIONS_REMOTE, (ArrayList<String>) remoteSubs);
+        intent.putExtra(EXTRA_LOCAL_DEVICE_TYPE, localDeviceType.name());
         return intent;
     }
 
@@ -69,37 +69,34 @@ public class CommunicationsService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent != null) {
-            final String action = intent.getAction();
-            if (ACTION_CONFIGURE.equals(action)) {
-                List<String> localSubs = new ArrayList<>();
-                List<String> remoteSubs = new ArrayList<>();
-                if (intent.hasExtra(SUBSCRIPTIONS_LOCAL))
-                    localSubs = intent.getStringArrayListExtra(SUBSCRIPTIONS_LOCAL);
-                if (intent.hasExtra(SUBSCRIPTIONS_REMOTE))
-                    remoteSubs = intent.getStringArrayListExtra(SUBSCRIPTIONS_REMOTE);
-                mLocalDeviceType = DeviceType.valueOf(intent.getStringExtra(LOCAL_DEVICE_TYPE));
+        if (intent != null && ACTION_CONFIGURE_COMM_SERVICE.equals(intent.getAction())) {
+            List<String> localSubs = new ArrayList<>();
+            List<String> remoteSubs = new ArrayList<>();
+            if (intent.hasExtra(EXTRA_SUBSCRIPTIONS_LOCAL))
+                localSubs = intent.getStringArrayListExtra(EXTRA_SUBSCRIPTIONS_LOCAL);
+            if (intent.hasExtra(EXTRA_SUBSCRIPTIONS_REMOTE))
+                remoteSubs = intent.getStringArrayListExtra(EXTRA_SUBSCRIPTIONS_REMOTE);
+            mLocalDeviceType = DeviceType.valueOf(intent.getStringExtra(EXTRA_LOCAL_DEVICE_TYPE));
 
-                if (mBroadcastReceiver != null) {
-                    unregisterReceiver(mBroadcastReceiver);
-                    mBroadcastReceiver = null;
-                }
-                mBroadcastReceiver = createBroadcastReceiver(mLocalDeviceType.getOpposite());
-
-                IntentFilter intentFilter = new IntentFilter();
-                for (String each : localSubs) {
-                    intentFilter.addAction(each);
-                }
-                registerReceiver(mBroadcastReceiver, intentFilter);
-
-                if (mMqttConnectionManager == null) {
-                    mMqttConnectionManager = new MqttConnectionManager(this, mMqttConnectionManagerCallback, MQTT_BROKER, DEFAULT_PORT);
-                    mMqttConnectionManager.start();
-                }
-
-                mRemoteSubs = new ArrayList<>();
-                mRemoteSubs = remoteSubs;
+            if (mBroadcastReceiver != null) {
+                unregisterReceiver(mBroadcastReceiver);
+                mBroadcastReceiver = null;
             }
+            mBroadcastReceiver = createBroadcastReceiver(mLocalDeviceType.getOpposite());
+
+            IntentFilter intentFilter = new IntentFilter();
+            for (String each : localSubs) {
+                intentFilter.addAction(each);
+            }
+            registerReceiver(mBroadcastReceiver, intentFilter);
+
+            if (mMqttConnectionManager == null) {
+                mMqttConnectionManager = new MqttConnectionManager(this, mMqttConnectionManagerCallback, MQTT_BROKER, DEFAULT_PORT);
+                mMqttConnectionManager.start();
+            }
+
+            mRemoteSubs = new ArrayList<>();
+            mRemoteSubs = remoteSubs;
         }
         return START_STICKY;
     }
@@ -164,8 +161,8 @@ public class CommunicationsService extends Service {
             Intent intent = new Intent(topicSegments[topicSegments.length - 1]);
             try {
                 intent.putExtras(new BundleableJsonObject(message).toBundle());
-            } catch (JSONException jsonException) {
-                //TODO implement exception handling
+            } catch (JSONException e) {
+                e.printStackTrace();
             }
             sendBroadcast(intent);
         }

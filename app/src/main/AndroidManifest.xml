@@ -94,13 +94,11 @@
         <!-- Sensor Service -->
         <service
             android:name=".SensorService"
-            android:enabled="true"
-            android:exported="true" />
+            android:exported="false" />
         <!-- USB Serial Service -->
         <service
             android:name=".UsbSerialService"
-            android:enabled="true"
-            android:exported="true" />
+            android:exported="false" />
     </application>
 
 </manifest>

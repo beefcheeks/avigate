@@ -57,7 +57,6 @@ public class PermissionsChecker extends AppCompatActivity {
                         mCallback.permissionGranted(PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
                     }
                 }
-                return;
             }
         }
     }
