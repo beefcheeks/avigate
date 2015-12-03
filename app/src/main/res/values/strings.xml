@@ -5,18 +5,26 @@
     <string name="button_module_controller">Controller Module</string>
 
     <string name="button_arduino_test">Arduino Test</string>
+    <string name="button_emergency_reset">Emergency Reset</string>
     <string name="button_sensor_readings">Sensor Readings</string>
     <string name="button_connectivity_test">Connectivity Test</string>
     <string name="button_flight_visualizer">Flight Visualizer</string>
     <string name="button_connect">Connect</string>
     <string name="button_disconnect">Disconnect</string>
     <string name="button_publish">Publish</string>
+    <string name="button_cancel">Cancel</string>
+    <string name="button_set">Set</string>
     <string name="button_subscribe">Subscribe</string>
     <string name="button_unsubscribe">Unsubscribe</string>
 
-    <string name="button_stop">Stop</string>
-    <string name="button_half_speed">Half Speed</string>
-    <string name="button_full_speed">Full Speed</string>
+    <string name="button_servo_min">Min Servo</string>
+    <string name="button_servo_half">Half Servo</string>
+    <string name="button_servo_max">Max Servo</string>
+
+    <string name="et_pin_aileron">10</string>
+    <string name="et_pin_elevator">9</string>
+    <string name="et_pin_rudder">8</string>
+    <string name="et_pin_throttle">7</string>
 
     <string name="title_activity_display_sensor">Sensor Readings</string>
     <string name="title_activity_connectivity_test">Connectivity Test</string>
@@ -24,7 +32,14 @@
     <string name="tv_main_title_modules">Flight Modules</string>
     <string name="tv_main_title_concept">Proof of Concept</string>
 
-    <string name="tv_arduino_label_status">Arduino status: </string>
+    <string name="tv_arduino_label_aileron">Aileron </string>
+    <string name="tv_arduino_label_elevator">Elevator </string>
+    <string name="tv_arduino_label_rudder">Rudder </string>
+    <string name="tv_arduino_label_throttle">Throttle </string>
+    <string name="tv_arduino_label_pin">Pin</string>
+    <string name="tv_arduino_label_output">Output: </string>
+    <string name="tv_arduino_label_status">Status: </string>
+    <string name="tv_arduino_value_status">USB disconnected</string>
 
     <string name="tv_craft_title_connection">Connection</string>
     <string name="tv_craft_label_connection">Connection status:</string>
