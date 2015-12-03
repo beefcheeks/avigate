@@ -7,10 +7,11 @@ import com.rabidllamastudios.avigate.AvigateApplication;
 
 /**
  * Created by Ryan on 11/19/15.
+ * A data model class to communicate connection data
+ * For convenience, this class can convert to and between Bundle and Intent
  */
 public class ConnectionPacket {
-
-    public static final String PACKAGE_NAME = AvigateApplication.class.getPackage().getName();
+    private static final String PACKAGE_NAME = AvigateApplication.class.getPackage().getName();
     public static final String INTENT_ACTION = PACKAGE_NAME + ".action.CONNECTION_DATA";
 
     private boolean mIsConnected = false;

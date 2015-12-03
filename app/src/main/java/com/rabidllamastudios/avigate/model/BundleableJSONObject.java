@@ -10,7 +10,7 @@ import java.util.Iterator;
 import java.util.Set;
 
 /**
- * BundleableJSONObject is identical to a JSONObject, except it can convert between JSON and bundle
+ * This class is identical to a JSONObject, except it can convert between JSON and Bundle objects
  * Created by Ryan on 11/12/15.
  */
 public class BundleableJSONObject extends JSONObject {
@@ -26,7 +26,7 @@ public class BundleableJSONObject extends JSONObject {
                 try {
                     this.put(key, JSONObject.wrap(bundle.get(key)));
                 } catch (JSONException e) {
-                    //TODO Handle exception here
+                    e.printStackTrace();
                 }
             }
         } else {
@@ -34,13 +34,13 @@ public class BundleableJSONObject extends JSONObject {
                 try {
                     this.put(key, bundle.get(key));
                 } catch (JSONException e) {
-                    //TODO Handle exception here
+                    e.printStackTrace();
                 }
             }
         }
     }
 
-    //TODO find less awful method if there is one
+    //TODO find less awful method implementation if there is one
     public Bundle toBundle() {
         Bundle bundle = new Bundle();
         Iterator<String> keys = this.keys();
@@ -61,7 +61,7 @@ public class BundleableJSONObject extends JSONObject {
                 else if (value instanceof Double)
                     bundle.putDouble(key, (Double) value);
             } catch (JSONException e) {
-                //TODO Handle exception here
+                e.printStackTrace();
             }
         }
         return bundle;

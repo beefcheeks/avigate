@@ -7,9 +7,11 @@ import com.rabidllamastudios.avigate.AvigateApplication;
 
 /**
  * Created by Ryan on 11/19/15.
+ * A data model class to communicate magnetic field sensor data
+ * For convenience, this class can convert to and between Bundle and Intent
  */
 public class MagneticFieldPacket {
-    public static final String PACKAGE_NAME = AvigateApplication.class.getPackage().getName();
+    private static final String PACKAGE_NAME = AvigateApplication.class.getPackage().getName();
     public static final String INTENT_ACTION = PACKAGE_NAME + ".action.MAGNETIC_FIELD_DATA";
 
     private float mX;

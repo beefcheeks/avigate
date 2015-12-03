@@ -12,7 +12,7 @@ import org.rajawali3d.math.Quaternion;
  * Created by Ryan on 11/13/15.
  */
 public class OrientationPacket {
-    public static final String PACKAGE_NAME = AvigateApplication.class.getPackage().getName();
+    private static final String PACKAGE_NAME = AvigateApplication.class.getPackage().getName();
     public static final String INTENT_ACTION = PACKAGE_NAME + ".action.ORIENTATION_DATA";
 
     private Quaternion mOrientation;
