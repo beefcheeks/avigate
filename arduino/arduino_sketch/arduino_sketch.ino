@@ -7,8 +7,14 @@
 #include <PinChangeInt.h>
 #include <Servo.h>
 
+//Sets the max char array size for JSON serial input and output
+const byte CHAR_ARRAY_SIZE = 235;
+
 //Pulse threshold values for receiver input for cutover between auto and manual control
-const byte CUTOVER_BUFFER = 150;
+const byte CUTOVER_BUFFER = 125;
+
+//Number of cutover samples to use for cutoverInAverage
+const byte CUTOVER_SAMPLES = 10;
 
 //Byte flags used to store whether there is an update from a given input
 const byte FLAG_AILERON = 1;
@@ -20,9 +26,6 @@ const byte FLAG_CUTOVER = 16;
 //Min and max values for the Servo.write() function
 const byte SERVO_MIN = 0;
 const byte SERVO_MAX = 180;
-
-//Sets the max char array size for JSON serial input and output
-const int CHAR_ARRAY_SIZE = 300;
 
 //Default servo input value
 //TODO use better calibration default
@@ -48,11 +51,21 @@ volatile uint16_t rudderInValue;
 volatile uint16_t throttleInValue;
 
 //Stores the pin number for each receiver input
-int aileronInPin = -1;
-int cutoverInPin = -1;
-int elevatorInPin = -1;
-int rudderInPin = -1;
-int throttleInPin = -1;
+byte aileronInPin = 255;
+byte cutoverInPin = 255;
+byte elevatorInPin = 255;
+byte rudderInPin = 255;
+byte throttleInPin = 255;
+
+//Stores the servo range of the throttle
+byte aileronMax = SERVO_MAX;
+byte aileronMin = SERVO_MIN;
+byte elevatorMax = SERVO_MAX;
+byte elevatorMin = SERVO_MIN;
+byte rudderMax = SERVO_MAX;
+byte rudderMin = SERVO_MIN;
+byte throttleMax = SERVO_MAX;
+byte throttleMin = SERVO_MIN;
 
 //Determines if the servos are in the process of calibration
 boolean calibrationMode = false;
@@ -74,16 +87,19 @@ char startMarker = '@';
 char receivedJson[CHAR_ARRAY_SIZE];
 
 //Calibrated min and max for all receiver input (in microseconds)
-uint16_t aileronMax = RECEIVER_INPUT_DEFAULT;
-uint16_t aileronMin = RECEIVER_INPUT_DEFAULT;
-uint16_t cutoverMax = RECEIVER_INPUT_DEFAULT;
-uint16_t cutoverMin = RECEIVER_INPUT_DEFAULT;
-uint16_t elevatorMax = RECEIVER_INPUT_DEFAULT;
-uint16_t elevatorMin = RECEIVER_INPUT_DEFAULT;
-uint16_t rudderMax = RECEIVER_INPUT_DEFAULT;
-uint16_t rudderMin = RECEIVER_INPUT_DEFAULT;
-uint16_t throttleMax = RECEIVER_INPUT_DEFAULT;
-uint16_t throttleMin = RECEIVER_INPUT_DEFAULT;
+uint16_t aileronInMax = RECEIVER_INPUT_DEFAULT;
+uint16_t aileronInMin = RECEIVER_INPUT_DEFAULT;
+uint16_t cutoverInMax = RECEIVER_INPUT_DEFAULT;
+uint16_t cutoverInMin = RECEIVER_INPUT_DEFAULT;
+uint16_t elevatorInMax = RECEIVER_INPUT_DEFAULT;
+uint16_t elevatorInMin = RECEIVER_INPUT_DEFAULT;
+uint16_t rudderInMax = RECEIVER_INPUT_DEFAULT;
+uint16_t rudderInMin = RECEIVER_INPUT_DEFAULT;
+uint16_t throttleInMax = RECEIVER_INPUT_DEFAULT;
+uint16_t throttleInMin = RECEIVER_INPUT_DEFAULT;
+
+//The running average for cutover receiver input
+uint16_t cutoverInAverage = RECEIVER_INPUT_DEFAULT;
 
 //Servos
 Servo aileron;
@@ -107,7 +123,7 @@ void loop() {
 //Most of this method code is taken from: https://forum.arduino.cc/index.php?topic=288234.0
 void readSerialJsonInput() {
   static boolean receiveInProgress = false;  //Determines if a char received via serial input belongs to the current json input char array
-  static int index = 0;  //Index for storing the most recently received serial input in the correct place in the input char array
+  static byte index = 0;  //Index for storing the most recently received serial input in the correct place in the input char array
   char charIn;  //Char being currently read from serial input
 
   //Only attempt to read data when serial input is available
@@ -137,8 +153,10 @@ void readSerialJsonInput() {
 }
 
 //Example JSON strings below:
-//@{"config":{"throttle":10, "elevator":9, "rudder":8, "aileron":7, "aileronIn":6, "throttleIn":5, "elevatorIn":4, "rudderIn":3, "cutoverIn":2}, "throttle": 32, "elevator": 90, "rudder": 90, "aileron": 90}#
-//@{"throttle":0, "elevator":100, "aileron":120, "rudder":75}#
+//@{"config":{"throttle":10, "elevator":9, "rudder":8, "aileron":7, "aileronIn":6, "throttleIn":5, "elevatorIn":4, "rudderIn":3, "cutoverIn":2}, "servos":{"throttle":32, "elevator":90, "rudder":90, "aileron":90}}#
+//@{"calibration":{"aileronInMin":1084,"aileronInMax":1688,"elevatorInMin":964,"elevatorInMax":1752,"rudderInMin":1044,"rudderInMax":1800,"throttleInMin":1020,"throttleInMax":1704,"cutoverInMin":776,"cutoverInMax":1844}}#
+//@{"ranges":{"aileronMin":45, "aileronMax":135, "elevatorMin":0, "elevatorMax":180, "rudderMin":0, "rudderMax":180, "throttleMin":32, "throttleMax":124}}#
+//@{"servos":{"throttle":0, "elevator":100, "aileron":120, "rudder":75}}#
 void processReceivedJson() {
   if (newData) {
     StaticJsonBuffer<CHAR_ARRAY_SIZE> jsonBuffer;
@@ -163,20 +181,23 @@ void processReceivedJson() {
         manualControl = (boolean) root["manualControl"];
         sendJson("manualControl", manualControl);
       } else {
-        sendJson("error", "Receiver inputs require calibration");
+        sendJson("error", "Calibration required");
       }
     }
 
     //Enable or disable calibration mode
     if (root.containsKey("calibrationMode")) {
-      calibrationMode = (boolean) root["calibrationMode"];
-      sendJson("calibrationMode", calibrationMode);
-      if (calibrationMode) {
-        resetCalibration();
-        isCalibrated = false;
+      if (!manualControl) {
+        calibrationMode = (boolean) root["calibrationMode"];
+        sendJson("calibrationMode", calibrationMode);
+        if (calibrationMode) {
+          resetCalibration();
+        } else {
+          if (calibrationComplete()) isCalibrated = true;
+          sendCalibrationJsonData();
+        }
       } else {
-        if (calibrationComplete()) isCalibrated = true;
-        sendCalibrationJsonData();
+        sendJson("error", "Disable manual control");
       }
     }
 
@@ -205,77 +226,114 @@ void processReceivedJson() {
           throttle.attach(throttleOutPin);
         }
         if (config.containsKey("aileronIn")) {
-          if (aileronInPin != -1) PCintPort::detachInterrupt(aileronInPin);
-          aileronInPin = (int) config["aileronIn"];
+          if (aileronInPin != 255) PCintPort::detachInterrupt(aileronInPin);
+          aileronInPin = (byte) config["aileronIn"];
           PCintPort::attachInterrupt(aileronInPin, listenForAileron, CHANGE);
         }
         if (config.containsKey("cutoverIn")) {
-          if (cutoverInPin != -1) PCintPort::detachInterrupt(cutoverInPin);
-          cutoverInPin = (int) config["cutoverIn"];
+          if (cutoverInPin != 255) PCintPort::detachInterrupt(cutoverInPin);
+          cutoverInPin = (byte) config["cutoverIn"];
           PCintPort::attachInterrupt(cutoverInPin, listenForCutover, CHANGE);
         }
         if (config.containsKey("elevatorIn")) {
-          if (elevatorInPin != -1) PCintPort::detachInterrupt(elevatorInPin);
-          elevatorInPin = (int) config["elevatorIn"];
+          if (elevatorInPin != 255) PCintPort::detachInterrupt(elevatorInPin);
+          elevatorInPin = (byte) config["elevatorIn"];
           PCintPort::attachInterrupt(elevatorInPin, listenForElevator, CHANGE);
         }
         if (config.containsKey("rudderIn")) {
-          if (rudderInPin != -1) PCintPort::detachInterrupt(rudderInPin);
-          rudderInPin = (int) config["rudderIn"];
+          if (rudderInPin != 255) PCintPort::detachInterrupt(rudderInPin);
+          rudderInPin = (byte) config["rudderIn"];
           PCintPort::attachInterrupt(rudderInPin, listenForRudder, CHANGE);
         }
         if (config.containsKey("throttleIn")) {
-          if (throttleInPin != -1) PCintPort::detachInterrupt(throttleInPin);
-          throttleInPin = (int) config["throttleIn"];
+          if (throttleInPin != 255) PCintPort::detachInterrupt(throttleInPin);
+          throttleInPin = (byte) config["throttleIn"];
           PCintPort::attachInterrupt(throttleInPin, listenForThrottle, CHANGE);
         }
       } else {
-        sendJson("error", "Manual control must be disabled to configure servos");
+        sendJson("error", "Disable manual control");
+      }
+    }
+
+    if (root.containsKey("ranges")) {
+      if (!manualControl) {
+        JsonObject &ranges = root["ranges"];
+        if (ranges.containsKey("aileronMax")) aileronMax = (byte) ranges["aileronMax"];
+        if (ranges.containsKey("aileronMin")) aileronMin = (byte) ranges["aileronMin"];
+        if (ranges.containsKey("elevatorMax")) elevatorMax = (byte) ranges["elevatorMax"];
+        if (ranges.containsKey("elevatorMin")) elevatorMin = (byte) ranges["elevatorMin"];
+        if (ranges.containsKey("rudderMax")) rudderMax = (byte) ranges["rudderMax"];
+        if (ranges.containsKey("rudderMin")) rudderMin = (byte) ranges["rudderMin"];
+        if (ranges.containsKey("throttleMax")) throttleMax = (byte) ranges["throttleMax"];
+        if (ranges.containsKey("throttleMin")) throttleMin = (byte) ranges["throttleMin"];
+      } else {
+        sendJson("error", "Disable manual control");
+      }
+    }
+
+    if (root.containsKey("calibration")) {
+      if (!manualControl) {
+        resetCalibration();
+        JsonObject &calibration = root["calibration"];
+        if (calibration.containsKey("aileronInMax")) aileronInMax = (uint16_t) calibration["aileronInMax"];
+        if (calibration.containsKey("aileronInMin")) aileronInMin = (uint16_t) calibration["aileronInMin"];
+        if (calibration.containsKey("elevatorInMax")) elevatorInMax = (uint16_t) calibration["elevatorInMax"];
+        if (calibration.containsKey("elevatorInMin")) elevatorInMin = (uint16_t) calibration["elevatorInMin"];
+        if (calibration.containsKey("rudderInMax")) rudderInMax = (uint16_t) calibration["rudderInMax"];
+        if (calibration.containsKey("rudderInMin")) rudderInMin = (uint16_t) calibration["rudderInMin"];
+        if (calibration.containsKey("throttleInMax")) throttleInMax = (uint16_t) calibration["throttleInMax"];
+        if (calibration.containsKey("throttleInMin")) throttleInMin = (uint16_t) calibration["throttleInMin"];
+        if (calibration.containsKey("cutoverInMax")) cutoverInMax = (uint16_t) calibration["cutoverInMax"];
+        if (calibration.containsKey("cutoverInMin")) cutoverInMin = (uint16_t) calibration["cutoverInMin"];
+        if (calibrationComplete()) isCalibrated = true;
+        sendJson("isCalibrated", isCalibrated);
+      } else {
+        sendJson("error", "Disable manual control");
       }
     }
 
     //Set the servo values according to the received JSON
     if (root.containsKey("servos")) {
       if (!manualControl) {
-        JsonObject& servos = root["servos"];
+        JsonObject &servos = root["servos"];
         if (servos.containsKey("aileron")) {
           if (aileron.attached()) {
-            byte aileronValue = root["aileron"];
+            byte aileronValue = servos["aileron"];
             aileron.write(aileronValue);
             sendJson("aileron", aileronValue);
           } else {
-            sendJson("error", "Unassigned aileron pin");
+            sendJson("error", "Aileron not set");
           }
         }
         if (servos.containsKey("elevator")) {
           if (elevator.attached()) {
-            byte elevatorValue = root["elevator"];
+            byte elevatorValue = servos["elevator"];
             elevator.write(elevatorValue);
             sendJson("elevator", elevatorValue);
           } else {
-            sendJson("error", "Unassigned elevator pin");
+            sendJson("error", "Elevator not set");
           }
         }
         if (servos.containsKey("rudder")) {
           if (rudder.attached()) {
-            byte rudderValue = root["rudder"];
+            byte rudderValue = servos["rudder"];
             rudder.write(rudderValue);
             sendJson("rudder", rudderValue);
           } else {
-            sendJson("error", "Unassigned rudder pin");
+            sendJson("error", "Rudder not set");
           }
         }
         if (servos.containsKey("throttle")) {
           if (throttle.attached()) {
-            byte throttleValue = root["throttle"];
+            byte throttleValue = servos["throttle"];
             throttle.write(throttleValue);
             sendJson("throttle", throttleValue);
           } else {
-            sendJson("error", "Unassigned throttle pin");
+            sendJson("error", "Throttle not set");
           }
         }
       } else {
-        sendJson("error", "Manual control must be disabled to use servos");
+        sendJson("error", "Disable manual control");
       }
     }
     //Reset newData to false so we can read new serial input
@@ -288,10 +346,10 @@ void processReceiverInput() {
   //Static variables are used because they maintain their value over multiple function calls
   static byte servoInputFlagsLocal;
   static uint16_t aileronInValueLocal;
+  static uint16_t cutoverInValueLocal;
   static uint16_t elevatorInValueLocal;
   static uint16_t rudderInValueLocal;
   static uint16_t throttleInValueLocal;
-  static uint16_t cutoverInValueLocal;
 
   //If any servo input byte flags were set in any of the ISR methods, process them here
   if (servoInputFlags != 0) {
@@ -311,74 +369,80 @@ void processReceiverInput() {
   //If the cutover switch is flipped, set manualControl accordingly
   if (servoInputFlagsLocal & FLAG_CUTOVER) {
     //Only use cutover values within the set range for receiver input
-    if (isValidReceiverInput(cutoverInValueLocal)) {
-      if (calibrationMode) {
-        if (cutoverInValueLocal > cutoverMax) cutoverMax = cutoverInValueLocal;
-        if (cutoverInValueLocal < cutoverMin) cutoverMin = cutoverInValueLocal;
-      } else if (isCalibrated) {
-        if (manualControl && cutoverInValueLocal > (cutoverMax - CUTOVER_BUFFER)) {
+    if (calibrationMode && isValidReceiverInput(cutoverInValueLocal)) {
+      if (cutoverInValueLocal > cutoverInMax) cutoverInMax = cutoverInValueLocal;
+      if (cutoverInValueLocal < cutoverInMin) cutoverInMin = cutoverInValueLocal;
+    } else if (isCalibrated) {
+      //Calculate weighted average for cutover
+      cutoverInAverage = (cutoverInValueLocal + (CUTOVER_SAMPLES - 1)*cutoverInAverage)/CUTOVER_SAMPLES;
+      if (isValidReceiverInput(cutoverInAverage)) {
+        if (manualControl && cutoverInAverage > (cutoverInMax - CUTOVER_BUFFER)) {
           manualControl = false;
           sendJson("manualControl", manualControl);
-        } else if (!manualControl && cutoverInValueLocal < (cutoverMin + CUTOVER_BUFFER)) {
+        } else if (!manualControl && cutoverInAverage < (cutoverInMin + CUTOVER_BUFFER)) {
           manualControl = true;
           sendJson("manualControl", manualControl);
         }
+      } else if (manualControl) {
+        sendJson("error", "Invalid cutover input");
       }
-    } else {
-      sendJson("error", "Cutover input value out of range");
     }
   }
-  //Process input for each servo that received new input from the receiver
-  if (servoInputFlagsLocal & FLAG_AILERON) {
-    //Only use aileron values within the set range for receiver input
-    if (isValidReceiverInput(aileronInValueLocal)) {
-      if (calibrationMode) {
-        if (aileronInValueLocal > aileronMax) aileronMax = aileronInValueLocal;
-        if (aileronInValueLocal < aileronMin) aileronMin = aileronInValueLocal;
-      } else if (manualControl) {
-        processServoInput(aileron, aileronInValueLocal, "aileron", "Unassigned aileron pin");
+
+  //Only process servo input if manualControl or calibrationMode are enabled
+  if (manualControl || calibrationMode) {
+    //Process input for each servo that received new input from the receiver
+    if (servoInputFlagsLocal & FLAG_AILERON) {
+      //Only use aileron values within the set range for receiver input
+      if (isValidReceiverInput(aileronInValueLocal)) {
+        if (calibrationMode) {
+          if (aileronInValueLocal > aileronInMax) aileronInMax = aileronInValueLocal;
+          if (aileronInValueLocal < aileronInMin) aileronInMin = aileronInValueLocal;
+        } else if (manualControl) {
+          processServoInput(aileron, aileronInValueLocal, "aileron", "Aileron not set");
+        }
+      } else {
+        sendJson("error", "Invalid aileron input");
       }
-    } else {
-      sendJson("error", "Aileron input value out of range");
     }
-  }
-  if (servoInputFlagsLocal & FLAG_ELEVATOR) {
-    //Only use elevator values within the set range for receiver input
-    if (isValidReceiverInput(elevatorInValueLocal)) {
-      if (calibrationMode) {
-        if (elevatorInValueLocal > elevatorMax) elevatorMax = elevatorInValueLocal;
-        if (elevatorInValueLocal < elevatorMin) elevatorMin = elevatorInValueLocal;
-      } else if (manualControl) {
-        processServoInput(elevator, elevatorInValueLocal, "elevator", "Unassigned elevator pin");
+    if (servoInputFlagsLocal & FLAG_ELEVATOR) {
+      //Only use elevator values within the set range for receiver input
+      if (isValidReceiverInput(elevatorInValueLocal)) {
+        if (calibrationMode) {
+          if (elevatorInValueLocal > elevatorInMax) elevatorInMax = elevatorInValueLocal;
+          if (elevatorInValueLocal < elevatorInMin) elevatorInMin = elevatorInValueLocal;
+        } else if (manualControl) {
+          processServoInput(elevator, elevatorInValueLocal, "elevator", "Elevator not set");
+        }
+      } else {
+        sendJson("error", "Invalid elevator input");
       }
-    } else {
-      sendJson("error", "Elevator input value out of range");
     }
-  }
-  if (servoInputFlagsLocal & FLAG_RUDDER) {
-  //Only use rudder values within the set range for receiver input
-    if (isValidReceiverInput(rudderInValueLocal)) {
-      if (calibrationMode) {
-        if (rudderInValueLocal > rudderMax) rudderMax = rudderInValueLocal;
-        if (rudderInValueLocal < rudderMin) rudderMin = rudderInValueLocal;
-      } else if (manualControl) {
-        processServoInput(rudder, rudderInValueLocal, "rudder", "Unassigned rudder pin");
+    if (servoInputFlagsLocal & FLAG_RUDDER) {
+      //Only use rudder values within the set range for receiver input
+      if (isValidReceiverInput(rudderInValueLocal)) {
+        if (calibrationMode) {
+          if (rudderInValueLocal > rudderInMax) rudderInMax = rudderInValueLocal;
+          if (rudderInValueLocal < rudderInMin) rudderInMin = rudderInValueLocal;
+        } else if (manualControl) {
+          processServoInput(rudder, rudderInValueLocal, "rudder", "Rudder not set");
+        }
+      } else {
+        sendJson("error", "Invalid rudder input");
       }
-    } else {
-      sendJson("error", "Rudder input value out of range");
     }
-  }
-  if (servoInputFlagsLocal & FLAG_THROTTLE) {
-    //Only use throttle values within the set range for receiver input
-    if (isValidReceiverInput(throttleInValueLocal)) {
-      if (calibrationMode) {
-        if (throttleInValueLocal > throttleMax) throttleMax = throttleInValueLocal;
-        if (throttleInValueLocal < throttleMin) throttleMin = throttleInValueLocal;
-      } else if (manualControl) {
-        processServoInput(throttle, throttleInValueLocal, "throttle", "Unassigned throttle pin");
+    if (servoInputFlagsLocal & FLAG_THROTTLE) {
+      //Only use throttle values within the set range for receiver input
+      if (isValidReceiverInput(throttleInValueLocal)) {
+        if (calibrationMode) {
+          if (throttleInValueLocal > throttleInMax) throttleInMax = throttleInValueLocal;
+          if (throttleInValueLocal < throttleInMin) throttleInMin = throttleInValueLocal;
+        } else if (manualControl) {
+          processServoInput(throttle, throttleInValueLocal, "throttle", "Throttle not set");
+        }
+      } else {
+        sendJson("error", "Invalid throttle input");
       }
-    } else {
-      sendJson("error", "Throttle input value out of range");
     }
   }
 }
@@ -416,19 +480,19 @@ void sendJson(const char key[], byte value) {
 //Sends all calibrated receiver input max and min values as JSON over the serial interface
 void sendCalibrationJsonData() {
   StaticJsonBuffer<CHAR_ARRAY_SIZE> jsonBuffer;
-  JsonObject& root = jsonBuffer.createObject();
-  JsonObject &calibrationData = jsonBuffer.createObject();;
-  calibrationData["aileronMin"] = aileronMin;
-  calibrationData["aileronMax"] = aileronMax;
-  calibrationData["elevatorMin"] = elevatorMin;
-  calibrationData["elevatorMax"] = elevatorMax;
-  calibrationData["rudderMin"] = rudderMin;
-  calibrationData["rudderMax"] = rudderMax;
-  calibrationData["throttleMin"] = throttleMin;
-  calibrationData["throttleMax"] = throttleMax;
-  calibrationData["cutoverMin"] = cutoverMin;
-  calibrationData["cutoverMax"] = cutoverMax;
-  root["calibrationData"] = calibrationData;
+  JsonObject &root = jsonBuffer.createObject();
+  JsonObject &calibration = jsonBuffer.createObject();;
+  calibration["aileronInMin"] = aileronInMin;
+  calibration["aileronInMax"] = aileronInMax;
+  calibration["elevatorInMin"] = elevatorInMin;
+  calibration["elevatorInMax"] = elevatorInMax;
+  calibration["rudderInMin"] = rudderInMin;
+  calibration["rudderInMax"] = rudderInMax;
+  calibration["throttleInMin"] = throttleInMin;
+  calibration["throttleInMax"] = throttleInMax;
+  calibration["cutoverInMin"] = cutoverInMin;
+  calibration["cutoverInMax"] = cutoverInMax;
+  root["calibration"] = calibration;
   Serial.print(startMarker);
   root.printTo(Serial);
   Serial.println(endMarker);
@@ -437,31 +501,32 @@ void sendCalibrationJsonData() {
 //Checks if the receiver inputs have been calibrated
 //TODO use better verification method
 boolean calibrationComplete() {
-  if (aileronMax == RECEIVER_INPUT_DEFAULT) return false;
-  if (aileronMin == RECEIVER_INPUT_DEFAULT) return false;
-  if (elevatorMax == RECEIVER_INPUT_DEFAULT) return false;
-  if (elevatorMin == RECEIVER_INPUT_DEFAULT) return false;
-  if (rudderMax == RECEIVER_INPUT_DEFAULT) return false;
-  if (rudderMin == RECEIVER_INPUT_DEFAULT) return false;
-  if (throttleMax == RECEIVER_INPUT_DEFAULT) return false;
-  if (throttleMin == RECEIVER_INPUT_DEFAULT) return false;
-  if (cutoverMax == RECEIVER_INPUT_DEFAULT) return false;
-  if (cutoverMin == RECEIVER_INPUT_DEFAULT) return false;
+  if (aileronInMax == RECEIVER_INPUT_DEFAULT) return false;
+  if (aileronInMin == RECEIVER_INPUT_DEFAULT) return false;
+  if (elevatorInMax == RECEIVER_INPUT_DEFAULT) return false;
+  if (elevatorInMin == RECEIVER_INPUT_DEFAULT) return false;
+  if (rudderInMax == RECEIVER_INPUT_DEFAULT) return false;
+  if (rudderInMin == RECEIVER_INPUT_DEFAULT) return false;
+  if (throttleInMax == RECEIVER_INPUT_DEFAULT) return false;
+  if (throttleInMin == RECEIVER_INPUT_DEFAULT) return false;
+  if (cutoverInMax == RECEIVER_INPUT_DEFAULT) return false;
+  if (cutoverInMin == RECEIVER_INPUT_DEFAULT) return false;
   return true;
 }
 
 //Reset all calibrated receiver input values to the default
 void resetCalibration() {
-  aileronMax = RECEIVER_INPUT_DEFAULT;
-  aileronMin = RECEIVER_INPUT_DEFAULT;
-  elevatorMax = RECEIVER_INPUT_DEFAULT;
-  elevatorMin = RECEIVER_INPUT_DEFAULT;
-  rudderMax = RECEIVER_INPUT_DEFAULT;
-  rudderMin = RECEIVER_INPUT_DEFAULT;
-  throttleMax = RECEIVER_INPUT_DEFAULT;
-  throttleMin = RECEIVER_INPUT_DEFAULT;
-  cutoverMax = RECEIVER_INPUT_DEFAULT;
-  cutoverMin = RECEIVER_INPUT_DEFAULT;
+  isCalibrated = false;
+  aileronInMax = RECEIVER_INPUT_DEFAULT;
+  aileronInMin = RECEIVER_INPUT_DEFAULT;
+  elevatorInMax = RECEIVER_INPUT_DEFAULT;
+  elevatorInMin = RECEIVER_INPUT_DEFAULT;
+  rudderInMax = RECEIVER_INPUT_DEFAULT;
+  rudderInMin = RECEIVER_INPUT_DEFAULT;
+  throttleInMax = RECEIVER_INPUT_DEFAULT;
+  throttleInMin = RECEIVER_INPUT_DEFAULT;
+  cutoverInMax = RECEIVER_INPUT_DEFAULT;
+  cutoverInMin = RECEIVER_INPUT_DEFAULT;
 }
 
 //Interrupt Service Routine (ISR) for aileron receiver input
@@ -529,7 +594,7 @@ boolean isValidReceiverInput(uint16_t receiverInput) {
 void processServoInput(Servo servo, int receiverInput, const char servoType[], const char servoError[]) {
   if (servo.attached()) {
     //The servoInValue (in microseconds) is mapped to the min and max of the Servo.write() function
-    byte convertedServoValue = map(receiverInput, getReceiverInputMin(servoType), getReceiverInputMax(servoType), SERVO_MIN, SERVO_MAX);
+    byte convertedServoValue = map(receiverInput, getReceiverInputMin(servoType), getReceiverInputMax(servoType), getServoMin(servoType), getServoMax(servoType));
     servo.write(convertedServoValue);
     sendJson(servoType, convertedServoValue);
   } else {
@@ -537,18 +602,34 @@ void processServoInput(Servo servo, int receiverInput, const char servoType[], c
   }
 }
 
-//Takes a servoType and returns the corresponding calibrated receiver input max value
-int getReceiverInputMax(const char servoType[]) {
-  if (strcmp(servoType, "aileron") == 0) return aileronMax;
-  if (strcmp(servoType, "elevator") == 0) return elevatorMax;
-  if (strcmp(servoType, "rudder") == 0) return rudderMax;
-  if (strcmp(servoType, "throttle") == 0) return throttleMax;
-}
-
 //Takes a servoType and returns the corresponding calibrated receiver input min value
 int getReceiverInputMin(const char servoType[]) {
+  if (strcmp(servoType, "aileron") == 0) return aileronInMin;
+  if (strcmp(servoType, "elevator") == 0) return elevatorInMin;
+  if (strcmp(servoType, "rudder") == 0) return rudderInMin;
+  if (strcmp(servoType, "throttle") == 0) return throttleInMin;
+}
+
+//Takes a servoType and returns the corresponding calibrated receiver input max value
+int getReceiverInputMax(const char servoType[]) {
+  if (strcmp(servoType, "aileron") == 0) return aileronInMax;
+  if (strcmp(servoType, "elevator") == 0) return elevatorInMax;
+  if (strcmp(servoType, "rudder") == 0) return rudderInMax;
+  if (strcmp(servoType, "throttle") == 0) return throttleInMax;
+}
+
+//Takes a servoType and returns the corresponding servo min value
+byte getServoMin(const char servoType[]) {
   if (strcmp(servoType, "aileron") == 0) return aileronMin;
   if (strcmp(servoType, "elevator") == 0) return elevatorMin;
   if (strcmp(servoType, "rudder") == 0) return rudderMin;
   if (strcmp(servoType, "throttle") == 0) return throttleMin;
+}
+
+//Takes a servoType and returns the corresponding servo max value
+byte getServoMax(const char servoType[]) {
+  if (strcmp(servoType, "aileron") == 0) return aileronMax;
+  if (strcmp(servoType, "elevator") == 0) return elevatorMax;
+  if (strcmp(servoType, "rudder") == 0) return rudderMax;
+  if (strcmp(servoType, "throttle") == 0) return throttleMax;
 }
