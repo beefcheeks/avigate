@@ -106,6 +106,14 @@ public class UsbSerialService extends Service {
     }
 
     //Get a pre-configured intent for starting this service class (UsbSerialService)
+    public static Intent getConfiguredIntent(Context context) {
+        Intent configuredIntent = new Intent(context, UsbSerialService.class);
+        configuredIntent.setAction(ACTION_CONFIGURE_USB_SERIAL_SERVICE);
+        configuredIntent.putExtra(EXTRA_BAUD_RATE, BAUD_RATE);
+        return configuredIntent;
+    }
+
+    //Get a pre-configured intent for starting this service class (UsbSerialService)
     public static Intent getConfiguredIntent(Context context, int baudRate) {
         Intent configuredIntent = new Intent(context, UsbSerialService.class);
         configuredIntent.setAction(ACTION_CONFIGURE_USB_SERIAL_SERVICE);
@@ -195,12 +203,14 @@ public class UsbSerialService extends Service {
     private BroadcastReceiver mServoInputReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Bundle bundle = intent.getExtras();
-            if (bundle == null) return;
-            String servoInputJson = new ServoPacket(bundle).toJsonString();
-            servoInputJson = SERIAL_START_MARKER + servoInputJson + SERIAL_END_MARKER;
-            Log.i("UsbSerialService", servoInputJson);
-            mSerialPort.write(servoInputJson.getBytes());
+            if (mSerialPortConnected) {
+                Bundle bundle = intent.getExtras();
+                if (bundle == null) return;
+                String servoInputJson = new ServoPacket(bundle).toJsonString();
+                servoInputJson = SERIAL_START_MARKER + servoInputJson + SERIAL_END_MARKER;
+                Log.i("UsbSerialService", servoInputJson);
+                mSerialPort.write(servoInputJson.getBytes());
+            }
         }
     };
 

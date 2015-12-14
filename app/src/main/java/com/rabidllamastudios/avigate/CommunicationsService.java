@@ -125,10 +125,12 @@ public class CommunicationsService extends Service {
             @Override
             public void onReceive(Context context, Intent intent) {
                 if (mMqttConnectionManager == null) return;
-                Bundle bundle = intent.getExtras();
-                if (bundle == null) return;
                 String topic = remoteDeviceType.name() + "/" + intent.getAction();
-                String message = new BundleableJsonObject(bundle).toString();
+                Bundle bundle = intent.getExtras();
+                String message = "";
+                if (bundle != null) {
+                    message = new BundleableJsonObject(bundle).toString();
+                }
                 Log.i("CommunicationsService", "Sending broadcast: " + topic + "/" + message);
                 mMqttConnectionManager.publish(topic, message);
             }
@@ -156,13 +158,17 @@ public class CommunicationsService extends Service {
 
         @Override
         public void messageArrived(String topic, String message) {
-            Log.i("CommunicationsService", "Message arrived: " + message);
             String[] topicSegments = topic.split("/");
             Intent intent = new Intent(topicSegments[topicSegments.length - 1]);
-            try {
-                intent.putExtras(new BundleableJsonObject(message).toBundle());
-            } catch (JSONException e) {
-                e.printStackTrace();
+            if (!message.equals("")) {
+                try {
+                    Log.i("CommunicationsService", "Message arrived: " + message);
+                    intent.putExtras(new BundleableJsonObject(message).toBundle());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                Log.i("CommunicationsService", "Messageless topic arrived: " + topic);
             }
             sendBroadcast(intent);
         }

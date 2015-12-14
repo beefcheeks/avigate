@@ -73,12 +73,14 @@ public class MqttConnectionManager {
     }
 
     public void publish(String topic, String message) {
-        MqttMessage mqttMessage = new MqttMessage(message.getBytes());
-        mqttMessage.setQos(mMqttQoS);
-        try {
-            mMqttAndroidClient.publish(topic, mqttMessage);
-        } catch (MqttException e) {
-            e.printStackTrace();
+        if (mMqttAndroidClient.isConnected()) {
+            MqttMessage mqttMessage = new MqttMessage(message.getBytes());
+            mqttMessage.setQos(mMqttQoS);
+            try {
+                mMqttAndroidClient.publish(topic, mqttMessage);
+            } catch (MqttException e) {
+                e.printStackTrace();
+            }
         }
     }
 

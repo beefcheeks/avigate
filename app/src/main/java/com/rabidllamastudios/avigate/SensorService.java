@@ -44,6 +44,12 @@ public class SensorService extends Service implements SensorEventListener {
     public SensorService() {
     }
 
+    public static Intent getConfiguredIntent(Context context) {
+        Intent intent = new Intent(context, SensorService.class);
+        intent.putExtra(SENSOR_RATE, DEFAULT_SENSOR_RATE);
+        return intent;
+    }
+
     public static Intent getConfiguredIntent(Context context, int sensorRate) {
         Intent intent = new Intent(context, SensorService.class);
         intent.putExtra(SENSOR_RATE, sensorRate);
