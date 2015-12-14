@@ -15,6 +15,7 @@ import com.rabidllamastudios.avigate.model.ConnectionPacket;
 import com.rabidllamastudios.avigate.model.GPSPacket;
 import com.rabidllamastudios.avigate.model.OrientationPacket;
 import com.rabidllamastudios.avigate.model.PressurePacket;
+import com.rabidllamastudios.avigate.model.ServoPacket;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,9 +26,9 @@ public class CraftActivity extends AppCompatActivity {
     //Sensor update rate in microseconds
     private static final int SENSOR_UPDATE_RATE = SensorManager.SENSOR_DELAY_UI;
 
-    private BroadcastReceiver mBroadcastReceiver;
     private Intent mCommService;
     private Intent mSensorService;
+    private Intent mUsbSerialService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,14 +40,34 @@ public class CraftActivity extends AppCompatActivity {
         assert getSupportActionBar() != null;
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        //Create broadcast receiver and listen for specific intents
-        mBroadcastReceiver = createBroadcastReceiver();
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(ConnectionPacket.INTENT_ACTION);
-        intentFilter.addAction(OrientationPacket.INTENT_ACTION);
-        intentFilter.addAction(GPSPacket.INTENT_ACTION);
-        intentFilter.addAction(PressurePacket.INTENT_ACTION);
-        registerReceiver(mBroadcastReceiver, intentFilter);
+        //Register broadcast receiver for connection-related intents
+        IntentFilter connectionIntentFilter = new IntentFilter(ConnectionPacket.INTENT_ACTION);
+        registerReceiver(mConnectionReceiver, connectionIntentFilter);
+
+        //Register broadcast receiver for sensor-related intents
+        IntentFilter sensorIntentFilter = new IntentFilter();
+        sensorIntentFilter.addAction(OrientationPacket.INTENT_ACTION);
+        sensorIntentFilter.addAction(GPSPacket.INTENT_ACTION);
+        sensorIntentFilter.addAction(PressurePacket.INTENT_ACTION);
+        registerReceiver(mSensorReceiver, sensorIntentFilter);
+
+        //Register broadcast receiver for usb-related intents
+        IntentFilter usbIntentFilter = new IntentFilter();
+        usbIntentFilter.addAction(UsbSerialService.ACTION_USB_READY);
+        usbIntentFilter.addAction(UsbSerialService.ACTION_USB_PERMISSION_GRANTED);
+        usbIntentFilter.addAction(UsbSerialService.ACTION_NO_USB);
+        usbIntentFilter.addAction(UsbSerialService.ACTION_USB_DISCONNECTED);
+        usbIntentFilter.addAction(UsbSerialService.ACTION_USB_NOT_SUPPORTED);
+        usbIntentFilter.addAction(UsbSerialService.ACTION_USB_PERMISSION_NOT_GRANTED);
+        registerReceiver(mUsbReceiver, usbIntentFilter);
+
+        //Initialize mServoOutputFilter IntentFilter
+        IntentFilter deviceOutputIntentFilter = new IntentFilter(ServoPacket.INTENT_ACTION_OUTPUT);
+        registerReceiver(mDeviceOutputReceiver, deviceOutputIntentFilter);
+
+        //Configure and start the UsbSerialService
+        mUsbSerialService = UsbSerialService.getConfiguredIntent(this);
+        startService(mUsbSerialService);
 
         //Configure sensor service intent
         mSensorService = SensorService.getConfiguredIntent(this, SENSOR_UPDATE_RATE);
@@ -57,10 +78,20 @@ public class CraftActivity extends AppCompatActivity {
             startService(mSensorService);
         }
 
-        //Start the communications service.
+        //Configure and start the communications service.
         List<String> localSubs = new ArrayList<>();
         List<String> remoteSubs = new ArrayList<>();
+        localSubs.add(GPSPacket.INTENT_ACTION);
         localSubs.add(OrientationPacket.INTENT_ACTION);
+        localSubs.add(PressurePacket.INTENT_ACTION);
+        localSubs.add(ServoPacket.INTENT_ACTION_OUTPUT);
+        localSubs.add(UsbSerialService.ACTION_USB_READY);
+        localSubs.add(UsbSerialService.ACTION_USB_PERMISSION_GRANTED);
+        localSubs.add(UsbSerialService.ACTION_NO_USB);
+        localSubs.add(UsbSerialService.ACTION_USB_DISCONNECTED);
+        localSubs.add(UsbSerialService.ACTION_USB_NOT_SUPPORTED);
+        localSubs.add(UsbSerialService.ACTION_USB_PERMISSION_NOT_GRANTED);
+        remoteSubs.add(ServoPacket.INTENT_ACTION_INPUT);
         mCommService = CommunicationsService.getConfiguredIntent(this, localSubs, remoteSubs, CommunicationsService.DeviceType.CRAFT);
         startService(mCommService);
     }
@@ -77,60 +108,110 @@ public class CraftActivity extends AppCompatActivity {
 
     @Override
     public void onDestroy() {
+        //Stop all services and unregister all broadcast receivers
         stopService(mCommService);
         stopService(mSensorService);
-        unregisterReceiver(mBroadcastReceiver);
+        stopService(mUsbSerialService);
+        unregisterReceiver(mConnectionReceiver);
+        unregisterReceiver(mDeviceOutputReceiver);
+        unregisterReceiver(mSensorReceiver);
+        unregisterReceiver(mUsbReceiver);
         super.onDestroy();
     }
 
-    private BroadcastReceiver createBroadcastReceiver() {
-        return new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                //If the intent is type connection packet, update corresponding textview value
-                if (intent.getAction().equals(ConnectionPacket.INTENT_ACTION)) {
-                    TextView connectionStatusTV = (TextView) findViewById(R.id.tv_craft_value_connect);
-                    ConnectionPacket connectionPacket = new ConnectionPacket(intent.getExtras());
-                    if (connectionPacket.isConnected()) {
-                        connectionStatusTV.setText(getResources().getString(R.string.tv_placeholder_connected));
-                    } else {
-                        connectionStatusTV.setText(getResources().getString(R.string.tv_placeholder_disconnected));
-                    }
-                //If the intent is type orientation packet, update corresponding textview values
-                } else if (intent.getAction().equals(OrientationPacket.INTENT_ACTION)) {
-                    TextView pitchTV = (TextView) findViewById(R.id.tv_craft_value_pitch);
-                    TextView yawTV = (TextView) findViewById(R.id.tv_craft_value_yaw);
-                    TextView rollTV = (TextView) findViewById(R.id.tv_craft_value_roll);
-                    OrientationPacket orientationPacket = new OrientationPacket(intent.getExtras());
-                    //yaw and roll switched due to necessary coordinate system transformation
-                    pitchTV.setText(String.valueOf(orientationPacket.getOrientation().getPitch()));
-                    yawTV.setText(String.valueOf(orientationPacket.getOrientation().getRoll()));
-                    rollTV.setText(String.valueOf(orientationPacket.getOrientation().getYaw()));
-                //If the intent is type gps packet, update corresponding textview values
-                } else if (intent.getAction().equals(GPSPacket.INTENT_ACTION)) {
-                    TextView gpsCoordinatesTV = (TextView) findViewById(R.id.tv_craft_value_gps_coordinates);
-                    TextView gpsAccuracyTV = (TextView) findViewById(R.id.tv_craft_value_gps_accuracy);
-                    TextView gpsBearingTV = (TextView) findViewById(R.id.tv_craft_value_bearing);
-                    GPSPacket gpsPacket = new GPSPacket(intent.getExtras());
-                    String coordinates = String.valueOf(gpsPacket.getLatitude()) + " ," + String.valueOf(gpsPacket.getLongitude());
-                    String accuracy = String.valueOf(gpsPacket.getAccuracy()) + " m";
-                    gpsCoordinatesTV.setText(coordinates);
-                    gpsAccuracyTV.setText(accuracy);
-                    if (gpsPacket.getBearing() == Double.NaN) {
-                        gpsBearingTV.setText(getResources().getString(R.string.tv_placeholder_sensor));
-                    } else {
-                        String bearing = String.valueOf(gpsPacket.getBearing()) + " °";
-                        gpsBearingTV.setText(bearing);
-                    }
-                //If the intent type is pressure packet, update corresponding textview value
-                } else if (intent.getAction().equals(PressurePacket.INTENT_ACTION)) {
-                    TextView pressureTV = (TextView) findViewById(R.id.tv_craft_value_barometer);
-                    PressurePacket pressurePacket = new PressurePacket(intent.getExtras());
-                    String altitude = String.valueOf(pressurePacket.getPressure()) + " hPa";
-                    pressureTV.setText(altitude);
+    private BroadcastReceiver mConnectionReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            //If the intent is type connection packet, update corresponding textview value
+            if (intent.getAction().equals(ConnectionPacket.INTENT_ACTION)) {
+                TextView connectionStatusTV = (TextView) findViewById(R.id.tv_craft_value_connect);
+                ConnectionPacket connectionPacket = new ConnectionPacket(intent.getExtras());
+                if (connectionPacket.isConnected()) {
+                    connectionStatusTV.setText(getResources().getString(R.string.tv_placeholder_connected));
+                } else {
+                    connectionStatusTV.setText(getResources().getString(R.string.tv_placeholder_disconnected));
                 }
             }
-        };
-    }
+        }
+    };
+
+    //Listens for responses from the connected USB serial device and updates the output TextView
+    private final BroadcastReceiver mDeviceOutputReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals(ServoPacket.INTENT_ACTION_OUTPUT)) {
+                ServoPacket servoPacket = new ServoPacket(intent.getExtras());
+                TextView outputTV = (TextView) findViewById(R.id.tv_craft_value_microcontroller_output);
+                outputTV.setText(servoPacket.toJsonString());
+            }
+        }
+    };
+
+    //Listens for sensor data and updates various TextViews accordingly
+    private BroadcastReceiver mSensorReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            //If the intent is type orientation packet, update corresponding textview values
+            if (intent.getAction().equals(OrientationPacket.INTENT_ACTION)) {
+                TextView pitchTV = (TextView) findViewById(R.id.tv_craft_value_pitch);
+                TextView yawTV = (TextView) findViewById(R.id.tv_craft_value_yaw);
+                TextView rollTV = (TextView) findViewById(R.id.tv_craft_value_roll);
+                OrientationPacket orientationPacket = new OrientationPacket(intent.getExtras());
+                //yaw and roll switched due to necessary coordinate system transformation
+                pitchTV.setText(String.valueOf(orientationPacket.getOrientation().getPitch()));
+                yawTV.setText(String.valueOf(orientationPacket.getOrientation().getRoll()));
+                rollTV.setText(String.valueOf(orientationPacket.getOrientation().getYaw()));
+            //If the intent is type gps packet, update corresponding textview values
+            } else if (intent.getAction().equals(GPSPacket.INTENT_ACTION)) {
+                TextView gpsCoordinatesTV = (TextView) findViewById(R.id.tv_craft_value_gps_coordinates);
+                TextView gpsAccuracyTV = (TextView) findViewById(R.id.tv_craft_value_gps_accuracy);
+                TextView gpsBearingTV = (TextView) findViewById(R.id.tv_craft_value_bearing);
+                GPSPacket gpsPacket = new GPSPacket(intent.getExtras());
+                String coordinates = String.valueOf(gpsPacket.getLatitude()) + " ," + String.valueOf(gpsPacket.getLongitude());
+                String accuracy = String.valueOf(gpsPacket.getAccuracy()) + " m";
+                gpsCoordinatesTV.setText(coordinates);
+                gpsAccuracyTV.setText(accuracy);
+                if (gpsPacket.getBearing() == Double.NaN) {
+                    gpsBearingTV.setText(getResources().getString(R.string.tv_placeholder_sensor));
+                } else {
+                    String bearing = String.valueOf(gpsPacket.getBearing()) + " °";
+                    gpsBearingTV.setText(bearing);
+                }
+            //If the intent type is pressure packet, update corresponding textview value
+            } else if (intent.getAction().equals(PressurePacket.INTENT_ACTION)) {
+                TextView pressureTV = (TextView) findViewById(R.id.tv_craft_value_barometer);
+                PressurePacket pressurePacket = new PressurePacket(intent.getExtras());
+                String altitude = String.valueOf(pressurePacket.getPressure()) + " hPa";
+                pressureTV.setText(altitude);
+            }
+        }
+    };
+
+    //Listens for USB state notifications from UsbSerialService and updates a TextView accordingly
+    private final BroadcastReceiver mUsbReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            TextView usbStatusTV = (TextView) findViewById(R.id.tv_craft_value_microcontroller_status);
+            if (intent.getAction().equals(UsbSerialService.ACTION_USB_READY)) {
+                usbStatusTV.setText("USB ready");
+            } else if (intent.getAction().equals(UsbSerialService.ACTION_USB_DISCONNECTED)) {
+                usbStatusTV.setText("USB disconnected");
+                TextView outputTV = (TextView) findViewById(R.id.tv_craft_value_microcontroller_output);
+                outputTV.setText("");
+            } else if (intent.getAction().equals(UsbSerialService.ACTION_USB_PERMISSION_GRANTED)) {
+                usbStatusTV.setText("USB permission granted");
+            } else if (intent.getAction().equals(UsbSerialService.ACTION_USB_PERMISSION_NOT_GRANTED)) {
+                usbStatusTV.setText("USB permission not granted");
+            } else if (intent.getAction().equals(UsbSerialService.ACTION_NO_USB)) {
+                usbStatusTV.setText("USB not connected");
+            } else if (intent.getAction().equals(UsbSerialService.ACTION_USB_NOT_SUPPORTED)) {
+                usbStatusTV.setText("USB device not supported");
+            } else if (intent.getAction().equals(UsbSerialService.ACTION_CDC_DRIVER_NOT_WORKING)) {
+                usbStatusTV.setText("USB CDC driver not found");
+            } else if (intent.getAction().equals(UsbSerialService.ACTION_USB_DEVICE_NOT_WORKING)) {
+                usbStatusTV.setText("USB device not working");
+            }
+        }
+    };
 
 }

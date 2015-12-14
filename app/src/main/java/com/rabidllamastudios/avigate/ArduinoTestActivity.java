@@ -23,6 +23,9 @@ import com.rabidllamastudios.avigate.model.ServoPacket;
 
 import org.florescu.android.rangeseekbar.RangeSeekBar;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by Ryan Staatz
  * This activity is intended as a test for USB-OTG connected CDC-ACM devices (e.g. Arduino)
@@ -48,6 +51,7 @@ public class ArduinoTestActivity extends AppCompatActivity implements NumberPick
     private int throttleMax = SERVO_MAX;
     private int throttleMin = SERVO_MIN;
 
+    private Intent mCommService;
     private Intent mUsbSerialService;
     private IntentFilter mUsbIntentFilter;
     private IntentFilter mDeviceOutputIntentFilter;
@@ -74,6 +78,9 @@ public class ArduinoTestActivity extends AppCompatActivity implements NumberPick
 
         //Initialize mServoOutputFilter IntentFilter
         mDeviceOutputIntentFilter = new IntentFilter(ServoPacket.INTENT_ACTION_OUTPUT);
+
+        //Start the communications service.
+        startCommunicationsService();
 
         //Initialize mRangeSeekBar
         mRangeSeekBar = (RangeSeekBar) findViewById(R.id.seekbar_range);
@@ -109,6 +116,7 @@ public class ArduinoTestActivity extends AppCompatActivity implements NumberPick
         } catch (IllegalArgumentException e) {
             e.printStackTrace();
         }
+        stopService(mCommService);
         stopService(mUsbSerialService);
         super.onPause();
     }
@@ -119,12 +127,29 @@ public class ArduinoTestActivity extends AppCompatActivity implements NumberPick
         registerReceiver(mDeviceOutputReceiver, mDeviceOutputIntentFilter);  //Start listening for servo output intents
         mUsbSerialService = UsbSerialService.getConfiguredIntent(this, BAUD_RATE);  //Get the configured intent to start the UsbSerialService
         startService(mUsbSerialService); //Start the UsbSerialService
+        startCommunicationsService();
         super.onResume();
     }
 
     @Override
     public void onValueChange(NumberPicker picker, int oldVal, int newVal) {}
 
+
+    private void startCommunicationsService() {
+        //Configure and start the communications service.
+        List<String> localSubs = new ArrayList<>();
+        List<String> remoteSubs = new ArrayList<>();
+        localSubs.add(ServoPacket.INTENT_ACTION_INPUT);
+        remoteSubs.add(ServoPacket.INTENT_ACTION_OUTPUT);
+        remoteSubs.add(UsbSerialService.ACTION_USB_READY);
+        remoteSubs.add(UsbSerialService.ACTION_USB_PERMISSION_GRANTED);
+        remoteSubs.add(UsbSerialService.ACTION_NO_USB);
+        remoteSubs.add(UsbSerialService.ACTION_USB_DISCONNECTED);
+        remoteSubs.add(UsbSerialService.ACTION_USB_NOT_SUPPORTED);
+        remoteSubs.add(UsbSerialService.ACTION_USB_PERMISSION_NOT_GRANTED);
+        mCommService = CommunicationsService.getConfiguredIntent(this, localSubs, remoteSubs, CommunicationsService.DeviceType.CONTROLLER);
+        startService(mCommService);
+    }
     //Emergency reset button resets all sliders back to defaults
     private void configureEmergencyResetButton() {
         Button emergencyResetButton = (Button) findViewById(R.id.button_emergency_reset);
@@ -141,6 +166,11 @@ public class ArduinoTestActivity extends AppCompatActivity implements NumberPick
                 elevatorSeekBar.setProgress((elevatorMax-elevatorMin)/2);
                 rudderSeekBar.setProgress((rudderMax-rudderMin)/2);
                 throttleSeekBar.setProgress(SERVO_MIN);
+
+                //Request the status of the microcontroller
+                ServoPacket statusRequestServoPacket = new ServoPacket();
+                statusRequestServoPacket.addStatusRequest();
+                sendBroadcast(statusRequestServoPacket.toIntent(ServoPacket.INTENT_ACTION_INPUT));
             }
         });
         //Resets range for all servos to full range, then resets all sliders to defaults

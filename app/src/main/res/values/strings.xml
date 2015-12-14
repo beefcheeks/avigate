@@ -57,8 +57,8 @@
     <string name="tv_craft_label_barometer">Barometer:</string>
 
     <string name="tv_craft_title_microcontroller">Microcontroller</string>
-    <string name="tv_craft_label_motor">Motor:</string>
-    <string name="tv_craft_label_servos">Servos:</string>
+    <string name="tv_craft_label_microcontroller_status">USB status:</string>
+    <string name="tv_craft_label_microcontroller_output">Output:</string>
 
     <string name="tv_placeholder_connected">Connected</string>
     <string name="tv_placeholder_disconnected">Disconnected</string>
