@@ -15,7 +15,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
-import android.widget.LinearLayout;
 import android.widget.NumberPicker;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -33,7 +32,7 @@ import org.florescu.android.rangeseekbar.RangeSeekBar;
 public class ArduinoTestActivity extends AppCompatActivity implements NumberPicker.OnValueChangeListener {
 
     private static final int BAUD_RATE = 115200;
-    private static final int PIN_MAX = 16;
+    private static final int PIN_MAX = 12;
     private static final int PIN_MIN = 0;
     private static final int SERVO_MAX = 180;
     private static final int SERVO_MIN = 0;
@@ -148,7 +147,7 @@ public class ArduinoTestActivity extends AppCompatActivity implements NumberPick
         emergencyResetButton.setOnLongClickListener(new Button.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                int servoNeutral = (SERVO_MAX - SERVO_MIN)/2;
+                int servoNeutral = (SERVO_MAX - SERVO_MIN) / 2;
                 configureSeekbar(ServoPacket.ServoType.AILERON, servoNeutral, SERVO_MIN, SERVO_MAX);
                 configureSeekbar(ServoPacket.ServoType.ELEVATOR, servoNeutral, SERVO_MIN, SERVO_MAX);
                 configureSeekbar(ServoPacket.ServoType.RUDDER, servoNeutral, SERVO_MIN, SERVO_MAX);
@@ -170,7 +169,7 @@ public class ArduinoTestActivity extends AppCompatActivity implements NumberPick
                 @Override
                 public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                     int convertedValue = minValue + progress;
-                    sendServoInput(servoType, convertedValue);
+                    sendServoValue(servoType, convertedValue);
                     editText.setText(String.valueOf(convertedValue));
                 }
 
@@ -234,7 +233,7 @@ public class ArduinoTestActivity extends AppCompatActivity implements NumberPick
     }
 
     //Sets the servo value for a given servo type
-    private void sendServoInput(ServoPacket.ServoType servoType, int value) {
+    private void sendServoValue(ServoPacket.ServoType servoType, int value) {
         if (mUsbSerialIsReady) {
             ServoPacket servoPacket = new ServoPacket();
             servoPacket.setServoValue(servoType, value);
@@ -321,10 +320,9 @@ public class ArduinoTestActivity extends AppCompatActivity implements NumberPick
                 int value = numberPicker.getValue();
                 //If this is a dialog to set the servo pin, then set the pin for the servo
                 if (isPinDialog) {
-                    setServoPin(servoType, value);
+                    setServoOutputPin(servoType, value);
                 //If this is not a dialog to set the servo pin, then set the servo value instead
                 } else if (max != -1 && min != -1) {
-                    sendServoInput(servoType, value);
                     SeekBar seekBar = getSeekBar(servoType);
                     if (seekBar != null) seekBar.setProgress(value - min);
                 }
@@ -336,10 +334,10 @@ public class ArduinoTestActivity extends AppCompatActivity implements NumberPick
     }
 
     //Sets the pin number for a given servo type
-    private void setServoPin(ServoPacket.ServoType servoType, int pinValue) {
+    private void setServoOutputPin(ServoPacket.ServoType servoType, int pinValue) {
         if (mUsbSerialIsReady) {
             ServoPacket servoPacket = new ServoPacket();
-            servoPacket.setServoPin(servoType, pinValue);
+            servoPacket.setOutputPin(servoType, pinValue);
             Intent servoConfigIntent = servoPacket.toIntent(ServoPacket.INTENT_ACTION_INPUT);
             sendBroadcast(servoConfigIntent);
         }
@@ -396,6 +394,8 @@ public class ArduinoTestActivity extends AppCompatActivity implements NumberPick
                     int currentServoValue = Integer.parseInt(editText.getText().toString());
                     if (currentServoValue < min) currentServoValue = min;
                     if (currentServoValue > max) currentServoValue = max;
+                    //Send the servo output range to the usb device
+                    sendServoOutputRange(servoType, min, max);
                     //configure the corresponding seekbar to use the new range and servo value
                     configureSeekbar(servoType, currentServoValue, min, max);
                     dialog.dismiss();
@@ -435,6 +435,15 @@ public class ArduinoTestActivity extends AppCompatActivity implements NumberPick
         return -1;
     }
 
+    private void sendServoOutputRange(ServoPacket.ServoType servoType, int outputMin, int outputMax) {
+        if (mUsbSerialIsReady) {
+            ServoPacket servoPacket = new ServoPacket();
+            servoPacket.setOutputRange(servoType, outputMin, outputMax);
+            Intent servoConfigIntent = servoPacket.toIntent(ServoPacket.INTENT_ACTION_INPUT);
+            sendBroadcast(servoConfigIntent);
+        }
+    }
+
     //Usb state notifications from UsbSerialService are received here.
     private final BroadcastReceiver mUsbReceiver = new BroadcastReceiver() {
         @Override
@@ -472,7 +481,9 @@ public class ArduinoTestActivity extends AppCompatActivity implements NumberPick
                 //If the device sent out a ready status, configure servos and enable SeekBars
                 if (servoPacket.isStatusReady() && !mUsbSerialIsReady) {
                     mUsbSerialIsReady = true;
-                    configureAllServos();
+                    configureAllServoOutput();
+                    TextView statusTV = (TextView) findViewById(R.id.tv_arduino_value_status);
+                    statusTV.setText("USB ready");
                 }
                 TextView outputTV = (TextView) findViewById(R.id.tv_arduino_value_output);
                 outputTV.setText(servoPacket.toJsonString());
@@ -481,17 +492,17 @@ public class ArduinoTestActivity extends AppCompatActivity implements NumberPick
     };
 
     //Sends the configuration information for all output servos to the device
-    private void configureAllServos() {
+    private void configureAllServoOutput() {
         if (mUsbSerialIsReady) {
             EditText aileronET = (EditText) findViewById(R.id.et_arduino_value_pin_aileron);
             EditText elevatorET = (EditText) findViewById(R.id.et_arduino_value_pin_elevator);
             EditText rudderET = (EditText) findViewById(R.id.et_arduino_value_pin_rudder);
             EditText throttleET = (EditText) findViewById(R.id.et_arduino_value_pin_throttle);
             ServoPacket servoPacket = new ServoPacket();
-            servoPacket.setServoPin(ServoPacket.ServoType.AILERON, Integer.parseInt(aileronET.getText().toString()));
-            servoPacket.setServoPin(ServoPacket.ServoType.ELEVATOR, Integer.parseInt(elevatorET.getText().toString()));
-            servoPacket.setServoPin(ServoPacket.ServoType.RUDDER, Integer.parseInt(rudderET.getText().toString()));
-            servoPacket.setServoPin(ServoPacket.ServoType.THROTTLE, Integer.parseInt(throttleET.getText().toString()));
+            servoPacket.setOutputPin(ServoPacket.ServoType.AILERON, Integer.parseInt(aileronET.getText().toString()));
+            servoPacket.setOutputPin(ServoPacket.ServoType.ELEVATOR, Integer.parseInt(elevatorET.getText().toString()));
+            servoPacket.setOutputPin(ServoPacket.ServoType.RUDDER, Integer.parseInt(rudderET.getText().toString()));
+            servoPacket.setOutputPin(ServoPacket.ServoType.THROTTLE, Integer.parseInt(throttleET.getText().toString()));
             Intent servoConfigIntent = servoPacket.toIntent(ServoPacket.INTENT_ACTION_INPUT);
             sendBroadcast(servoConfigIntent);
         }
