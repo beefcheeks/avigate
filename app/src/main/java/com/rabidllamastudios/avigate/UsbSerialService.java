@@ -165,41 +165,59 @@ public class UsbSerialService extends Service {
         mUsbManager.requestPermission(mUsbDevice, mPendingIntent);
     }
 
-    //Data received from serial port is received and processed, and then broadcast as an intent
+    //Data received from serial port is received and processed
     private UsbSerialInterface.UsbReadCallback mCallback = new UsbSerialInterface.UsbReadCallback() {
         @Override
         public void onReceivedData(byte[] receivedData) {
             try {
-                String newJsonData = new String(receivedData, "UTF-8");
-                if (mReceiveInProgress) {
-                    if (newJsonData.contains(SERIAL_END_MARKER)) {
-                        int endMarkerIndex = newJsonData.indexOf(SERIAL_END_MARKER);
-                        mReceivedJsonData = mReceivedJsonData.concat(newJsonData.substring(0, endMarkerIndex));
-                        Intent servoOutputIntent = new ServoPacket(mReceivedJsonData).toIntent(ServoPacket.INTENT_ACTION_OUTPUT);
-                        sendBroadcast(servoOutputIntent);
-                        mReceiveInProgress = false;
-                    } else {
-                        mReceivedJsonData = mReceivedJsonData.concat(newJsonData);
-                    }
-                } else if (newJsonData.contains(SERIAL_START_MARKER)) {
-                    int startMarkerIndex = newJsonData.lastIndexOf(SERIAL_START_MARKER);
-                    mReceivedJsonData = newJsonData.substring(startMarkerIndex + 1);
-                    if (mReceivedJsonData.contains(SERIAL_END_MARKER)) {
-                        int endMarkerIndex = mReceivedJsonData.indexOf(SERIAL_END_MARKER);
-                        mReceivedJsonData = mReceivedJsonData.substring(0, endMarkerIndex);
-                        Intent servoOutputIntent = new ServoPacket(mReceivedJsonData).toIntent(ServoPacket.INTENT_ACTION_OUTPUT);
-                        sendBroadcast(servoOutputIntent);
-                    } else {
-                        mReceiveInProgress = true;
-                    }
-                }
+                //Attempt to create a String from the incoming data stream and then process it
+                String incomingSerialData = new String(receivedData, "UTF-8");
+                processSerialInput(incomingSerialData);
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
             }
         }
     };
 
-    //Send received intent servo input json data to the connected USB serial device
+    //This method processes the serial input and broadcasts it as a JSON string
+    private void processSerialInput(String incomingSerialData) {
+        //If there is a receive in progress, find the end marker or append the serial data
+        if (mReceiveInProgress) {
+            if (incomingSerialData.contains(SERIAL_END_MARKER)) {
+                //Since just we hit the end marker, set receive in progress to false
+                mReceiveInProgress = false;
+                int endMarkerIndex = incomingSerialData.indexOf(SERIAL_END_MARKER);
+                //Create the full JSON string based on the end marker position
+                String jsonDataFull = mReceivedJsonData.concat(incomingSerialData.substring(0,
+                        endMarkerIndex));
+                Log.i("UsbSerialService", jsonDataFull);
+                //Broadcast the JSON string as a ServoPacket output Intent
+                Intent servoOutputIntent = new ServoPacket(jsonDataFull).toIntent(
+                        ServoPacket.INTENT_ACTION_OUTPUT);
+                sendBroadcast(servoOutputIntent);
+                //If there is still more data beyond the end marker, process the data
+                if (endMarkerIndex < (incomingSerialData.length() - 1)) {
+                    //Treat this data as if it is 'new' incoming serial data
+                    incomingSerialData = incomingSerialData.substring(endMarkerIndex + 1);
+                }
+            } else {
+                //If there is a receive in progress, but no end marker, concatenate the Strings
+                mReceivedJsonData = mReceivedJsonData.concat(incomingSerialData);
+            }
+        }
+        //If the incoming data contains a start marker, process the data
+        if (incomingSerialData.contains(SERIAL_START_MARKER)) {
+            int startMarkerIndex = incomingSerialData.indexOf(SERIAL_START_MARKER);
+            //Create the JSON String start via the substring of everything after the start marker
+            String jsonDataStart = incomingSerialData.substring(startMarkerIndex + 1);
+            mReceivedJsonData = "";  //Reset mReceivedJsonData
+            mReceiveInProgress = true;  //Since this is the start, there is a receive in progress
+            //Process the rest of the string beyond the start marker as if it were incoming data
+            processSerialInput(jsonDataStart);
+        }
+    }
+
+    //Send received servo input json data to the connected USB serial device
     private BroadcastReceiver mServoInputReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {

@@ -513,22 +513,23 @@ public class ConfigureArduinoActivity extends AppCompatActivity implements Numbe
         public void onReceive(Context context, Intent intent) {
             TextView statusTV = (TextView) findViewById(R.id.tv_arduino_value_status);
             if (intent.getAction().equals(UsbSerialService.ACTION_USB_READY)) {
-                statusTV.setText("USB ready");
+                statusTV.setText(getString(R.string.tv_usb_value_ready));
             } else if (intent.getAction().equals(UsbSerialService.ACTION_USB_DISCONNECTED)) {
                 mUsbSerialIsReady = false;
-                statusTV.setText("USB disconnected");
+                statusTV.setText(getString(R.string.tv_usb_value_disconnected));
             } else if (intent.getAction().equals(UsbSerialService.ACTION_USB_PERMISSION_GRANTED)) {
-                statusTV.setText("USB permission granted");
-            } else if (intent.getAction().equals(UsbSerialService.ACTION_USB_PERMISSION_NOT_GRANTED)) {
-                statusTV.setText("USB permission not granted");
+                statusTV.setText(getString(R.string.tv_usb_value_permission_granted));
+            } else if (intent.getAction()
+                    .equals(UsbSerialService.ACTION_USB_PERMISSION_NOT_GRANTED)) {
+                statusTV.setText(getString(R.string.tv_usb_value_permission_not_granted));
             } else if (intent.getAction().equals(UsbSerialService.ACTION_NO_USB)) {
-                statusTV.setText("USB not connected");
+                statusTV.setText(getString(R.string.tv_usb_value_not_connected));
             } else if (intent.getAction().equals(UsbSerialService.ACTION_USB_NOT_SUPPORTED)) {
-                statusTV.setText("USB device not supported");
+                statusTV.setText(getString(R.string.tv_usb_value_not_supported));
             } else if (intent.getAction().equals(UsbSerialService.ACTION_CDC_DRIVER_NOT_WORKING)) {
-                statusTV.setText("USB CDC driver not found");
+                statusTV.setText(getString(R.string.tv_usb_value_no_cdc_driver));
             } else if (intent.getAction().equals(UsbSerialService.ACTION_USB_DEVICE_NOT_WORKING)) {
-                statusTV.setText("USB device not working");
+                statusTV.setText(R.string.tv_usb_value_device_not_working);
             }
         }
     };

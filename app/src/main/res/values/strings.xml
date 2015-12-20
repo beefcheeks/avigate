@@ -57,9 +57,9 @@
     <string name="tv_craft_label_bearing">Bearing:</string>
     <string name="tv_craft_label_barometer">Barometer:</string>
 
-    <string name="tv_craft_title_microcontroller">Microcontroller</string>
-    <string name="tv_craft_label_microcontroller_status">USB status:</string>
-    <string name="tv_craft_label_microcontroller_output">Output:</string>
+    <string name="tv_craft_title_arduino">Arduino</string>
+    <string name="tv_craft_label_arduino_status">USB status:</string>
+    <string name="tv_craft_label_arduino_output">Output:</string>
 
     <string name="tv_placeholder_connected">Connected</string>
     <string name="tv_placeholder_disconnected">Disconnected</string>
@@ -102,5 +102,13 @@
     <string name="title_activity_controller">Controller Module</string>
     <string name="title_activity_arduino_test">Arduino Test Activity</string>
     <string name="title_activity_test_arduino">TestArduino</string>
+    <string name="tv_usb_value_ready">USB ready</string>
+    <string name="tv_usb_value_disconnected">USB disconnected</string>
+    <string name="tv_usb_value_permission_granted">USB permission granted</string>
+    <string name="tv_usb_value_permission_not_granted">USB permission not granted</string>
+    <string name="tv_usb_value_not_connected">USB not connected</string>
+    <string name="tv_usb_value_not_supported">USB device not supported</string>
+    <string name="tv_usb_value_no_cdc_driver">USB CDC driver not found</string>
+    <string name="tv_usb_value_device_not_working">USB device not working</string>
 
 </resources>

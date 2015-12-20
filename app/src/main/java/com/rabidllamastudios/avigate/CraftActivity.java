@@ -128,6 +128,10 @@ public class CraftActivity extends AppCompatActivity {
                 ConnectionPacket connectionPacket = new ConnectionPacket(intent.getExtras());
                 if (connectionPacket.isConnected()) {
                     connectionStatusTV.setText(getResources().getString(R.string.tv_placeholder_connected));
+                    //Request the status of the Arduino after a connection is established
+                    ServoPacket servoPacket = new ServoPacket();
+                    servoPacket.addStatusRequest();
+                    sendBroadcast(servoPacket.toIntent(ServoPacket.INTENT_ACTION_INPUT));
                 } else {
                     connectionStatusTV.setText(getResources().getString(R.string.tv_placeholder_disconnected));
                 }
@@ -141,8 +145,29 @@ public class CraftActivity extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals(ServoPacket.INTENT_ACTION_OUTPUT)) {
                 ServoPacket servoPacket = new ServoPacket(intent.getExtras());
-                TextView outputTV = (TextView) findViewById(R.id.tv_craft_value_microcontroller_output);
-                outputTV.setText(servoPacket.toJsonString());
+                TextView outputTV = (TextView) findViewById(R.id.tv_craft_value_arduino_output);
+
+                //Updates outputTV if the incoming JSON contains calibration mode data
+                if (servoPacket.hasCalibrationMode()) {
+                    String calibration = "Calibration mode: "
+                            + String.valueOf(servoPacket.isCalibrationMode());
+                    outputTV.setText(calibration);
+                }
+                //Updates outputTV if the incoming JSON contains receiver control data
+                if (servoPacket.hasReceiverControl()) {
+                    String receiverControl = "Receiver control: "
+                            + String.valueOf(servoPacket.isReceiverControl());
+                    outputTV.setText(receiverControl);
+                }
+                //Updates outputTV if the incoming JSON contains receiver control data
+                if (servoPacket.hasInputRanges()) {
+                    outputTV.setText(servoPacket.toJsonString());
+                }
+                //Updates outputTV if the incoming JSON contains an error message
+                if (servoPacket.hasErrorMessage()) {
+                    String error = "Error: " + servoPacket.getErrorMessage();
+                    outputTV.setText(error);
+                }
             }
         }
     };
@@ -191,25 +216,25 @@ public class CraftActivity extends AppCompatActivity {
     private final BroadcastReceiver mUsbReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            TextView usbStatusTV = (TextView) findViewById(R.id.tv_craft_value_microcontroller_status);
+            TextView usbStatusTV = (TextView) findViewById(R.id.tv_craft_value_arduino_status);
             if (intent.getAction().equals(UsbSerialService.ACTION_USB_READY)) {
-                usbStatusTV.setText("USB ready");
+                usbStatusTV.setText(getString(R.string.tv_usb_value_ready));
             } else if (intent.getAction().equals(UsbSerialService.ACTION_USB_DISCONNECTED)) {
-                usbStatusTV.setText("USB disconnected");
-                TextView outputTV = (TextView) findViewById(R.id.tv_craft_value_microcontroller_output);
+                usbStatusTV.setText(getString(R.string.tv_usb_value_disconnected));
+                TextView outputTV = (TextView) findViewById(R.id.tv_craft_value_arduino_output);
                 outputTV.setText("");
             } else if (intent.getAction().equals(UsbSerialService.ACTION_USB_PERMISSION_GRANTED)) {
-                usbStatusTV.setText("USB permission granted");
+                usbStatusTV.setText(getString(R.string.tv_usb_value_permission_granted));
             } else if (intent.getAction().equals(UsbSerialService.ACTION_USB_PERMISSION_NOT_GRANTED)) {
-                usbStatusTV.setText("USB permission not granted");
+                usbStatusTV.setText(getString(R.string.tv_usb_value_permission_not_granted));
             } else if (intent.getAction().equals(UsbSerialService.ACTION_NO_USB)) {
-                usbStatusTV.setText("USB not connected");
+                usbStatusTV.setText(getString(R.string.tv_usb_value_not_connected));
             } else if (intent.getAction().equals(UsbSerialService.ACTION_USB_NOT_SUPPORTED)) {
-                usbStatusTV.setText("USB device not supported");
+                usbStatusTV.setText(getString(R.string.tv_usb_value_not_supported));
             } else if (intent.getAction().equals(UsbSerialService.ACTION_CDC_DRIVER_NOT_WORKING)) {
-                usbStatusTV.setText("USB CDC driver not found");
+                usbStatusTV.setText(getString(R.string.tv_usb_value_no_cdc_driver));
             } else if (intent.getAction().equals(UsbSerialService.ACTION_USB_DEVICE_NOT_WORKING)) {
-                usbStatusTV.setText("USB device not working");
+                usbStatusTV.setText(R.string.tv_usb_value_device_not_working);
             }
         }
     };

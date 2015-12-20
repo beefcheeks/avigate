@@ -92,9 +92,9 @@ public class MqttConnectionManager {
         if (mMqttAndroidClient != null) {
             if (mMqttAndroidClient.isConnected()) {
                 unsubscribeAll();
+                mMqttAndroidClient.close();
             }
             mMqttAndroidClient.unregisterResources();
-            mMqttAndroidClient.close();
             mMqttAndroidClient = null;
         }
     }

@@ -268,19 +268,19 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/layout_relative_craft_position"
         android:paddingTop="8dp"
-        android:id="@+id/layout_relative_craft_microcontroller">
+        android:id="@+id/layout_relative_craft_arduino">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/tv_craft_title_microcontroller"
+            android:text="@string/tv_craft_title_arduino"
             android:textSize="18sp"
-            android:id="@+id/tv_craft_title_microcontroller"/>
+            android:id="@+id/tv_craft_title_arduino"/>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/tv_craft_title_microcontroller"
+            android:layout_below="@+id/tv_craft_title_arduino"
             android:paddingLeft="8dp"
             android:paddingTop="4dp"
             android:id="@+id/layout_linear_craft_status_usb">
@@ -288,7 +288,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/tv_craft_label_microcontroller_status"
+                android:text="@string/tv_craft_label_arduino_status"
                 android:id="@+id/tv_craft_label_motor"/>
 
             <TextView
@@ -296,7 +296,7 @@
                 android:layout_height="wrap_content"
                 android:paddingLeft="8dp"
                 android:text="@string/tv_placeholder_disconnected"
-                android:id="@+id/tv_craft_value_microcontroller_status"/>
+                android:id="@+id/tv_craft_value_arduino_status"/>
 
         </LinearLayout>
 
@@ -311,14 +311,14 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/tv_craft_label_microcontroller_output"
-                android:id="@+id/tv_craft_label_microcontroller_output"/>
+                android:text="@string/tv_craft_label_arduino_output"
+                android:id="@+id/tv_craft_label_arduino_output"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:paddingLeft="8dp"
-                android:id="@+id/tv_craft_value_microcontroller_output"/>
+                android:id="@+id/tv_craft_value_arduino_output"/>
 
         </LinearLayout>
 

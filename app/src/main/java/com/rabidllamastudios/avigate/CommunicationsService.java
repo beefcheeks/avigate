@@ -32,7 +32,9 @@ public class CommunicationsService extends Service {
     private static final int DEFAULT_PORT = 1883;
 
     private static final String PACKAGE_NAME = AvigateApplication.class.getPackage().getName();
-    public static final String ACTION_CONFIGURE_COMM_SERVICE = PACKAGE_NAME + ".action.CONFIGURE_COMM_SERVICE";
+
+    public static final String ACTION_CONFIGURE_COMM_SERVICE =
+            PACKAGE_NAME + ".action.CONFIGURE_COMM_SERVICE";
 
     public static final String EXTRA_SUBSCRIPTIONS_LOCAL = PACKAGE_NAME + ".extra.LOCAL";
     public static final String EXTRA_SUBSCRIPTIONS_REMOTE = PACKAGE_NAME + ".extra.REMOTE";
@@ -69,7 +71,7 @@ public class CommunicationsService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent != null && ACTION_CONFIGURE_COMM_SERVICE.equals(intent.getAction())) {
+        if (intent != null && intent.getAction().equals(ACTION_CONFIGURE_COMM_SERVICE)) {
             List<String> localSubs = new ArrayList<>();
             List<String> remoteSubs = new ArrayList<>();
             if (intent.hasExtra(EXTRA_SUBSCRIPTIONS_LOCAL))
@@ -91,7 +93,8 @@ public class CommunicationsService extends Service {
             registerReceiver(mBroadcastReceiver, intentFilter);
 
             if (mMqttConnectionManager == null) {
-                mMqttConnectionManager = new MqttConnectionManager(this, mMqttConnectionManagerCallback, MQTT_BROKER, DEFAULT_PORT);
+                mMqttConnectionManager = new MqttConnectionManager(this
+                        , mMqttConnectionManagerCallback, MQTT_BROKER, DEFAULT_PORT);
                 mMqttConnectionManager.start();
             }
 
@@ -137,7 +140,8 @@ public class CommunicationsService extends Service {
         };
     }
 
-    private MqttConnectionManager.Callback mMqttConnectionManagerCallback = new MqttConnectionManager.Callback() {
+    private MqttConnectionManager.Callback mMqttConnectionManagerCallback
+            = new MqttConnectionManager.Callback() {
         @Override
         public void onConnect() {
             mMqttConnectionManager.unsubscribeAll();
