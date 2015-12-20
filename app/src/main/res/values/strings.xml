@@ -1,46 +1,66 @@
 <resources>
     <string name="app_name">Avigate</string>
 
-    <string name="button_module_craft">Craft Module</string>
-    <string name="button_module_controller">Controller Module</string>
-
     <string name="button_arduino_configure">Configure Arduino</string>
-    <string name="button_emergency_reset">Emergency Reset</string>
-    <string name="button_sensor_readings">Sensor Readings</string>
-    <string name="button_connectivity_test">Connectivity Test</string>
-    <string name="button_flight_visualizer">Flight Visualizer</string>
-    <string name="button_connect">Connect</string>
-    <string name="button_disconnect">Disconnect</string>
-    <string name="button_publish">Publish</string>
+    <string name="button_calibrate">Calibrate</string>
     <string name="button_cancel">Cancel</string>
+    <string name="button_configure_inputs">Configure Inputs</string>
+    <string name="button_configure_outputs">Configure Outputs</string>
+    <string name="button_connect">Connect</string>
+    <string name="button_connectivity_test">Connectivity Test</string>
+    <string name="button_disconnect">Disconnect</string>
+    <string name="button_emergency_reset">Emergency Reset</string>
+    <string name="button_flight_visualizer">Flight Visualizer</string>
+    <string name="button_module_controller">Controller Module</string>
+    <string name="button_module_craft">Craft Module</string>
+    <string name="button_publish">Publish</string>
+    <string name="button_sensor_readings">Sensor Readings</string>
     <string name="button_set">Set</string>
+    <string name="button_stop_calibrating">Stop calibrating</string>
     <string name="button_subscribe">Subscribe</string>
     <string name="button_unsubscribe">Unsubscribe</string>
 
     <string name="button_servo_min">Min Servo</string>
     <string name="button_servo_half">Half Servo</string>
     <string name="button_servo_max">Max Servo</string>
+    <string name="et_arduino_value_pin_output_aileron">7</string>
+    <string name="et_arduino_value_pin_output_elevator">9</string>
+    <string name="et_arduino_value_pin_output_rudder">8</string>
+    <string name="et_arduino_value_pin_output_throttle">10</string>
 
     <string name="et_arduino_value_pin_aileron">7</string>
     <string name="et_arduino_value_pin_elevator">9</string>
     <string name="et_arduino_value_pin_rudder">8</string>
     <string name="et_arduino_value_pin_throttle">10</string>
+    <string name="et_arduino_value_pin_input_aileron">6</string>
+    <string name="et_arduino_value_pin_input_cutover">2</string>
+    <string name="et_arduino_value_pin_input_elevator">4</string>
+    <string name="et_arduino_value_pin_input_rudder">3</string>
+    <string name="et_arduino_value_pin_input_throttle">5</string>
 
-    <string name="title_activity_display_sensor">Sensor Readings</string>
+    <string name="et_connect_hint_server">Server URL or IP</string>
+    <string name="et_connect_hint_topic">Topic</string>
+    <string name="et_connect_hint_message">Message</string>
+
     <string name="title_activity_configure_arduino">Configure Arduino</string>
     <string name="title_activity_connectivity_test">Connectivity Test</string>
+    <string name="title_activity_controller">Controller Module</string>
+    <string name="title_activity_craft">Craft Module</string>
+    <string name="title_activity_display_sensor">Sensor Readings</string>
+    <string name="title_activity_flight_visualizer">Orientation Visualizer</string>
 
-    <string name="tv_main_title_modules">Flight Modules</string>
-    <string name="tv_main_title_concept">Proof of Concept</string>
 
-    <string name="tv_arduino_label_aileron">Aileron </string>
-    <string name="tv_arduino_label_elevator">Elevator </string>
-    <string name="tv_arduino_label_rudder">Rudder </string>
-    <string name="tv_arduino_label_throttle">Throttle </string>
-    <string name="tv_arduino_label_pin">Pin</string>
-    <string name="tv_arduino_label_output">Output: </string>
+    <string name="tv_arduino_label_aileron">Aileron</string>
+    <string name="tv_arduino_label_cutover">Cutover</string>
+    <string name="tv_arduino_label_elevator">Elevator</string>
+    <string name="tv_arduino_label_rudder">Rudder</string>
+    <string name="tv_arduino_label_throttle">Throttle</string>
     <string name="tv_arduino_label_status">Status: </string>
+
     <string name="tv_arduino_value_status">USB disconnected</string>
+    <string name="tv_arduino_value_ready">Arduino is ready</string>
+    <string name="tv_arduino_value_calibrating">Calibrating receiver inputs&#8230;</string>
+    <string name="tv_arduino_value_calibration_stopped">Calibration stopped</string>
 
     <string name="tv_craft_title_connection">Connection</string>
     <string name="tv_craft_label_connection">Connection status:</string>
@@ -61,9 +81,13 @@
     <string name="tv_craft_label_arduino_status">USB status:</string>
     <string name="tv_craft_label_arduino_output">Output:</string>
 
+    <string name="tv_main_title_modules">Flight Modules</string>
+    <string name="tv_main_title_concept">Proof of Concept</string>
+
     <string name="tv_placeholder_connected">Connected</string>
     <string name="tv_placeholder_disconnected">Disconnected</string>
     <string name="tv_placeholder_latency">Infinite</string>
+    <string name="tv_placeholder_calibration">Not calibrated</string>
     <string name="tv_placeholder_sensor">No sensor data</string>
     <string name="tv_placeholder_zero">0</string>
 
@@ -89,19 +113,12 @@
     <string name="tv_sensor_label_linear_acceleration_y">Y Direction:</string>
     <string name="tv_sensor_label_linear_acceleration_z">Z Direction:</string>
 
-    <string name="tv_sensor_title_angular_acceleration">Angular Acceleration Readings (rad/sec)</string>
+    <string name="tv_sensor_title_angular_acceleration">
+        Angular Acceleration Readings (rad/sec)</string>
     <string name="tv_sensor_label_angular_acceleration_x">About X Axis:</string>
     <string name="tv_sensor_label_angular_acceleration_y">About Y Axis:</string>
     <string name="tv_sensor_label_angular_acceleration_z">About Z Axis:</string>
 
-    <string name="et_connect_hint_server">Server URL or IP</string>
-    <string name="et_connect_hint_topic">Topic</string>
-    <string name="et_connect_hint_message">Message</string>
-    <string name="title_activity_flight_visualizer">Orientation Visualizer</string>
-    <string name="title_activity_craft">Craft Module</string>
-    <string name="title_activity_controller">Controller Module</string>
-    <string name="title_activity_arduino_test">Arduino Test Activity</string>
-    <string name="title_activity_test_arduino">TestArduino</string>
     <string name="tv_usb_value_ready">USB ready</string>
     <string name="tv_usb_value_disconnected">USB disconnected</string>
     <string name="tv_usb_value_permission_granted">USB permission granted</string>

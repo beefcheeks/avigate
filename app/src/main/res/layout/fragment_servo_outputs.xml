@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:id ="@+id/layout_relative_arduino_outputs">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingTop="4dp"
+            android:id="@+id/layout_relative_arduino_outputs_aileron">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/layout_relative_arduino_output_aileron">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_alignParentStart="true"
+                    android:layout_alignParentLeft="true"
+                    android:textSize="20sp"
+                    android:text="@string/tv_arduino_label_aileron"
+                    android:id="@+id/tv_arduino_label_output_aileron"/>
+
+                <EditText
+                    android:layout_width="48dp"
+                    android:layout_height="wrap_content"
+                    android:focusable="false"
+                    android:layout_centerHorizontal="true"
+                    android:gravity="center_horizontal"
+                    android:inputType="none"
+                    android:textSize="20sp"
+                    android:id="@+id/et_arduino_value_output_aileron" />
+
+                <EditText
+                    android:layout_width="40dp"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_alignParentRight="true"
+                    android:focusable="false"
+                    android:gravity="center_horizontal"
+                    android:inputType="none"
+                    android:textSize="20sp"
+                    android:text="@string/et_arduino_value_pin_output_aileron"
+                    android:id="@+id/et_arduino_value_pin_output_aileron" />
+
+            </RelativeLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="8dp"
+                android:paddingLeft="12dp"
+                android:paddingRight="12dp" >
+
+                <SeekBar android:id="@+id/seekbar_aileron"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingTop="6dp"
+            android:id="@+id/layout_relative_arduino_outputs_elevator">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/layout_relative_arduino_output_elevator">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_alignParentStart="true"
+                    android:layout_alignParentLeft="true"
+                    android:textSize="20sp"
+                    android:text="@string/tv_arduino_label_elevator"
+                    android:id="@+id/tv_arduino_label_output_elevator"/>
+
+                <EditText
+                    android:layout_width="48dp"
+                    android:layout_height="wrap_content"
+                    android:layout_centerHorizontal="true"
+                    android:focusable="false"
+                    android:gravity="center_horizontal"
+                    android:inputType="none"
+                    android:textSize="20sp"
+                    android:id="@+id/et_arduino_value_output_elevator" />
+
+                <EditText
+                    android:layout_width="40dp"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_alignParentRight="true"
+                    android:focusable="false"
+                    android:gravity="center_horizontal"
+                    android:inputType="none"
+                    android:textSize="20sp"
+                    android:text="@string/et_arduino_value_pin_output_elevator"
+                    android:id="@+id/et_arduino_value_pin_output_elevator" />
+
+            </RelativeLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="8dp"
+                android:paddingLeft="12dp"
+                android:paddingRight="12dp" >
+
+                <SeekBar android:id="@+id/seekbar_elevator"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingTop="6dp"
+            android:id="@+id/layout_relative_arduino_outputs_rudder">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/layout_relative_arduino_output_rudder">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_alignParentStart="true"
+                    android:layout_alignParentLeft="true"
+                    android:textSize="20sp"
+                    android:text="@string/tv_arduino_label_rudder"
+                    android:id="@+id/tv_arduino_label_output_rudder"/>
+
+                <EditText
+                    android:layout_width="48dp"
+                    android:layout_height="wrap_content"
+                    android:layout_centerHorizontal="true"
+                    android:focusable="false"
+                    android:gravity="center_horizontal"
+                    android:inputType="none"
+                    android:textSize="20sp"
+                    android:id="@+id/et_arduino_value_output_rudder" />
+
+                <EditText
+                    android:layout_width="40dp"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_alignParentRight="true"
+                    android:focusable="false"
+                    android:gravity="center_horizontal"
+                    android:inputType="none"
+                    android:textSize="20sp"
+                    android:text="@string/et_arduino_value_pin_output_rudder"
+                    android:id="@+id/et_arduino_value_pin_output_rudder" />
+
+            </RelativeLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="8dp"
+                android:paddingLeft="12dp"
+                android:paddingRight="12dp" >
+
+                <SeekBar android:id="@+id/seekbar_rudder"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingTop="6dp"
+            android:id="@+id/layout_relative_arduino_outputs_throttle">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/layout_relative_arduino_output_throttle">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_alignParentStart="true"
+                    android:layout_alignParentLeft="true"
+                    android:textSize="20sp"
+                    android:text="@string/tv_arduino_label_throttle"
+                    android:id="@+id/tv_arduino_label_output_throttle"/>
+
+                <EditText
+                    android:layout_width="48dp"
+                    android:layout_height="wrap_content"
+                    android:layout_centerHorizontal="true"
+                    android:focusable="false"
+                    android:gravity="center_horizontal"
+                    android:inputType="none"
+                    android:textSize="20sp"
+                    android:id="@+id/et_arduino_value_output_throttle" />
+
+                <EditText
+                    android:layout_width="40dp"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_alignParentRight="true"
+                    android:focusable="false"
+                    android:gravity="center_horizontal"
+                    android:inputType="none"
+                    android:textSize="20sp"
+                    android:text="@string/et_arduino_value_pin_output_throttle"
+                    android:id="@+id/et_arduino_value_pin_output_throttle"/>
+
+            </RelativeLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="8dp"
+                android:paddingLeft="12dp"
+                android:paddingRight="12dp" >
+
+                <SeekBar android:id="@+id/seekbar_throttle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+    </LinearLayout>
+
+    <org.florescu.android.rangeseekbar.RangeSeekBar
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        app:showLabels="false"
+        app:textAboveThumbsColor="@color/colorAccent"
+        android:visibility="invisible"
+        android:id="@+id/seekbar_range" />
+
+</RelativeLayout>
