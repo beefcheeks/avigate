@@ -7,21 +7,16 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.support.design.widget.TabLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.Gravity;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.FrameLayout;
-import android.widget.NumberPicker;
-import android.widget.SeekBar;
 import android.widget.TextView;
 
+import com.rabidllamastudios.avigate.fragments.ReceiverCalibrationFragment;
+import com.rabidllamastudios.avigate.fragments.ServoInputFragment;
+import com.rabidllamastudios.avigate.fragments.ServoOutputFragment;
+import com.rabidllamastudios.avigate.model.ConnectionPacket;
 import com.rabidllamastudios.avigate.model.ServoPacket;
-
-import org.florescu.android.rangeseekbar.RangeSeekBar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,42 +27,60 @@ import java.util.List;
  * Some code adapted from: https://github.com/felHR85/SerialPortExample
  */
 
-public class ConfigureArduinoActivity extends AppCompatActivity implements NumberPicker.OnValueChangeListener {
+public class ConfigureArduinoActivity extends AppCompatActivity {
 
     private static final int BAUD_RATE = 115200;
-    private static final int PIN_MAX = 12;
-    private static final int PIN_MIN = 0;
-    private static final int SERVO_MAX = 180;
-    private static final int SERVO_MIN = 0;
 
+    private boolean mCalibrationMode = false;
+    private boolean mReceiverOnly = false;
     private boolean mUsbSerialIsReady = false;
-    private boolean calibrationMode = false;
-
-    private int aileronMax = SERVO_MAX;
-    private int aileronMin = SERVO_MIN;
-    private int elevatorMax = SERVO_MAX;
-    private int elevatorMin = SERVO_MIN;
-    private int rudderMax = SERVO_MAX;
-    private int rudderMin = SERVO_MIN;
-    private int throttleMax = SERVO_MAX;
-    private int throttleMin = SERVO_MIN;
 
     private Intent mCommService;
     private Intent mUsbSerialService;
-    private IntentFilter mUsbIntentFilter;
     private IntentFilter mDeviceOutputIntentFilter;
-    private RangeSeekBar<Integer> mRangeSeekBar;
+    private IntentFilter mConnectionIntentFilter;
+    private IntentFilter mUsbIntentFilter;
+
+    private ReceiverCalibrationFragment mReceiverCalibrationFragment;
+    private ServoInputFragment mServoInputFragment;
+    private ServoOutputFragment mServoOutputFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setTitle("Configure Arduino Servo Output");
-        setContentView(R.layout.activity_arduino);
+        setContentView(R.layout.activity_configure_arduino);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         assert getSupportActionBar() != null;
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        //Configure the fragments and their callbacks
+        mServoOutputFragment = new ServoOutputFragment();
+        mServoInputFragment = new ServoInputFragment();
+        mReceiverCalibrationFragment = new ReceiverCalibrationFragment();
+        mServoOutputFragment.setCallback(mServoOutputCallback);
+        mServoInputFragment.setCallback(mServoInputCallback);
+        mReceiverCalibrationFragment.setCallback(mReceiverCalibrationCallback);
+
+        //Configure the FragmentPagerAdapter
+        CustomFragmentPagerAdapter fragmentPagerAdapter =
+                new CustomFragmentPagerAdapter(getSupportFragmentManager());
+        fragmentPagerAdapter.addEntry(0, "Outputs", mServoOutputFragment);
+        fragmentPagerAdapter.addEntry(1, "Inputs", mServoInputFragment);
+        fragmentPagerAdapter.addEntry(2, "Calibration", mReceiverCalibrationFragment);
+
+        //Configure the ViewPager
+        NonSwipeableViewPager viewPager =
+                (NonSwipeableViewPager) findViewById(R.id.viewpager_configure_arduino);
+        viewPager.setAdapter(fragmentPagerAdapter);
+
+        //Set up the TabLayout with the configure ViewPager
+        TabLayout tabLayout = (TabLayout) findViewById(R.id.tablayout_configure_arduino);
+        tabLayout.setupWithViewPager(viewPager);
+
+        //Initialize the mConnectionIntentFilter
+        mConnectionIntentFilter = new IntentFilter(ConnectionPacket.INTENT_ACTION);
 
         //Initialize mUsbFilter IntentFilter
         mUsbIntentFilter = new IntentFilter();
@@ -80,36 +93,17 @@ public class ConfigureArduinoActivity extends AppCompatActivity implements Numbe
 
         //Initialize mServoOutputFilter IntentFilter
         mDeviceOutputIntentFilter = new IntentFilter(ServoPacket.INTENT_ACTION_OUTPUT);
-
-        //Start the communications service.
-        startCommunicationsService();
-
-        //Initialize mRangeSeekBar
-        mRangeSeekBar = (RangeSeekBar) findViewById(R.id.seekbar_range);
-
-        //Initialize UI
-        int servoNeutral = (SERVO_MAX - SERVO_MIN)/2;
-        configureSeekbar(ServoPacket.ServoType.AILERON, servoNeutral, SERVO_MIN, SERVO_MAX);
-        configureSeekbar(ServoPacket.ServoType.ELEVATOR, servoNeutral, SERVO_MIN, SERVO_MAX);
-        configureSeekbar(ServoPacket.ServoType.RUDDER, servoNeutral, SERVO_MIN, SERVO_MAX);
-        configureSeekbar(ServoPacket.ServoType.THROTTLE, SERVO_MIN, SERVO_MIN, SERVO_MAX);
-        configurePinEditText(ServoPacket.ServoType.AILERON);
-        configurePinEditText(ServoPacket.ServoType.ELEVATOR);
-        configurePinEditText(ServoPacket.ServoType.RUDDER);
-        configurePinEditText(ServoPacket.ServoType.THROTTLE);
-        configureServoEditText(ServoPacket.ServoType.AILERON);
-        configureServoEditText(ServoPacket.ServoType.ELEVATOR);
-        configureServoEditText(ServoPacket.ServoType.RUDDER);
-        configureServoEditText(ServoPacket.ServoType.THROTTLE);
-        configureEmergencyResetButton();
-        configureInputsButton();
-        configureCalibrateButton();
     }
 
     @Override
     public void onPause() {
-        //Unregister receivers and stop UsbSerialService
+        //Unregister receivers and stop CommunicationsService and UsbSerialService
         mUsbSerialIsReady = false;
+        try {
+            unregisterReceiver(mConnectionReceiver);
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        }
         try {
             unregisterReceiver(mDeviceOutputReceiver);
         } catch (IllegalArgumentException e) {
@@ -127,20 +121,102 @@ public class ConfigureArduinoActivity extends AppCompatActivity implements Numbe
 
     @Override
     public void onResume() {
-        registerReceiver(mUsbReceiver, mUsbIntentFilter);  //Start listening for USB notifications from Android system
-        registerReceiver(mDeviceOutputReceiver, mDeviceOutputIntentFilter);  //Start listening for servo output intents
-        mUsbSerialService = UsbSerialService.getConfiguredIntent(this, BAUD_RATE);  //Get the configured intent to start the UsbSerialService
-        startService(mUsbSerialService); //Start the UsbSerialService
+        //Register receivers and start CommunicationsService and UsbSerialService
+        registerReceiver(mConnectionReceiver, mConnectionIntentFilter);
+        registerReceiver(mUsbReceiver, mUsbIntentFilter);
+        registerReceiver(mDeviceOutputReceiver, mDeviceOutputIntentFilter);
+        //Get the configured intent to start the UsbSerialService
+        mUsbSerialService = UsbSerialService.getConfiguredIntent(this, BAUD_RATE);
+        startService(mUsbSerialService);
+        //Start the CommunicationsService
         startCommunicationsService();
         super.onResume();
     }
 
-    @Override
-    public void onValueChange(NumberPicker picker, int oldVal, int newVal) {}
+    //Implemented callback methods for ServoOutputFragment.Callback
+    private ServoOutputFragment.Callback mServoOutputCallback = new ServoOutputFragment.Callback() {
 
+        @Override
+        public void setServoOutputPin(ServoPacket.ServoType servoType, int pinValue) {
+            if (mUsbSerialIsReady) {
+                //Configures the servo output pin value for a given ServoType
+                ServoPacket servoPacket = new ServoPacket();
+                servoPacket.setOutputPin(servoType, pinValue);
+                sendBroadcast(servoPacket.toIntent(ServoPacket.INTENT_ACTION_INPUT));
+            }
+        }
 
+        @Override
+        public void setServoOutputRange(ServoPacket.ServoType servoType, int outputMin,
+                                        int outputMax) {
+            if (mUsbSerialIsReady) {
+                //Sets the servo output range for a given ServoType
+                ServoPacket servoPacket = new ServoPacket();
+                servoPacket.setOutputRange(servoType, outputMin, outputMax);
+                sendBroadcast(servoPacket.toIntent(ServoPacket.INTENT_ACTION_INPUT));
+            }
+        }
+
+        @Override
+        public void setServoValue(ServoPacket.ServoType servoType, int servoValue) {
+            if (mUsbSerialIsReady) {
+                //Sets the servo output value for a given ServoType
+                ServoPacket servoPacket = new ServoPacket();
+                servoPacket.setServoValue(servoType, servoValue);
+                sendBroadcast(servoPacket.toIntent(ServoPacket.INTENT_ACTION_INPUT));
+            }
+        }
+    };
+
+    //Implemented callback methods for ServoInputFragment.Callback
+    private ServoInputFragment.Callback mServoInputCallback = new ServoInputFragment.Callback() {
+        @Override
+        public void setControlType(ServoPacket.ServoType servoType, boolean receiverOnly) {
+            if (mUsbSerialIsReady) {
+                //Sets the control type (e.g. shared or receiver only) for a given ServoType
+                ServoPacket servoPacket = new ServoPacket();
+                servoPacket.setInputControl(servoType, receiverOnly);
+                sendBroadcast(servoPacket.toIntent(ServoPacket.INTENT_ACTION_INPUT));
+            }
+        }
+
+        @Override
+        public void setServoInputPin(ServoPacket.ServoType servoType, int pinValue) {
+            if (mUsbSerialIsReady) {
+                //Configures the servo output pin value for a given ServoType
+                ServoPacket servoPacket = new ServoPacket();
+                servoPacket.setInputPin(servoType, pinValue);
+                sendBroadcast(servoPacket.toIntent(ServoPacket.INTENT_ACTION_INPUT));
+            }
+        }
+    };
+
+    //Implemented callback methods for ReceiverCalibrationFragment.Callback
+    private ReceiverCalibrationFragment.Callback mReceiverCalibrationCallback =
+            new ReceiverCalibrationFragment.Callback() {
+        @Override
+        public void calibrationButtonPressed(boolean calibrationMode) {
+            if (mUsbSerialIsReady) {
+                //Sets the calibrationMode accordingly when the calibrate button is pressed,
+                ServoPacket servoPacket = new ServoPacket();
+                servoPacket.setCalibrationMode(calibrationMode);
+                sendBroadcast(servoPacket.toIntent(ServoPacket.INTENT_ACTION_INPUT));
+            } else {
+                new AlertDialog.Builder(ConfigureArduinoActivity.this)
+                        .setTitle("No USB device connected")
+                        .setMessage("The Arduino cannot be calibrated until it is connected " +
+                                "to an Android phone via USB.")
+                        .setPositiveButton(android.R.string.ok,
+                                new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {}
+                        })
+                        .show();
+            }
+        }
+    };
+
+    //Configure and start the communications service.
     private void startCommunicationsService() {
-        //Configure and start the communications service.
         List<String> localSubs = new ArrayList<>();
         List<String> remoteSubs = new ArrayList<>();
         localSubs.add(ServoPacket.INTENT_ACTION_INPUT);
@@ -151,361 +227,21 @@ public class ConfigureArduinoActivity extends AppCompatActivity implements Numbe
         remoteSubs.add(UsbSerialService.ACTION_USB_DISCONNECTED);
         remoteSubs.add(UsbSerialService.ACTION_USB_NOT_SUPPORTED);
         remoteSubs.add(UsbSerialService.ACTION_USB_PERMISSION_NOT_GRANTED);
-        mCommService = CommunicationsService.getConfiguredIntent(this, localSubs, remoteSubs, CommunicationsService.DeviceType.CONTROLLER);
+        mCommService = CommunicationsService.getConfiguredIntent(this, localSubs, remoteSubs,
+                CommunicationsService.DeviceType.CONTROLLER);
         startService(mCommService);
     }
-    //Emergency reset button resets all sliders back to defaults
-    private void configureEmergencyResetButton() {
-        Button emergencyResetButton = (Button) findViewById(R.id.button_emergency_reset);
-        //Resets all sliders to defaults - servos to neutral position, throttle to minimum position
-        emergencyResetButton.setOnClickListener(new Button.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                SeekBar aileronSeekBar = (SeekBar) findViewById(R.id.seekbar_aileron);
-                SeekBar elevatorSeekBar = (SeekBar) findViewById(R.id.seekbar_elevator);
-                SeekBar rudderSeekBar = (SeekBar) findViewById(R.id.seekbar_rudder);
-                SeekBar throttleSeekBar = (SeekBar) findViewById(R.id.seekbar_throttle);
 
-                aileronSeekBar.setProgress((aileronMax-aileronMin)/2);
-                elevatorSeekBar.setProgress((elevatorMax-elevatorMin)/2);
-                rudderSeekBar.setProgress((rudderMax-rudderMin)/2);
-                throttleSeekBar.setProgress(SERVO_MIN);
-
-                //Request the status of the arduino
+    private final BroadcastReceiver mConnectionReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals(ConnectionPacket.INTENT_ACTION)) {
                 ServoPacket statusRequestServoPacket = new ServoPacket();
                 statusRequestServoPacket.addStatusRequest();
                 sendBroadcast(statusRequestServoPacket.toIntent(ServoPacket.INTENT_ACTION_INPUT));
             }
-        });
-        //Resets range for all servos to full range, then resets all sliders to defaults
-        emergencyResetButton.setOnLongClickListener(new Button.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                int servoNeutral = (SERVO_MAX - SERVO_MIN) / 2;
-                configureSeekbar(ServoPacket.ServoType.AILERON, servoNeutral, SERVO_MIN, SERVO_MAX);
-                configureSeekbar(ServoPacket.ServoType.ELEVATOR, servoNeutral, SERVO_MIN, SERVO_MAX);
-                configureSeekbar(ServoPacket.ServoType.RUDDER, servoNeutral, SERVO_MIN, SERVO_MAX);
-                configureSeekbar(ServoPacket.ServoType.THROTTLE, SERVO_MIN, SERVO_MIN, SERVO_MAX);
-                return true;
-            }
-        });
-    }
-
-    private void configureInputsButton() {
-        final Button configureInputsButton = (Button) findViewById(R.id.button_arduino_inputs);
-        configureInputsButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                ServoPacket configureInputsServoPacket = new ServoPacket();
-                configureInputsServoPacket.setInputPin(ServoPacket.ServoType.AILERON, 6);
-                configureInputsServoPacket.setInputPin(ServoPacket.ServoType.CUTOVER, 2);
-                configureInputsServoPacket.setInputPin(ServoPacket.ServoType.ELEVATOR, 4);
-                configureInputsServoPacket.setInputPin(ServoPacket.ServoType.RUDDER, 3);
-                configureInputsServoPacket.setInputPin(ServoPacket.ServoType.THROTTLE, 5);
-                sendBroadcast(configureInputsServoPacket.toIntent(ServoPacket.INTENT_ACTION_INPUT));
-            }
-        });
-    }
-
-    private void configureCalibrateButton() {
-        final Button configureCalibrateButton = (Button) findViewById(R.id.button_calibrate);
-        configureCalibrateButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                ServoPacket calibrateServoPacket = new ServoPacket();
-                calibrationMode = !calibrationMode;
-                calibrateServoPacket.setCalibrationMode(calibrationMode);
-                sendBroadcast(calibrateServoPacket.toIntent(ServoPacket.INTENT_ACTION_INPUT));
-            }
-        });
-    }
-
-    //Configures the SeekBar and OnSeekBarChangeListener
-    private void configureSeekbar(final ServoPacket.ServoType servoType, int startValue, final int minValue, final int maxValue) {
-        final EditText editText = getServoET(servoType);
-        SeekBar seekBar = getSeekBar(servoType);
-        if (editText != null && seekBar != null) {
-            seekBar.setMax(maxValue - minValue);
-            //Set editText here since onProgressChanged may not be called on setProgress
-            editText.setText(String.valueOf(startValue));
-            seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-                @Override
-                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                    int convertedValue = minValue + progress;
-                    sendServoValue(servoType, convertedValue);
-                    editText.setText(String.valueOf(convertedValue));
-                }
-
-                @Override
-                public void onStartTrackingTouch(SeekBar seekBar) {
-
-                }
-
-                @Override
-                public void onStopTrackingTouch(SeekBar seekBar) {
-
-                }
-            });
-            seekBar.setProgress(startValue - minValue);
         }
-    }
-
-    //Takes a ServoType and returns the corresponding SeekBar
-    private SeekBar getSeekBar(ServoPacket.ServoType servoType) {
-        switch(servoType) {
-            case AILERON:
-                return (SeekBar) findViewById(R.id.seekbar_aileron);
-            case ELEVATOR:
-                return (SeekBar) findViewById(R.id.seekbar_elevator);
-            case RUDDER:
-                return (SeekBar) findViewById(R.id.seekbar_rudder);
-            case THROTTLE:
-                return (SeekBar) findViewById(R.id.seekbar_throttle);
-        }
-        return null;
-    }
-
-    //Takes a ServoType and returns the EditText that contains that ServoType's pin value
-    private EditText getPinET(ServoPacket.ServoType servoType) {
-        switch(servoType) {
-            case AILERON:
-                return (EditText) findViewById(R.id.et_arduino_value_pin_aileron);
-            case ELEVATOR:
-                return (EditText) findViewById(R.id.et_arduino_value_pin_elevator);
-            case RUDDER:
-                return (EditText) findViewById(R.id.et_arduino_value_pin_rudder);
-            case THROTTLE:
-                return (EditText) findViewById(R.id.et_arduino_value_pin_throttle);
-        }
-        return null;
-    }
-
-    //Takes a ServoType and return the EditText that contains that ServoType's servo value
-    private EditText getServoET(ServoPacket.ServoType servoType) {
-        switch(servoType) {
-            case AILERON:
-                return (EditText) findViewById(R.id.et_arduino_value_aileron);
-            case ELEVATOR:
-                return (EditText) findViewById(R.id.et_arduino_value_elevator);
-            case RUDDER:
-                return (EditText) findViewById(R.id.et_arduino_value_rudder);
-            case THROTTLE:
-                return (EditText) findViewById(R.id.et_arduino_value_throttle);
-        }
-        return null;
-    }
-
-    //Sets the servo value for a given servo type
-    private void sendServoValue(ServoPacket.ServoType servoType, int value) {
-        if (mUsbSerialIsReady) {
-            ServoPacket servoPacket = new ServoPacket();
-            servoPacket.setServoValue(servoType, value);
-            Intent servoInputIntent = servoPacket.toIntent(ServoPacket.INTENT_ACTION_INPUT);
-            sendBroadcast(servoInputIntent);
-        }
-    }
-
-    //Configures the EditText field to be clickable and bring up a NumberPicker AlertDialog
-    private void configurePinEditText(final ServoPacket.ServoType servoType) {
-        final EditText editText = getPinET(servoType);
-        if (editText != null ) {
-            editText.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    AlertDialog.Builder alertDialogBuilder = getNumPickAlertDialogBuilder(editText, servoType, true);
-                    alertDialogBuilder.setTitle("Set " + servoType.getStringValue() + " pin number");
-                    AlertDialog alertDialog = alertDialogBuilder.create();
-                    alertDialog.show();
-                }
-            });
-        }
-    }
-
-    //Configures the EditText field to be clickable and bring up a NumberPicker AlertDialog
-    private void configureServoEditText(final ServoPacket.ServoType servoType) {
-        final EditText editText = getServoET(servoType);
-        if (editText != null ) {
-            editText.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    AlertDialog.Builder alertDialogBuilder = getNumPickAlertDialogBuilder(editText, servoType, false);
-                    alertDialogBuilder.setTitle("Set " + servoType.getStringValue() + " value");
-                    AlertDialog alertDialog = alertDialogBuilder.create();
-                    alertDialog.show();
-                }
-            });
-            editText.setOnLongClickListener(new View.OnLongClickListener() {
-                @Override
-                public boolean onLongClick(View v) {
-                    configureRangeAlertDialog(servoType);
-                    return true;
-                }
-            });
-        }
-    }
-
-    //Creates a customized AlertDialogBuilder that includes a NumberPicker
-    private AlertDialog.Builder getNumPickAlertDialogBuilder(final EditText editText, final ServoPacket.ServoType servoType, final boolean isPinDialog) {
-        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
-        final NumberPicker numberPicker = new NumberPicker(this);
-        final int max = getServoMax(servoType);
-        final int min = getServoMin(servoType);
-        //If this is a servo pin AlertDialog, use the servo pin min and max constants
-        if (isPinDialog) {
-            numberPicker.setMaxValue(PIN_MAX);
-            numberPicker.setMinValue(PIN_MIN);
-        //If this is not a servo pin AlertDialog, use the corresponding servo value min and max vars
-       } else {
-            if (max != -1 && min != -1) {
-                numberPicker.setMaxValue(max);
-                numberPicker.setMinValue(min);
-            }
-        }
-        numberPicker.setValue(Integer.parseInt(editText.getText().toString()));
-        numberPicker.setOnValueChangedListener(this);
-        numberPicker.setWrapSelectorWheel(false);
-        //Create numPickFrameLayout to properly center numberPicker
-        final FrameLayout numPickFrameLayout = new FrameLayout(this);
-        numPickFrameLayout.addView(numberPicker, new FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.WRAP_CONTENT,
-                FrameLayout.LayoutParams.WRAP_CONTENT,
-                Gravity.CENTER));
-        alertDialogBuilder.setView(numPickFrameLayout);
-        alertDialogBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-            }
-        });
-        alertDialogBuilder.setPositiveButton("Set", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                int value = numberPicker.getValue();
-                //If this is a dialog to set the servo pin, then set the pin for the servo
-                if (isPinDialog) {
-                    setServoOutputPin(servoType, value);
-                //If this is not a dialog to set the servo pin, then set the servo value instead
-                } else if (max != -1 && min != -1) {
-                    SeekBar seekBar = getSeekBar(servoType);
-                    if (seekBar != null) seekBar.setProgress(value - min);
-                }
-                editText.setText(String.valueOf(value));
-                dialog.dismiss();
-            }
-        });
-        return alertDialogBuilder;
-    }
-
-    //Sets the pin number for a given servo type
-    private void setServoOutputPin(ServoPacket.ServoType servoType, int pinValue) {
-        if (mUsbSerialIsReady) {
-            ServoPacket servoPacket = new ServoPacket();
-            servoPacket.setOutputPin(servoType, pinValue);
-            Intent servoConfigIntent = servoPacket.toIntent(ServoPacket.INTENT_ACTION_INPUT);
-            sendBroadcast(servoConfigIntent);
-        }
-    }
-
-    //Prompts the user to set the value range for a given servo type
-    private void configureRangeAlertDialog (final ServoPacket.ServoType servoType) {
-        final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
-        alertDialogBuilder.setTitle("Set " + servoType.getStringValue() + " range");
-        mRangeSeekBar.setRangeValues(SERVO_MIN, SERVO_MAX);
-        mRangeSeekBar.setSelectedMaxValue(getServoMax(servoType));
-        mRangeSeekBar.setSelectedMinValue(getServoMin(servoType));
-        //Remove the parent view from mRangeSeekBar to prevent a 'Parent Not Null error'
-        ViewGroup parent = (ViewGroup) mRangeSeekBar.getParent();
-        if (parent != null) {
-            parent.removeView(mRangeSeekBar);
-            mRangeSeekBar.setVisibility(View.VISIBLE);
-        }
-        alertDialogBuilder.setView(mRangeSeekBar);
-        alertDialogBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-            }
-        });
-        //Based on the mRangeSeekBar input, set the min and max values for the corresponding SeekBar
-        alertDialogBuilder.setPositiveButton("Set", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                int max = mRangeSeekBar.getSelectedMaxValue();
-                int min = mRangeSeekBar.getSelectedMinValue();
-                //Store the max and min in the corresponding int for the current servo type
-                switch (servoType) {
-                    case AILERON:
-                        aileronMax = max;
-                        aileronMin = min;
-                        break;
-                    case ELEVATOR:
-                        elevatorMax = max;
-                        elevatorMin = min;
-                        break;
-                    case RUDDER:
-                        rudderMax = max;
-                        rudderMin = min;
-                        break;
-                    case THROTTLE:
-                        throttleMax = max;
-                        throttleMin = min;
-                        break;
-                }
-                EditText editText = getServoET(servoType);
-                if (editText != null) {
-                    //If the current servo value is not within the new range, constrain it
-                    int currentServoValue = Integer.parseInt(editText.getText().toString());
-                    if (currentServoValue < min) currentServoValue = min;
-                    if (currentServoValue > max) currentServoValue = max;
-                    //Send the servo output range to the usb device
-                    sendServoOutputRange(servoType, min, max);
-                    //configure the corresponding seekbar to use the new range and servo value
-                    configureSeekbar(servoType, currentServoValue, min, max);
-                    dialog.dismiss();
-                }
-            }
-        });
-        AlertDialog alertDialog = alertDialogBuilder.create();
-        alertDialog.show();
-    }
-
-    //Takes a servo packet and returns the corresponding current max range value
-    private int getServoMax(ServoPacket.ServoType servoType) {
-        switch (servoType) {
-            case AILERON:
-                return aileronMax;
-            case ELEVATOR:
-                return elevatorMax;
-            case RUDDER:
-                return rudderMax;
-            case THROTTLE:
-                return throttleMax;
-        }
-        return -1;
-    }
-    //Takes a servo packet and returns the corresponding current min range value
-    private int getServoMin(ServoPacket.ServoType servoType) {
-        switch (servoType) {
-            case AILERON:
-                return aileronMin;
-            case ELEVATOR:
-                return elevatorMin;
-            case RUDDER:
-                return rudderMin;
-            case THROTTLE:
-                return throttleMin;
-        }
-        return -1;
-    }
-
-    private void sendServoOutputRange(ServoPacket.ServoType servoType, int outputMin, int outputMax) {
-        if (mUsbSerialIsReady) {
-            ServoPacket servoPacket = new ServoPacket();
-            servoPacket.setOutputRange(servoType, outputMin, outputMax);
-            Intent servoConfigIntent = servoPacket.toIntent(ServoPacket.INTENT_ACTION_INPUT);
-            sendBroadcast(servoConfigIntent);
-        }
-    }
+    };
 
     //Usb state notifications from UsbSerialService are received here.
     private final BroadcastReceiver mUsbReceiver = new BroadcastReceiver() {
@@ -540,34 +276,59 @@ public class ConfigureArduinoActivity extends AppCompatActivity implements Numbe
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals(ServoPacket.INTENT_ACTION_OUTPUT)) {
                 ServoPacket servoPacket = new ServoPacket(intent.getExtras());
-                //If the device sent out a ready status, configure servos and enable SeekBars
-                if (servoPacket.isStatusReady() && !mUsbSerialIsReady) {
-                    mUsbSerialIsReady = true;
-                    configureAllServoOutput();
-                    TextView statusTV = (TextView) findViewById(R.id.tv_arduino_value_status);
-                    statusTV.setText("USB ready");
-                }
+
+                //Ready the status TextView for use in if statement methods below
                 TextView statusTV = (TextView) findViewById(R.id.tv_arduino_value_status);
-                statusTV.setText(servoPacket.toJsonString());
+
+                //If the device sent out a ready status
+                if (servoPacket.isStatusReady()) {
+                    if (!mUsbSerialIsReady) mUsbSerialIsReady = true;
+                    statusTV.setText(getString(R.string.tv_arduino_value_ready));
+                    mServoOutputFragment.configureOutputPins();
+                    mServoInputFragment.configureInputPins();
+                }
+
+                //If the ServoPacket contains the receiverControl json key, set mReceiverOnly
+                if (servoPacket.hasReceiverControl()) {
+                    mReceiverOnly = servoPacket.isReceiverControl();
+                }
+
+                //If the ServoPacket contains the calibrationMode, set text and buttons accordingly
+                if (servoPacket.hasCalibrationMode()) {
+                    mCalibrationMode = servoPacket.isCalibrationMode();
+                    //If the arduino is in calibration mode, inform the user
+                    if (mCalibrationMode) {
+                        statusTV.setText(getString(R.string.tv_arduino_value_calibrating));
+                        mReceiverCalibrationFragment.calibrationStarted();
+
+                    //If the arduino is no longer in calibration mode, inform the user
+                    } else {
+                        mReceiverCalibrationFragment.calibrationStopped();
+                    }
+                }
+
+                //If the ServoPacket contains receiver input calibration ranges, show them on screen
+                if (servoPacket.hasInputRanges()) {
+                    showCalibrationRange(ServoPacket.ServoType.AILERON, servoPacket);
+                    showCalibrationRange(ServoPacket.ServoType.CUTOVER, servoPacket);
+                    showCalibrationRange(ServoPacket.ServoType.ELEVATOR, servoPacket);
+                    showCalibrationRange(ServoPacket.ServoType.RUDDER, servoPacket);
+                    showCalibrationRange(ServoPacket.ServoType.THROTTLE, servoPacket);
+                }
+
+                //If the ServoPacket contains an error message, display the message to the user
+                if (servoPacket.hasErrorMessage()) {
+                    String output = "Error: " + servoPacket.getErrorMessage();
+                    statusTV.setText(output);
+                }
             }
         }
     };
 
-    //Sends the configuration information for all output servos to the device
-    private void configureAllServoOutput() {
-        if (mUsbSerialIsReady) {
-            EditText aileronET = (EditText) findViewById(R.id.et_arduino_value_pin_aileron);
-            EditText elevatorET = (EditText) findViewById(R.id.et_arduino_value_pin_elevator);
-            EditText rudderET = (EditText) findViewById(R.id.et_arduino_value_pin_rudder);
-            EditText throttleET = (EditText) findViewById(R.id.et_arduino_value_pin_throttle);
-            ServoPacket servoPacket = new ServoPacket();
-            servoPacket.setOutputPin(ServoPacket.ServoType.AILERON, Integer.parseInt(aileronET.getText().toString()));
-            servoPacket.setOutputPin(ServoPacket.ServoType.ELEVATOR, Integer.parseInt(elevatorET.getText().toString()));
-            servoPacket.setOutputPin(ServoPacket.ServoType.RUDDER, Integer.parseInt(rudderET.getText().toString()));
-            servoPacket.setOutputPin(ServoPacket.ServoType.THROTTLE, Integer.parseInt(throttleET.getText().toString()));
-            Intent servoConfigIntent = servoPacket.toIntent(ServoPacket.INTENT_ACTION_INPUT);
-            sendBroadcast(servoConfigIntent);
-        }
+    //Sets the ReceiverCalibrationFragment to display the incoming receiver input calibration ranges
+    private void showCalibrationRange(ServoPacket.ServoType servoType, ServoPacket servoPacket) {
+        mReceiverCalibrationFragment.showCalibrationRange(servoType,
+                servoPacket.getInputMin(servoType), servoPacket.getInputMax(servoType));
     }
 
 }
