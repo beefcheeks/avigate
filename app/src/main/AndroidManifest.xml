@@ -81,8 +81,8 @@
                 android:value="com.rabidllamastudios.avigate.MainActivity" />
         </activity>
         <activity
-            android:name=".ArduinoTestActivity"
-            android:label="@string/title_activity_arduino_test"
+            android:name=".ConfigureArduinoActivity"
+            android:label="@string/title_activity_configure_arduino"
             android:parentActivityName=".MainActivity"
             android:theme="@style/AppTheme.NoActionBar" >
             <meta-data

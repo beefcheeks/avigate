@@ -4,7 +4,7 @@
     <string name="button_module_craft">Craft Module</string>
     <string name="button_module_controller">Controller Module</string>
 
-    <string name="button_arduino_test">Arduino Test</string>
+    <string name="button_arduino_configure">Configure Arduino</string>
     <string name="button_emergency_reset">Emergency Reset</string>
     <string name="button_sensor_readings">Sensor Readings</string>
     <string name="button_connectivity_test">Connectivity Test</string>
@@ -27,6 +27,7 @@
     <string name="et_arduino_value_pin_throttle">10</string>
 
     <string name="title_activity_display_sensor">Sensor Readings</string>
+    <string name="title_activity_configure_arduino">Configure Arduino</string>
     <string name="title_activity_connectivity_test">Connectivity Test</string>
 
     <string name="tv_main_title_modules">Flight Modules</string>

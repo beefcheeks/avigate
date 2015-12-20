@@ -32,7 +32,7 @@ import java.util.List;
  * Some code adapted from: https://github.com/felHR85/SerialPortExample
  */
 
-public class ArduinoTestActivity extends AppCompatActivity implements NumberPicker.OnValueChangeListener {
+public class ConfigureArduinoActivity extends AppCompatActivity implements NumberPicker.OnValueChangeListener {
 
     private static final int BAUD_RATE = 115200;
     private static final int PIN_MAX = 12;
@@ -41,6 +41,7 @@ public class ArduinoTestActivity extends AppCompatActivity implements NumberPick
     private static final int SERVO_MIN = 0;
 
     private boolean mUsbSerialIsReady = false;
+    private boolean calibrationMode = false;
 
     private int aileronMax = SERVO_MAX;
     private int aileronMin = SERVO_MIN;
@@ -60,7 +61,8 @@ public class ArduinoTestActivity extends AppCompatActivity implements NumberPick
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_arduino_test);
+        setTitle("Configure Arduino Servo Output");
+        setContentView(R.layout.activity_arduino);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -100,6 +102,8 @@ public class ArduinoTestActivity extends AppCompatActivity implements NumberPick
         configureServoEditText(ServoPacket.ServoType.RUDDER);
         configureServoEditText(ServoPacket.ServoType.THROTTLE);
         configureEmergencyResetButton();
+        configureInputsButton();
+        configureCalibrateButton();
     }
 
     @Override
@@ -167,7 +171,7 @@ public class ArduinoTestActivity extends AppCompatActivity implements NumberPick
                 rudderSeekBar.setProgress((rudderMax-rudderMin)/2);
                 throttleSeekBar.setProgress(SERVO_MIN);
 
-                //Request the status of the microcontroller
+                //Request the status of the arduino
                 ServoPacket statusRequestServoPacket = new ServoPacket();
                 statusRequestServoPacket.addStatusRequest();
                 sendBroadcast(statusRequestServoPacket.toIntent(ServoPacket.INTENT_ACTION_INPUT));
@@ -183,6 +187,35 @@ public class ArduinoTestActivity extends AppCompatActivity implements NumberPick
                 configureSeekbar(ServoPacket.ServoType.RUDDER, servoNeutral, SERVO_MIN, SERVO_MAX);
                 configureSeekbar(ServoPacket.ServoType.THROTTLE, SERVO_MIN, SERVO_MIN, SERVO_MAX);
                 return true;
+            }
+        });
+    }
+
+    private void configureInputsButton() {
+        final Button configureInputsButton = (Button) findViewById(R.id.button_arduino_inputs);
+        configureInputsButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ServoPacket configureInputsServoPacket = new ServoPacket();
+                configureInputsServoPacket.setInputPin(ServoPacket.ServoType.AILERON, 6);
+                configureInputsServoPacket.setInputPin(ServoPacket.ServoType.CUTOVER, 2);
+                configureInputsServoPacket.setInputPin(ServoPacket.ServoType.ELEVATOR, 4);
+                configureInputsServoPacket.setInputPin(ServoPacket.ServoType.RUDDER, 3);
+                configureInputsServoPacket.setInputPin(ServoPacket.ServoType.THROTTLE, 5);
+                sendBroadcast(configureInputsServoPacket.toIntent(ServoPacket.INTENT_ACTION_INPUT));
+            }
+        });
+    }
+
+    private void configureCalibrateButton() {
+        final Button configureCalibrateButton = (Button) findViewById(R.id.button_calibrate);
+        configureCalibrateButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ServoPacket calibrateServoPacket = new ServoPacket();
+                calibrationMode = !calibrationMode;
+                calibrateServoPacket.setCalibrationMode(calibrationMode);
+                sendBroadcast(calibrateServoPacket.toIntent(ServoPacket.INTENT_ACTION_INPUT));
             }
         });
     }
@@ -484,8 +517,6 @@ public class ArduinoTestActivity extends AppCompatActivity implements NumberPick
             } else if (intent.getAction().equals(UsbSerialService.ACTION_USB_DISCONNECTED)) {
                 mUsbSerialIsReady = false;
                 statusTV.setText("USB disconnected");
-                TextView outputTV = (TextView) findViewById(R.id.tv_arduino_value_output);
-                outputTV.setText("");
             } else if (intent.getAction().equals(UsbSerialService.ACTION_USB_PERMISSION_GRANTED)) {
                 statusTV.setText("USB permission granted");
             } else if (intent.getAction().equals(UsbSerialService.ACTION_USB_PERMISSION_NOT_GRANTED)) {
@@ -515,8 +546,8 @@ public class ArduinoTestActivity extends AppCompatActivity implements NumberPick
                     TextView statusTV = (TextView) findViewById(R.id.tv_arduino_value_status);
                     statusTV.setText("USB ready");
                 }
-                TextView outputTV = (TextView) findViewById(R.id.tv_arduino_value_output);
-                outputTV.setText(servoPacket.toJsonString());
+                TextView statusTV = (TextView) findViewById(R.id.tv_arduino_value_status);
+                statusTV.setText(servoPacket.toJsonString());
             }
         }
     };

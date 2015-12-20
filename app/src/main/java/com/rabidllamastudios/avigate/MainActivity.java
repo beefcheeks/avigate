@@ -44,8 +44,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /** Called when the user clicks the Arduino Test button */
-    public void startArduinoTest(View view) {
-        Intent intent = new Intent(this, ArduinoTestActivity.class);
+    public void startArduinoActivity(View view) {
+        Intent intent = new Intent(this, ConfigureArduinoActivity.class);
         startActivity(intent);
     }
 }
