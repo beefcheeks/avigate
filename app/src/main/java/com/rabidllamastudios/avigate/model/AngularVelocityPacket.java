@@ -7,24 +7,24 @@ import com.rabidllamastudios.avigate.AvigateApplication;
 
 /**
  * Created by Ryan on 11/19/15.
- * A data model class to communicate angular acceleration sensor data
+ * A data model class to communicate angular velocity sensor data
  * For convenience, this class can convert to and between Bundle and Intent
  */
-public class AngularAccelerationPacket {
+public class AngularVelocityPacket {
     private static final String PACKAGE_NAME = AvigateApplication.class.getPackage().getName();
-    public static final String INTENT_ACTION = PACKAGE_NAME + ".action.ANGULAR_ACCELERATION_DATA";
+    public static final String INTENT_ACTION = PACKAGE_NAME + ".action.ANGULAR_VELOCITY_DATA";
 
     private float mX;
     private float mY;
     private float mZ;
 
-    public AngularAccelerationPacket(float x, float y, float z) {
+    public AngularVelocityPacket(float x, float y, float z) {
         mX = x;
         mY = y;
         mZ = z;
     }
 
-    public AngularAccelerationPacket(Bundle bundle) {
+    public AngularVelocityPacket(Bundle bundle) {
         mX = bundle.getFloat("x");
         mY = bundle.getFloat("y");
         mZ = bundle.getFloat("z");

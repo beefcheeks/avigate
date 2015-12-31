@@ -64,8 +64,8 @@ public class ConfigureArduinoActivity extends AppCompatActivity {
         mReceiverCalibrationFragment.setCallback(mReceiverCalibrationCallback);
 
         //Configure the FragmentPagerAdapter
-        CustomFragmentPagerAdapter fragmentPagerAdapter =
-                new CustomFragmentPagerAdapter(getSupportFragmentManager());
+        TabFragmentPagerAdapter fragmentPagerAdapter =
+                new TabFragmentPagerAdapter(getSupportFragmentManager());
         fragmentPagerAdapter.addEntry(0, "Outputs", mServoOutputFragment);
         fragmentPagerAdapter.addEntry(1, "Inputs", mServoInputFragment);
         fragmentPagerAdapter.addEntry(2, "Calibration", mReceiverCalibrationFragment);
@@ -73,6 +73,7 @@ public class ConfigureArduinoActivity extends AppCompatActivity {
         //Configure the ViewPager
         NonSwipeableViewPager viewPager =
                 (NonSwipeableViewPager) findViewById(R.id.viewpager_configure_arduino);
+        viewPager.setOffscreenPageLimit(fragmentPagerAdapter.getCount());
         viewPager.setAdapter(fragmentPagerAdapter);
 
         //Set up the TabLayout with the configure ViewPager

@@ -13,7 +13,7 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.IBinder;
 
-import com.rabidllamastudios.avigate.model.AngularAccelerationPacket;
+import com.rabidllamastudios.avigate.model.AngularVelocityPacket;
 import com.rabidllamastudios.avigate.model.GPSPacket;
 import com.rabidllamastudios.avigate.model.LinearAccelerationPacket;
 import com.rabidllamastudios.avigate.model.MagneticFieldPacket;
@@ -42,12 +42,6 @@ public class SensorService extends Service implements SensorEventListener {
     private Quaternion mPhoneOrientationQuaternion;
 
     public SensorService() {
-    }
-
-    public static Intent getConfiguredIntent(Context context) {
-        Intent intent = new Intent(context, SensorService.class);
-        intent.putExtra(SENSOR_RATE, DEFAULT_SENSOR_RATE);
-        return intent;
     }
 
     public static Intent getConfiguredIntent(Context context, int sensorRate) {
@@ -88,7 +82,8 @@ public class SensorService extends Service implements SensorEventListener {
                 } else {
                     gpsVector[4] = Double.NaN;
                 }
-                Intent gpsIntent = new GPSPacket(gpsVector[0], gpsVector[1], gpsVector[2], gpsVector[3], gpsVector[4]).toIntent();
+                Intent gpsIntent = new GPSPacket(gpsVector[0], gpsVector[1], gpsVector[2],
+                        gpsVector[3], gpsVector[4]).toIntent();
                 sendBroadcast(gpsIntent);
             }
 
@@ -124,7 +119,8 @@ public class SensorService extends Service implements SensorEventListener {
 
             //TODO make GPS refresh rate configurable via Intent
             //Start GPS using fastest rate (0)
-            mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, mLocationListener);
+            mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0,
+                    mLocationListener);
 
         }
         return START_STICKY;
@@ -134,17 +130,22 @@ public class SensorService extends Service implements SensorEventListener {
     public void onSensorChanged(SensorEvent event) {
         Sensor sensor = event.sensor;
         if (sensor.getType() == Sensor.TYPE_LINEAR_ACCELERATION) {
-            Intent linearAccelerationIntent = new LinearAccelerationPacket(event.values[0], event.values[1], event.values[2]).toIntent();
+            Intent linearAccelerationIntent = new LinearAccelerationPacket(event.values[0],
+                    event.values[1], event.values[2]).toIntent();
             sendBroadcast(linearAccelerationIntent);
         } else if (sensor.getType() == Sensor.TYPE_GYROSCOPE) {
-            Intent angularAccelerationIntent = new AngularAccelerationPacket(event.values[0], event.values[1], event.values[2]).toIntent();
-            sendBroadcast(angularAccelerationIntent);
+            Intent angularVelocityIntent = new AngularVelocityPacket(event.values[0],
+                    event.values[1], event.values[2]).toIntent();
+            sendBroadcast(angularVelocityIntent);
         } else if (sensor.getType() == Sensor.TYPE_ROTATION_VECTOR) {
-            mPhoneOrientationQuaternion.setAll(event.values[3], event.values[0], event.values[1], event.values[2]);
-            Intent orientationIntent = new OrientationPacket(mPhoneOrientationQuaternion).toIntent();
+            mPhoneOrientationQuaternion.setAll(event.values[3], event.values[0], event.values[1],
+                    event.values[2]);
+            Intent orientationIntent =
+                    new OrientationPacket(mPhoneOrientationQuaternion).toIntent();
             sendBroadcast(orientationIntent);
         } else if (sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
-            Intent magneticFieldIntent = new MagneticFieldPacket(event.values[0], event.values[1], event.values[2]).toIntent();
+            Intent magneticFieldIntent = new MagneticFieldPacket(event.values[0], event.values[1],
+                    event.values[2]).toIntent();
             sendBroadcast(magneticFieldIntent);
         } else if (sensor.getType() == Sensor.TYPE_PRESSURE) {
             Intent pressureIntent = new PressurePacket(event.values[0]).toIntent();

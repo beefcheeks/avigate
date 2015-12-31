@@ -39,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
 
     /** Called when the user clicks the Flight Visualizer button */
     public void startFlightVisualizer(View view) {
-        Intent intent = new Intent(this, FlightVisualizer.class);
+        Intent intent = new Intent(this, FlightVisualizerActivity.class);
         startActivity(intent);
     }
 

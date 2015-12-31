@@ -15,7 +15,7 @@ import org.rajawali3d.math.Quaternion;
 import org.rajawali3d.surface.IRajawaliSurface;
 import org.rajawali3d.surface.RajawaliSurfaceView;
 
-public class FlightVisualizer extends AppCompatActivity implements SensorEventListener {
+public class FlightVisualizerActivity extends AppCompatActivity implements SensorEventListener {
 
     FlightRenderer mFlightRenderer;
     private SensorManager mSensorManager;

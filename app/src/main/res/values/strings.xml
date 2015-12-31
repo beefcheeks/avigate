@@ -98,17 +98,16 @@
     <string name="tv_sensor_label_orientation_y">Y Direction:</string>
     <string name="tv_sensor_label_orientation_z">Z Direction:</string>
 
-    <string name="tv_sensor_title_acceleration">Acceleration</string>
-    <string name="tv_sensor_title_linear_acceleration">Linear Acceleration Reading (m/s/s)</string>
+    <string name="tv_sensor_title_velocity_acceleration">Velocity and Acceleration</string>
+    <string name="tv_sensor_title_linear_acceleration">Linear Acceleration (m/s/s)</string>
     <string name="tv_sensor_label_linear_acceleration_x">X Direction:</string>
     <string name="tv_sensor_label_linear_acceleration_y">Y Direction:</string>
     <string name="tv_sensor_label_linear_acceleration_z">Z Direction:</string>
 
-    <string name="tv_sensor_title_angular_acceleration">
-        Angular Acceleration Readings (rad/sec)</string>
-    <string name="tv_sensor_label_angular_acceleration_x">About X Axis:</string>
-    <string name="tv_sensor_label_angular_acceleration_y">About Y Axis:</string>
-    <string name="tv_sensor_label_angular_acceleration_z">About Z Axis:</string>
+    <string name="tv_sensor_title_angular_velocity">Angular Velocity (rad/sec)</string>
+    <string name="tv_sensor_label_angular_velocity_x">About X Axis:</string>
+    <string name="tv_sensor_label_angular_velocity_y">About Y Axis:</string>
+    <string name="tv_sensor_label_angular_velocity_z">About Z Axis:</string>
 
     <string name="tv_usb_value_ready">USB ready</string>
     <string name="tv_usb_value_disconnected">USB disconnected</string>

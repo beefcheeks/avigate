@@ -243,22 +243,93 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/tv_sensor_section_position"
         android:paddingTop="8dp"
-        android:text="@string/tv_sensor_title_acceleration"
+        android:text="@string/tv_sensor_title_velocity_acceleration"
         android:textStyle="bold"
         android:textSize="16sp"
-        android:id="@+id/tv_sensor_title_acceleration"
+        android:id="@+id/tv_sensor_title_velocity_acceleration"
         />
 
     <RelativeLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/tv_sensor_title_acceleration"
+        android:layout_below="@id/tv_sensor_title_velocity_acceleration"
         android:paddingLeft="16dp"
         android:id="@+id/tv_sensor_section_acceleration">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:paddingTop="8dp"
+            android:text="@string/tv_sensor_title_angular_velocity"
+            android:textStyle="bold"
+            android:id="@+id/tv_sensor_title_angular_velocity"
+            />
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_sensor_title_angular_velocity"
+            android:paddingLeft="24dp"
+            android:id="@+id/tv_sensor_section_angular_velocity">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/tv_sensor_label_angular_velocity_x"
+                android:id="@+id/tv_sensor_label_angular_velocity_x"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toRightOf="@id/tv_sensor_label_angular_velocity_x"
+                android:paddingLeft="8dp"
+                android:text="@string/tv_placeholder_sensor"
+                android:id="@+id/tv_sensor_value_angular_velocity_x"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/tv_sensor_label_angular_velocity_x"
+                android:text="@string/tv_sensor_label_angular_velocity_y"
+                android:id="@+id/tv_sensor_label_angular_velocity_y"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/tv_sensor_label_angular_velocity_x"
+                android:layout_toRightOf="@id/tv_sensor_label_angular_velocity_y"
+                android:paddingLeft="8dp"
+                android:text="@string/tv_placeholder_sensor"
+                android:id="@+id/tv_sensor_value_angular_velocity_y"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/tv_sensor_label_angular_velocity_y"
+                android:text="@string/tv_sensor_label_angular_velocity_z"
+                android:id="@+id/tv_sensor_label_angular_velocity_z"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/tv_sensor_label_angular_velocity_y"
+                android:layout_toRightOf="@id/tv_sensor_label_angular_velocity_z"
+                android:paddingLeft="8dp"
+                android:text="@string/tv_placeholder_sensor"
+                android:id="@+id/tv_sensor_value_angular_velocity_z"
+                />
+
+        </RelativeLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_sensor_section_angular_velocity"
             android:paddingTop="8dp"
             android:text="@string/tv_sensor_title_linear_acceleration"
             android:textStyle="bold"
@@ -322,77 +393,6 @@
                 android:paddingLeft="8dp"
                 android:text="@string/tv_placeholder_sensor"
                 android:id="@+id/tv_sensor_value_linear_acceleration_z"
-                />
-
-        </RelativeLayout>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/tv_sensor_section_linear_acceleration"
-            android:paddingTop="8dp"
-            android:text="@string/tv_sensor_title_angular_acceleration"
-            android:textStyle="bold"
-            android:id="@+id/tv_sensor_title_angular_acceleration"
-            />
-
-        <RelativeLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/tv_sensor_title_angular_acceleration"
-            android:paddingLeft="24dp"
-            android:id="@+id/tv_sensor_section_angular_acceleration">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/tv_sensor_label_angular_acceleration_x"
-                android:id="@+id/tv_sensor_label_angular_acceleration_x"
-                />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_toRightOf="@id/tv_sensor_label_angular_acceleration_x"
-                android:paddingLeft="8dp"
-                android:text="@string/tv_placeholder_sensor"
-                android:id="@+id/tv_sensor_value_angular_acceleration_x"
-                />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_below="@+id/tv_sensor_label_angular_acceleration_x"
-                android:text="@string/tv_sensor_label_angular_acceleration_y"
-                android:id="@+id/tv_sensor_label_angular_acceleration_y"
-                />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/tv_sensor_label_angular_acceleration_x"
-                android:layout_toRightOf="@id/tv_sensor_label_angular_acceleration_y"
-                android:paddingLeft="8dp"
-                android:text="@string/tv_placeholder_sensor"
-                android:id="@+id/tv_sensor_value_angular_acceleration_y"
-                />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_below="@+id/tv_sensor_label_angular_acceleration_y"
-                android:text="@string/tv_sensor_label_angular_acceleration_z"
-                android:id="@+id/tv_sensor_label_angular_acceleration_z"
-                />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/tv_sensor_label_angular_acceleration_y"
-                android:layout_toRightOf="@id/tv_sensor_label_angular_acceleration_z"
-                android:paddingLeft="8dp"
-                android:text="@string/tv_placeholder_sensor"
-                android:id="@+id/tv_sensor_value_angular_acceleration_z"
                 />
 
         </RelativeLayout>

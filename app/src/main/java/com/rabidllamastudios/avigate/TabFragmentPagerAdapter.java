@@ -12,11 +12,11 @@ import java.util.List;
  * This FragmentPagerAdapter class configures any number of Tab Title and Fragment pairs
  * This class is intended for use with the TabLayout class
  */
-public class CustomFragmentPagerAdapter extends FragmentPagerAdapter {
+public class TabFragmentPagerAdapter extends FragmentPagerAdapter {
     private List<String> mTabTitles;
     private List<Fragment> mFragments;
 
-    public CustomFragmentPagerAdapter(FragmentManager fragmentManager) {
+    public TabFragmentPagerAdapter(FragmentManager fragmentManager) {
         super(fragmentManager);
         mTabTitles = new ArrayList<>();
         mFragments = new ArrayList<>();
