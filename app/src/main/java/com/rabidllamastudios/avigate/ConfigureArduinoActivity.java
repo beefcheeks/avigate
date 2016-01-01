@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.support.design.widget.TabLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.MenuItem;
 import android.widget.TextView;
 
 import com.rabidllamastudios.avigate.fragments.ReceiverCalibrationFragment;
@@ -31,6 +32,7 @@ public class ConfigureArduinoActivity extends AppCompatActivity {
     private static final int BAUD_RATE = 115200;
 
     private boolean mUsbSerialIsReady = false;
+    private ServoPacket mMasterServoPacket;
 
     private Intent mCommService;
     private Intent mUsbSerialService;
@@ -131,8 +133,28 @@ public class ConfigureArduinoActivity extends AppCompatActivity {
         super.onResume();
     }
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.item_enable_transmitter:
+                //This menu action is handled by ReceiverCalibrationFragment and not this activity
+                return false;
+            case R.id.item_reset_servos:
+                //This menu action is handled by ServoOutputFragment and not this activity
+                return false;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
     //Implemented callback methods for ServoOutputFragment.Callback
     private ServoOutputFragment.Callback mServoOutputCallback = new ServoOutputFragment.Callback() {
+
+        @Override
+        public void loadOutputConfiguration() {
+            //Loads the output configuration for the ServoOutputFragment
+            mServoOutputFragment.loadOutputConfiguration(mMasterServoPacket);
+        }
 
         @Override
         public void setServoOutputPin(ServoPacket.ServoType servoType, int pinValue) {
@@ -142,6 +164,7 @@ public class ConfigureArduinoActivity extends AppCompatActivity {
                 servoPacket.setOutputPin(servoType, pinValue);
                 sendBroadcast(servoPacket.toIntent(ServoPacket.INTENT_ACTION_INPUT));
             }
+            mMasterServoPacket.setOutputPin(servoType, pinValue);
         }
 
         @Override
@@ -153,6 +176,7 @@ public class ConfigureArduinoActivity extends AppCompatActivity {
                 servoPacket.setOutputRange(servoType, outputMin, outputMax);
                 sendBroadcast(servoPacket.toIntent(ServoPacket.INTENT_ACTION_INPUT));
             }
+            mMasterServoPacket.setOutputRange(servoType, outputMin, outputMax);
         }
 
         @Override
@@ -169,6 +193,12 @@ public class ConfigureArduinoActivity extends AppCompatActivity {
     //Implemented callback methods for ServoInputFragment.Callback
     private ServoInputFragment.Callback mServoInputCallback = new ServoInputFragment.Callback() {
         @Override
+        public void loadInputConfiguration() {
+            //Loads the input configuration for the ServoInputFragment
+            mServoInputFragment.loadInputConfiguration(mMasterServoPacket);
+        }
+
+        @Override
         public void setControlType(ServoPacket.ServoType servoType, boolean receiverOnly) {
             if (mUsbSerialIsReady) {
                 //Sets the control type (e.g. shared or receiver only) for a given ServoType
@@ -176,6 +206,7 @@ public class ConfigureArduinoActivity extends AppCompatActivity {
                 servoPacket.setInputControl(servoType, receiverOnly);
                 sendBroadcast(servoPacket.toIntent(ServoPacket.INTENT_ACTION_INPUT));
             }
+            mMasterServoPacket.setInputControl(servoType, receiverOnly);
         }
 
         @Override
@@ -186,6 +217,7 @@ public class ConfigureArduinoActivity extends AppCompatActivity {
                 servoPacket.setInputPin(servoType, pinValue);
                 sendBroadcast(servoPacket.toIntent(ServoPacket.INTENT_ACTION_INPUT));
             }
+            mMasterServoPacket.setInputPin(servoType, pinValue);
         }
     };
 
@@ -204,7 +236,39 @@ public class ConfigureArduinoActivity extends AppCompatActivity {
             }
         }
 
+        @Override
+        public void loadCalibrationValues() {
+            //Loads the calibration values stored in the master ServoPacket
+            mReceiverCalibrationFragment.loadCalibrationConfig(mMasterServoPacket);
+        }
 
+        @Override
+        public void transmitterIconPressed(boolean enableTransmitter) {
+            //Different warning dialogs are displayed depending on the configuration / Arduino state
+            if (mMasterServoPacket.hasInputRanges()) {
+                if (mUsbSerialIsReady) {
+                    //If the transmitter is to be enabled, send the appropriate ServoPacket
+                    if (enableTransmitter) {
+                        //Use the getInputRangesJson method to get the minimum necessary ServoPacket
+                        //The maximum Arduino input stream size is 255 characters
+                        sendReceiverInputRange(ServoPacket.ServoType.AILERON);
+                        sendReceiverInputRange(ServoPacket.ServoType.ELEVATOR);
+                        sendReceiverInputRange(ServoPacket.ServoType.RUDDER);
+                        sendReceiverInputRange(ServoPacket.ServoType.THROTTLE);
+                        sendReceiverInputRange(ServoPacket.ServoType.CUTOVER);
+                    } else {
+                        mReceiverCalibrationFragment.showTransmitterWarningDialog();
+                    }
+                } else {
+                    mReceiverCalibrationFragment.showNoUsbDeviceTransmitterWarningDialog();
+                }
+            } else {
+                mReceiverCalibrationFragment.showNotCalibratedWarningDialog();
+            }
+        }
+    };
+
+    //Detects when a connection has been made via a ConnectionPacket Intent
     private final BroadcastReceiver mConnectionReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -271,6 +335,12 @@ public class ConfigureArduinoActivity extends AppCompatActivity {
                 if (servoPacket.isStatusReady()) {
                     if (!mUsbSerialIsReady) mUsbSerialIsReady = true;
                     statusTV.setText(getString(R.string.tv_arduino_value_ready));
+                    //Send the config for each servo (minus receiver input and max) to the Arduino
+                    sendServoConfig(ServoPacket.ServoType.AILERON);
+                    sendServoConfig(ServoPacket.ServoType.ELEVATOR);
+                    sendServoConfig(ServoPacket.ServoType.RUDDER);
+                    sendServoConfig(ServoPacket.ServoType.THROTTLE);
+                    sendServoConfig(ServoPacket.ServoType.CUTOVER);
                 }
 
                 //If the ServoPacket contains the receiverControl json key, set mReceiverOnly
@@ -330,10 +400,30 @@ public class ConfigureArduinoActivity extends AppCompatActivity {
         startService(mCommService);
     }
 
+    //Sends the receiver input min and max for a given ServoType
+    private void sendReceiverInputRange(ServoPacket.ServoType servoType) {
+        String servoInputRangeJson = mMasterServoPacket.getInputRangeJson(servoType);
+        if (servoInputRangeJson != null) {
+            ServoPacket servoPacket = new ServoPacket(servoInputRangeJson);
+            sendBroadcast(servoPacket.toIntent(ServoPacket.INTENT_ACTION_INPUT));
+        }
+    }
+
+    //Sends the configuration (minus the receiver input min and max) for a given ServoType
+    private void sendServoConfig(ServoPacket.ServoType servoType) {
+        String servoConfigJson = mMasterServoPacket.getConfigJson(servoType);
+        if (servoConfigJson != null) {
+            ServoPacket servoPacket = new ServoPacket(servoConfigJson);
+            sendBroadcast(servoPacket.toIntent(ServoPacket.INTENT_ACTION_INPUT));
+        }
+    }
+
     //Sets the ReceiverCalibrationFragment to display the incoming receiver input calibration ranges
     private void showCalibrationRange(ServoPacket.ServoType servoType, ServoPacket servoPacket) {
         mReceiverCalibrationFragment.showCalibrationRange(servoType,
                 servoPacket.getInputMin(servoType), servoPacket.getInputMax(servoType));
+        mMasterServoPacket.setInputRange(servoType, servoPacket.getInputMin(servoType),
+                servoPacket.getInputMax(servoType));
     }
 
 }

@@ -22,6 +22,9 @@
     <string name="et_connect_hint_topic">Topic</string>
     <string name="et_connect_hint_message">Message</string>
 
+    <string name="item_enable_transmitter">Enable transmitter</string>
+    <string name="item_reset_servos">Reset servos</string>
+
     <string name="title_activity_configure_arduino">Configure Arduino</string>
     <string name="title_activity_connectivity_test">Connectivity Test</string>
     <string name="title_activity_controller">Controller Module</string>

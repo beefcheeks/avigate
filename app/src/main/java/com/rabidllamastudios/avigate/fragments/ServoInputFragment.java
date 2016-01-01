@@ -34,6 +34,8 @@ public class ServoInputFragment extends Fragment implements NumberPicker.OnValue
                              Bundle savedInstanceState) {
         mRootView = inflater.inflate(R.layout.fragment_servo_inputs, container, false);
 
+        if (mCallback != null) mCallback.loadInputConfiguration();
+
         //Configure UI
         configurePinEditText();
         configureCheckBoxes();
@@ -45,6 +47,28 @@ public class ServoInputFragment extends Fragment implements NumberPicker.OnValue
     //Enables the Fragment to communicate with the activity
     public void setCallback(Callback callback) {
         mCallback = callback;
+    }
+
+    //Loads the servo input configuration into the fragment UI from the masterServoPacket parameter
+    public void loadInputConfiguration(ServoPacket masterServoPacket) {
+        loadServoInputConfig(masterServoPacket, ServoPacket.ServoType.AILERON);
+        loadServoInputConfig(masterServoPacket, ServoPacket.ServoType.ELEVATOR);
+        loadServoInputConfig(masterServoPacket, ServoPacket.ServoType.RUDDER);
+        loadServoInputConfig(masterServoPacket, ServoPacket.ServoType.THROTTLE);
+        loadServoInputConfig(masterServoPacket, ServoPacket.ServoType.CUTOVER);
+    }
+
+    //Loads the input pin and receiverOnly value from a ServoPacket for a given ServoType
+    private void loadServoInputConfig(ServoPacket servoPacket, ServoPacket.ServoType servoType) {
+        EditText editText = getInputPinEditText(servoType);
+        if (editText != null && servoPacket.hasInputPin(servoType)) {
+            editText.setText(String.valueOf(servoPacket.getInputPin(servoType)));
+        }
+
+        CheckBox checkBox = getCheckBox(servoType);
+        if (checkBox != null && servoPacket.hasReceiverOnly(servoType)) {
+            checkBox.setChecked(!servoPacket.isReceiverOnly(servoType));
+        }
     }
 
     //Configures all input pin EditTexts
@@ -178,6 +202,9 @@ public class ServoInputFragment extends Fragment implements NumberPicker.OnValue
      * This is the callback class for ServoInputFragment
      */
     public interface Callback {
+        //Triggers the loading of the servo input configuration
+        void loadInputConfiguration();
+
         //Sets the control type for a given ServoType (e.g. shared control or receiver only)
         void setControlType(ServoPacket.ServoType servoType, boolean receiverOnly);
 

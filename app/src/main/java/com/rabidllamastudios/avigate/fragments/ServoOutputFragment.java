@@ -3,9 +3,13 @@ package com.rabidllamastudios.avigate.fragments;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
@@ -98,6 +102,43 @@ public class ServoOutputFragment extends Fragment implements NumberPicker.OnValu
     //Enables the Fragment to communicate with the activity
     public void setCallback(Callback callback) {
         mCallback = callback;
+    }
+
+    //Resets all servo output values to their default
+    private void resetServoValues() {
+        SeekBar aileronSeekBar = (SeekBar) mRootView.findViewById(R.id.seekbar_aileron);
+        SeekBar elevatorSeekBar = (SeekBar) mRootView.findViewById(R.id.seekbar_elevator);
+        SeekBar rudderSeekBar = (SeekBar) mRootView.findViewById(R.id.seekbar_rudder);
+        SeekBar throttleSeekBar = (SeekBar) mRootView.findViewById(R.id.seekbar_throttle);
+
+        aileronSeekBar.setProgress((mAileronMax - mAileronMin) / 2);
+        elevatorSeekBar.setProgress((mElevatorMax - mElevatorMin) / 2);
+        rudderSeekBar.setProgress((mRudderMax - mRudderMin) / 2);
+        throttleSeekBar.setProgress(SERVO_MIN);
+
+        //Shows Snackbar alerting user that servo values were reset
+        Snackbar.make(mRootView, "Servo values have been reset", Snackbar.LENGTH_SHORT).show();
+    }
+
+    //Loads the output configuration from a ServoPacket for a given ServoType
+    private void loadServoOutputConfig(ServoPacket servoPacket, ServoPacket.ServoType servoType) {
+        //If the config has an output pin set, set the output pin EditText for that ServoType
+        EditText editText = getOutputPinEditText(servoType);
+        if (editText != null && servoPacket.hasOutputPin(servoType)) {
+            editText.setText(String.valueOf(servoPacket.getOutputPin(servoType)));
+        }
+
+        //If the config contains an output min, set that setOutputMin for that ServoType
+        if (servoPacket.hasOutputMin(servoType)) {
+            int min = servoPacket.getOutputMin(servoType);
+            if (min != -1) setOutputMin(servoType, min);
+        }
+
+        //If the config contains an output max, set that setOutputMin for that ServoType
+        if (servoPacket.hasOutputMax(servoType)) {
+            int max = servoPacket.getOutputMax(servoType);
+            if (max != -1) setOutputMax(servoType, max);
+        }
     }
 
     //Configures all SeekBars in the layout
@@ -440,6 +481,9 @@ public class ServoOutputFragment extends Fragment implements NumberPicker.OnValu
      * This is the callback class for ServoOutputFragment
      */
     public interface Callback {
+        //Triggers the loading of the servo output configuration
+        void loadOutputConfiguration();
+
         //Sets the pin number for a given ServoType
         void setServoOutputPin(ServoPacket.ServoType servoType, int pinValue);
 
