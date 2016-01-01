@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:clipToPadding="false"
+    android:padding="12dp">
+
+    <android.support.v7.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/cardview_row_arduino"
+        card_view:cardElevation="4dp">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:padding="8dp">
+
+            <LinearLayout
+                android:id="@+id/thumbnail_image"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                android:layout_marginEnd="5dp"
+                android:layout_marginRight="5dp"
+                android:padding="3dp">
+
+                <!--craft profile image -->
+                <ImageView
+                    android:id="@+id/iv_row_craft_profile_image"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:contentDescription="@string/iv_row_craft_profile_image"
+                    android:src="@mipmap/ic_launcher" />
+
+            </LinearLayout>
+
+            <!--craft name-->
+            <TextView
+                android:id="@+id/row_craft_profile_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignEnd="@+id/row_craft_calibration_details"
+                android:layout_alignRight="@+id/row_craft_calibration_details"
+                android:layout_alignTop="@+id/thumbnail_image"
+                android:layout_toRightOf="@+id/thumbnail_image"
+                android:layout_toEndOf="@+id/thumbnail_image"
+                android:textColor="#000000"
+                android:textStyle="bold"
+                android:textSize="20sp" />
+
+            <ImageButton
+                android:id="@+id/ib_row_overflow_menu_image"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentEnd="true"
+                android:background="@color/colorWhite"
+                android:src="@drawable/ic_more_vert_black_18dp"
+                android:alpha="0.4"
+                android:contentDescription="@string/ib_row_overflow_menu_image" />
+
+            <!--calibration details-->
+            <TextView
+                android:id="@+id/row_craft_calibration_details"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/row_craft_profile_name"
+                android:layout_marginTop="1dip"
+                android:layout_toRightOf="@+id/thumbnail_image"
+                android:layout_toEndOf="@+id/thumbnail_image"
+                android:textColor="#343434"
+                android:textSize="14sp" />
+
+            <RelativeLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/thumbnail_image">
+
+                <Button
+                    android:layout_width="60sp"
+                    android:layout_height="40sp"
+                    android:gravity="center_vertical|start"
+                    android:textColor="@color/colorAccent"
+                    android:text="Fly"
+                    android:id="@+id/button_fly"
+                    style="?android:attr/borderlessButtonStyle"/>
+
+                <Button
+                    android:layout_width="wrap_content"
+                    android:layout_height="40sp"
+                    android:gravity="center_vertical|start"
+                    android:layout_toRightOf="@+id/button_fly"
+                    android:layout_toEndOf="@+id/button_fly"
+                    android:textColor="#343434"
+                    android:id="@+id/button_configure"
+                    android:text="Configure"
+                    style="?android:attr/borderlessButtonStyle"/>
+
+            </RelativeLayout>
+
+        </RelativeLayout>
+
+    </android.support.v7.widget.CardView>
+
+</LinearLayout>

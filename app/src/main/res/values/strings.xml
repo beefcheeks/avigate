@@ -22,7 +22,12 @@
     <string name="et_connect_hint_topic">Topic</string>
     <string name="et_connect_hint_message">Message</string>
 
+    <string name="ib_row_overflow_menu_image">Overflow menu</string>
+    <string name="iv_row_craft_profile_image">Craft image</string>
+
+    <string name="item_delete_profile">Delete</string>
     <string name="item_enable_transmitter">Enable transmitter</string>
+    <string name="item_rename_craft">Rename</string>
     <string name="item_reset_servos">Reset servos</string>
 
     <string name="title_activity_configure_arduino">Configure Arduino</string>
@@ -31,6 +36,7 @@
     <string name="title_activity_craft">Craft Module</string>
     <string name="title_activity_display_sensor">Sensor Readings</string>
     <string name="title_activity_flight_visualizer">Orientation Visualizer</string>
+    <string name="title_activity_select_craft">Select Craft</string>
 
     <string name="tv_arduino_label_aileron">Aileron</string>
     <string name="tv_arduino_label_cutover">Cutover</string>

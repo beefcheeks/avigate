@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
@@ -32,6 +33,10 @@ public class ConfigureArduinoActivity extends AppCompatActivity {
     private static final int BAUD_RATE = 115200;
 
     private boolean mUsbSerialIsReady = false;
+    private String mCraftProfileName = null;
+
+    private SharedPreferencesManager mSharedPreferencesManager;
+    private ServoPacket mImportedServoPacket = null;
     private ServoPacket mMasterServoPacket;
 
     private Intent mCommService;
@@ -53,6 +58,8 @@ public class ConfigureArduinoActivity extends AppCompatActivity {
 
         assert getSupportActionBar() != null;
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        loadArduinoConfiguration(getIntent());
 
         //Configure the fragments and their callbacks
         mServoOutputFragment = new ServoOutputFragment();
@@ -136,6 +143,17 @@ public class ConfigureArduinoActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
+            case android.R.id.home:
+                //If changes have been made to the configuration, prompt the user to save them
+                if (!mMasterServoPacket.equals(mImportedServoPacket)) {
+                    //If there are duplicate pins configured, warn the user
+                    if (mMasterServoPacket.hasDuplicatePins()) {
+                        showDuplicatePinsAlertDialog();
+                    } else {
+                        showSaveChangesAlertDialog();
+                    }
+                    return true;
+                }
             case R.id.item_enable_transmitter:
                 //This menu action is handled by ReceiverCalibrationFragment and not this activity
                 return false;
@@ -144,6 +162,19 @@ public class ConfigureArduinoActivity extends AppCompatActivity {
                 return false;
             default:
                 return super.onOptionsItemSelected(item);
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        //If changes have been made to the configuration, prompt the user to save them
+        if (!mMasterServoPacket.equals(mImportedServoPacket)) {
+            if (mMasterServoPacket.hasDuplicatePins()) {
+                //If there are duplicate pins configured, warn the user
+                showDuplicatePinsAlertDialog();
+            } else {
+                showSaveChangesAlertDialog();
+            }
         }
     }
 
@@ -383,6 +414,24 @@ public class ConfigureArduinoActivity extends AppCompatActivity {
         }
     };
 
+    //Loads the Arduino configuration into a ServoPacket from SharedPreferences
+    private void loadArduinoConfiguration(Intent intent) {
+        mMasterServoPacket = new ServoPacket();
+        mCraftProfileName = intent.getStringExtra(SharedPreferencesManager.KEY_CRAFT_NAME);
+        mSharedPreferencesManager = new SharedPreferencesManager(this);
+        //If the craft profile name is not null, load the craft configuration
+        if (mCraftProfileName != null) {
+            String config = mSharedPreferencesManager.getCraftConfiguration(
+                    mCraftProfileName);
+            //If the craft configuration is not null, save the configuration into ServoPackets
+            if (config != null) {
+                //Save the
+                mImportedServoPacket = new ServoPacket(config);
+                mMasterServoPacket = new ServoPacket(config);
+            }
+        }
+    }
+
     //Configure and start the communications service.
     private void startCommunicationsService() {
         List<String> localSubs = new ArrayList<>();
@@ -398,6 +447,60 @@ public class ConfigureArduinoActivity extends AppCompatActivity {
         mCommService = CommunicationsService.getConfiguredIntent(this, localSubs, remoteSubs,
                 CommunicationsService.DeviceType.CONTROLLER);
         startService(mCommService);
+    }
+
+    //Prompts the user to save any changes made to the Arduino configuration for this craft profile
+    private void showDuplicatePinsAlertDialog() {
+        if (mCraftProfileName != null) {
+            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+            alertDialogBuilder.setTitle("Warning - Duplicate Pins!");
+            alertDialogBuilder.setMessage(
+                    "Duplicate pins detected. If not intended, this may result in" +
+                            " an UNCONTROLLABLE CRAFT! " +
+                            "Would you like to go back and correct the duplicate pins?");
+            alertDialogBuilder.setNegativeButton("Proceed", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    showSaveChangesAlertDialog();
+                }
+            });
+            alertDialogBuilder.setPositiveButton("Go back", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {}
+            });
+            AlertDialog alertDialog = alertDialogBuilder.create();
+            alertDialog.show();
+        } else {
+            NavUtils.navigateUpFromSameTask(ConfigureArduinoActivity.this);
+        }
+    }
+
+    //Prompts the user to save any changes made to the Arduino configuration for this craft profile
+    private void showSaveChangesAlertDialog() {
+        if (mCraftProfileName != null) {
+            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+            alertDialogBuilder.setTitle("Save changes?");
+            alertDialogBuilder.setMessage(
+                    "Would you like to save changes made to this configuration?");
+            alertDialogBuilder.setNegativeButton("Discard", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    NavUtils.navigateUpFromSameTask(ConfigureArduinoActivity.this);
+                }
+            });
+            alertDialogBuilder.setPositiveButton("Save", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    mSharedPreferencesManager.updateCraftConfiguration(mCraftProfileName,
+                            mMasterServoPacket.toJsonString());
+                    NavUtils.navigateUpFromSameTask(ConfigureArduinoActivity.this);
+                }
+            });
+            AlertDialog alertDialog = alertDialogBuilder.create();
+            alertDialog.show();
+        } else {
+            NavUtils.navigateUpFromSameTask(ConfigureArduinoActivity.this);
+        }
     }
 
     //Sends the receiver input min and max for a given ServoType

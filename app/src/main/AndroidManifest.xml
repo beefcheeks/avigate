@@ -31,13 +31,17 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".DisplaySensorActivity"
-            android:label="@string/title_activity_display_sensor"
-            android:parentActivityName=".MainActivity"
+            android:name=".ConfigureArduinoActivity"
+            android:label="@string/title_activity_configure_arduino"
+            android:parentActivityName=".SelectCraftActivity"
             android:theme="@style/AppTheme.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.rabidllamastudios.avigate.MainActivity" />
+                android:value=".SelectCraftActivity" />
+
+            <intent-filter>
+                <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
+            </intent-filter>
         </activity>
         <activity
             android:name=".ConnectivityTestActivity"
@@ -46,16 +50,16 @@
             android:theme="@style/AppTheme.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.rabidllamastudios.avigate.MainActivity" />
+                android:value=".MainActivity" />
         </activity>
         <activity
-            android:name=".FlightVisualizer"
-            android:label="@string/title_activity_flight_visualizer"
-            android:parentActivityName=".MainActivity"
+            android:name=".ControllerActivity"
+            android:label="@string/title_activity_controller"
+            android:parentActivityName=".SelectCraftActivity"
             android:theme="@style/AppTheme.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.rabidllamastudios.avigate.MainActivity" />
+                android:value=".SelectCraftActivity" />
         </activity>
         <activity
             android:name=".CraftActivity"
@@ -64,36 +68,46 @@
             android:theme="@style/AppTheme.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.rabidllamastudios.avigate.MainActivity" />
+                android:value=".MainActivity" />
+
             <intent-filter>
                 <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
             </intent-filter>
-            <meta-data android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
+
+            <meta-data
+                android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
                 android:resource="@xml/device_filter" />
         </activity>
         <activity
-            android:name=".ControllerActivity"
-            android:label="@string/title_activity_controller"
+            android:name=".DisplaySensorActivity"
+            android:label="@string/title_activity_display_sensor"
             android:parentActivityName=".MainActivity"
             android:theme="@style/AppTheme.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.rabidllamastudios.avigate.MainActivity" />
+                android:value=".MainActivity" />
         </activity>
         <activity
-            android:name=".ConfigureArduinoActivity"
-            android:label="@string/title_activity_configure_arduino"
+            android:name=".FlightVisualizerActivity"
+            android:label="@string/title_activity_flight_visualizer"
             android:parentActivityName=".MainActivity"
-            android:theme="@style/AppTheme.NoActionBar" >
+            android:theme="@style/AppTheme.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.rabidllamastudios.avigate.MainActivity"/>
-            <intent-filter>
-                <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
-            </intent-filter>
+                android:value=".MainActivity" />
+        </activity>
+        <activity
+            android:name=".SelectCraftActivity"
+            android:label="@string/title_activity_select_craft"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/AppTheme.NoActionBar">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".MainActivity" />
         </activity>
 
         <!-- MqttService -->
+        <!-- Third-party service included as part of third party library, Paho MQTT-->
         <service android:name="org.eclipse.paho.android.service.MqttService" />
         <!-- CommunicationsService -->
         <service
@@ -107,6 +121,7 @@
         <service
             android:name=".UsbSerialService"
             android:exported="false" />
+
     </application>
 
 </manifest>

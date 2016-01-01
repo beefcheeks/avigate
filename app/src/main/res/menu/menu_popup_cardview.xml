@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/item_popup_cardview_rename"
+        android:title="@string/item_rename_craft"
+        android:visible="true"
+        app:showAsAction="ifRoom|withText" />
+
+    <item
+        android:id="@+id/item_popup_cardview_delete"
+        android:title="@string/item_delete_profile"
+        android:visible="true"
+        app:showAsAction="ifRoom|withText" />
+
+</menu>

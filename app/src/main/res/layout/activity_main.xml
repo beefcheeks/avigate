@@ -60,12 +60,4 @@
         android:onClick="startFlightVisualizer"
         android:id="@+id/button_flight_visualizer"/>
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/button_flight_visualizer"
-        android:text="@string/button_arduino_configure"
-        android:onClick="startArduinoActivity"
-        android:id="@+id/button_arduino"/>
-
 </RelativeLayout>

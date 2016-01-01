@@ -250,6 +250,27 @@ public class ServoPacket {
         return rootJson.containsKey(KEY_CALIBRATION_MODE);
     }
 
+    //Checks whether rootJson contains duplicate pin numbers (input and output)
+    public boolean hasDuplicatePins() {
+        List<Integer> pinList = new ArrayList<>();
+        //Add output pin values
+        if (getOutputPin(ServoType.AILERON) != -1) pinList.add(getOutputPin(ServoType.AILERON));
+        if (getOutputPin(ServoType.ELEVATOR) != -1) pinList.add(getOutputPin(ServoType.ELEVATOR));
+        if (getOutputPin(ServoType.RUDDER) != -1) pinList.add(getOutputPin(ServoType.RUDDER));
+        if (getOutputPin(ServoType.THROTTLE) != -1) pinList.add(getOutputPin(ServoType.THROTTLE));
+
+        //Add input pin values
+        if (getInputPin(ServoType.AILERON) != -1) pinList.add(getInputPin(ServoType.AILERON));
+        if (getInputPin(ServoType.ELEVATOR) != -1) pinList.add(getInputPin(ServoType.ELEVATOR));
+        if (getInputPin(ServoType.RUDDER) != -1) pinList.add(getInputPin(ServoType.RUDDER));
+        if (getInputPin(ServoType.THROTTLE) != -1) pinList.add(getInputPin(ServoType.THROTTLE));
+        if (getInputPin(ServoType.CUTOVER) != -1) pinList.add(getInputPin(ServoType.CUTOVER));
+
+        //Since sets do not allow duplicates, there are duplicates if the size of the set is smaller
+        Set<Integer> pinSet = new HashSet<>(pinList);
+        return pinSet.size() < pinList.size();
+    }
+
     //Checks whether rootJson contains the error JSON key
     public boolean hasErrorMessage() {
         return rootJson.containsKey(KEY_ERROR);
@@ -496,6 +517,90 @@ public class ServoPacket {
             return servoJson.containsKey(KEY_VALUE);
         }
         return false;
+    }
+
+    //Takes a ServoType and another (separate) rootJson object
+    //Returns true if the input JSON object has the same config as the ServoType JSON of rootJSON
+    private boolean servoEquals(JSONObject otherRootJson, ServoType servoType) {
+        if (otherRootJson.containsKey(servoType.getStringValue())) {
+            JSONObject servoJson = (JSONObject) otherRootJson.get(servoType.getStringValue());
+            if (servoJson.containsKey(KEY_INPUT_CONFIG)) {
+                JSONObject inputConfigJson = (JSONObject) servoJson.get(KEY_INPUT_CONFIG);
+                if (inputConfigJson.containsKey(KEY_MAX)) {
+                    Number inputMax1 = (Number) inputConfigJson.get(KEY_MAX);
+                    Number inputMax2 = (Number) getInputConfigValue(servoType, KEY_MAX);
+                    if (inputMax1 != null && !inputMax1.equals(inputMax2)) return false;
+                } else if (hasInputMax(servoType)) {
+                    return false;
+                }
+                if (inputConfigJson.containsKey(KEY_MIN)) {
+                    Number inputMin1 = (Number) inputConfigJson.get(KEY_MIN);
+                    Number inputMin2 = (Number) getInputConfigValue(servoType, KEY_MIN);
+                    if (inputMin1 != null && !inputMin1.equals(inputMin2)) return false;
+                } else if (hasInputMin(servoType)) {
+                    return false;
+                }
+                if (inputConfigJson.containsKey(KEY_PIN)) {
+                    Number inputPin1 = (Number) inputConfigJson.get(KEY_PIN);
+                    Number inputPin2 = (Number) getInputConfigValue(servoType, KEY_PIN);
+                    if (inputPin1 != null && !inputPin1.equals(inputPin2)) return false;
+                } else if (hasInputPin(servoType)) {
+                    return false;
+                }
+                if (inputConfigJson.containsKey(KEY_RECEIVER_ONLY)) {
+                    boolean receiverOnly1 = (boolean) inputConfigJson.get(KEY_RECEIVER_ONLY);
+                    boolean receiverOnly2 = (boolean) getInputConfigValue(servoType,
+                            KEY_RECEIVER_ONLY);
+                    if (receiverOnly1 != receiverOnly2) return false;
+                } else if (hasReceiverOnly(servoType)) {
+                    return false;
+                }
+            } else if (hasInputRange(servoType) || hasInputPin(servoType)
+                    || hasReceiverOnly(servoType)) {
+                return false;
+            }
+
+            if (servoJson.containsKey(KEY_OUTPUT_CONFIG)) {
+                JSONObject outputConfigJson = (JSONObject) servoJson.get(KEY_OUTPUT_CONFIG);
+                if (outputConfigJson.containsKey(KEY_MAX)) {
+                    Number outputMax1 = (Number) outputConfigJson.get(KEY_MAX);
+                    Number outputMax2 = getOutputConfigValue(servoType, KEY_MAX);
+                    if (outputMax1 != null && !outputMax1.equals(outputMax2)) return false;
+                } else if (hasOutputMax(servoType)) {
+                    return false;
+                }
+                if (outputConfigJson.containsKey(KEY_MIN)) {
+                    Number outputMin1 = (Number) outputConfigJson.get(KEY_MIN);
+                    Number outputMin2 = getOutputConfigValue(servoType, KEY_MIN);
+                    if (outputMin1 != null && !outputMin1.equals(outputMin2)) return false;
+                } else if (hasOutputMin(servoType)) {
+                    return false;
+                }
+                if (outputConfigJson.containsKey(KEY_PIN)) {
+                    Number outputPin1 = (Number) outputConfigJson.get(KEY_PIN);
+                    Number outputPin2 = getOutputConfigValue(servoType, KEY_PIN);
+                    if (outputPin1 != null && !outputPin1.equals(outputPin2)) return false;
+                } else if (hasOutputPin(servoType)) {
+                    return false;
+                }
+            } else if (hasOutputMax(servoType) || hasOutputMin(servoType)
+                    || hasOutputPin(servoType)) {
+                return false;
+            }
+
+            if (servoJson.containsKey(KEY_VALUE)) {
+                Number value1 = (Number) servoJson.get(KEY_VALUE);
+                Number value2 = getServoValue(servoType);
+                if (value1 != null && !value1.equals(value2)) return false;
+            } else if (hasServoValue(servoType)) {
+                return false;
+            }
+
+        } else if (rootJson.containsKey(servoType.getStringValue())) {
+            return false;
+        }
+
+        return true;
     }
 
 }
