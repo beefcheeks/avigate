@@ -14,7 +14,7 @@ const byte BYTE_MAX = 255;
 const byte CHAR_ARRAY_SIZE = BYTE_MAX;
 
 //The allowed margin from the cutover min/max input
-const byte CUTOVER_MARGIN = 125;
+const byte CUTOVER_MARGIN = 100;
 
 //Number of cutover samples to use for cutoverInAverage
 const byte CUTOVER_SAMPLE_SIZE = 10;
@@ -37,9 +37,12 @@ const int CUTOVER_THRESHOLD = 1500;
 //TODO use better calibration default
 const int RECEIVER_INPUT_DEFAULT = 1500;
 
+//Allowed distance from the default for a valid receiver input value
+const int RECEIVER_INPUT_DISTANCE = 800;
+
 //Min and max possible values to filter for receiver servo input
-const int RECEIVER_INPUT_MAX = 2300;
-const int RECEIVER_INPUT_MIN = 700;
+const int RECEIVER_INPUT_MAX = RECEIVER_INPUT_DEFAULT + RECEIVER_INPUT_DISTANCE;
+const int RECEIVER_INPUT_MIN = RECEIVER_INPUT_DEFAULT - RECEIVER_INPUT_DISTANCE;
 
 //Sets the baud rate of the Arduino
 const long BAUD_RATE = 115200;
@@ -194,16 +197,15 @@ void processReceivedJson() {
       if (!receiverControl) {
         calibrationMode = (boolean) root["calibrationMode"];
         sendJsonBoolean("calibrationMode", calibrationMode);
-        if (calibrationMode) {
-          resetCalibration();
-        } else {
+        if (!calibrationMode) {
           if (calibrationComplete()){
-            isCalibrated = true;
             sendCalibrationJsonData();
           } else {
             sendJsonString("error", "Calibration not complete");
           }
         }
+        //Reset the calibration values (they will later be sent back from the attached USB device)
+        resetCalibration();
       } else {
         sendJsonString("error", "Disable receiver control to change calibration mode");
       }
@@ -212,10 +214,6 @@ void processReceivedJson() {
     //Assigns pin numbers to the motor, servos, and receiver inputs based on the received JSON
     if (root.containsKey("aileron")) {
       processServoJson(root["aileron"], aileron, "aileron", listenForAileron, "Unassigned aileron pin");
-    }
-    if (root.containsKey("cutover")) {
-      //Cutover is input only, so output only function parameters can be null
-      processServoJson(root["cutover"], cutover, "", listenForCutover, "");
     }
     if (root.containsKey("elevator")) {
       processServoJson(root["elevator"], elevator, "elevator", listenForElevator, "Unassigned elevator pin");
@@ -226,64 +224,16 @@ void processReceivedJson() {
     if (root.containsKey("throttle")) {
       processServoJson(root["throttle"], throttle, "throttle", listenForThrottle, "Unassigned throttle pin");
     }
+    if (root.containsKey("cutover")) {
+      //Cutover is input only, so output-only function parameters can be null
+      processServoJson(root["cutover"], cutover, "", listenForCutover, "");
+    }
+
+    //If the receiver inputs are not yet calibrated, but calibration values were just received, set isCalibrated to true
+    if (!isCalibrated && calibrationComplete()) isCalibrated = true;
 
     //Reset newData to false so we can read new serial input
     newData = false;
-  }
-}
-
-//Processes received JSON for a given servo (e.g. ServoData struct)
-//The inputISR is the interrupt service routine function for triggering action upon receiver input
-void processServoJson(JsonObject& servoJson, ServoData& servoData, const char servoType[], void inputISR(), const char servoError[]) {
-  if (!receiverControl) {
-    //Check for any output configuration parameters for this servo
-    if (servoJson.containsKey("outputConfig")) {
-      JsonObject& outputConfig = servoJson["outputConfig"];
-      if (outputConfig.containsKey("max")) {
-        servoData.outputMax = (byte) outputConfig["max"];
-      }
-      if (outputConfig.containsKey("min")) {
-        servoData.outputMin = (byte) outputConfig["min"];
-      }
-      if (outputConfig.containsKey("pin")) {
-        if (servoData.servo.attached()) servoData.servo.detach();
-        byte servoOutPin = (byte) outputConfig["pin"];
-        servoData.servo.attach(servoOutPin);
-      }
-    }
-    //Check for any input configuration parameters for this servo
-    if (servoJson.containsKey("inputConfig")) {
-      JsonObject& inputConfig = servoJson["inputConfig"];
-      if (inputConfig.containsKey("max")) {
-        servoData.inputMax = (uint16_t) inputConfig["max"];
-      }
-      if (inputConfig.containsKey("min")) {
-        servoData.inputMin = (uint16_t) inputConfig["min"];
-      }
-      if (inputConfig.containsKey("pin")) {
-        if (servoData.inputPin != BYTE_MAX) PCintPort::detachInterrupt(servoData.inputPin);
-        servoData.inputPin = (byte) inputConfig["pin"];
-        PCintPort::attachInterrupt(servoData.inputPin, inputISR, CHANGE);
-      }
-      if (inputConfig.containsKey("receiverOnly")) {
-        servoData.receiverInputOnly = (boolean) inputConfig["receiverOnly"];
-      }
-    }
-    //Only write to servo if the phone input for this servo has permission to do so
-    if (!servoData.receiverInputOnly) {
-      //Check for any servo output values to write to the servo
-      if (servoJson.containsKey("value")) {
-        if (servoData.servo.attached()) {
-          byte value = (byte) servoJson["value"];
-          servoData.servo.write(value);
-          sendJsonServoOutput(servoType, value);
-        } else {
-          sendJsonString("error", servoError);
-        }
-      }
-    }
-  } else {
-    sendJsonString("error", "Disable receiver control to configure servos");
   }
 }
 
@@ -469,6 +419,61 @@ void resetCalibration() {
   cutover.inputMin= RECEIVER_INPUT_MAX;
 }
 
+//Processes received JSON for a given servo (e.g. ServoData struct)
+//The inputISR is the interrupt service routine function for triggering action upon receiver input
+void processServoJson(JsonObject& servoJson, ServoData& servoData, const char servoType[], void inputISR(), const char servoError[]) {
+  if (!receiverControl) {
+    //Check for any output configuration parameters for this servo
+    if (servoJson.containsKey("outputConfig")) {
+      JsonObject& outputConfig = servoJson["outputConfig"];
+      if (outputConfig.containsKey("max")) {
+        servoData.outputMax = (byte) outputConfig["max"];
+      }
+      if (outputConfig.containsKey("min")) {
+        servoData.outputMin = (byte) outputConfig["min"];
+      }
+      if (outputConfig.containsKey("pin")) {
+        if (servoData.servo.attached()) servoData.servo.detach();
+        byte servoOutPin = (byte) outputConfig["pin"];
+        servoData.servo.attach(servoOutPin);
+      }
+    }
+    //Check for any input configuration parameters for this servo
+    if (servoJson.containsKey("inputConfig")) {
+      JsonObject& inputConfig = servoJson["inputConfig"];
+      if (inputConfig.containsKey("max")) {
+        servoData.inputMax = (uint16_t) inputConfig["max"];
+      }
+      if (inputConfig.containsKey("min")) {
+        servoData.inputMin = (uint16_t) inputConfig["min"];
+      }
+      if (inputConfig.containsKey("pin")) {
+        if (servoData.inputPin != BYTE_MAX) PCintPort::detachInterrupt(servoData.inputPin);
+        servoData.inputPin = (byte) inputConfig["pin"];
+        PCintPort::attachInterrupt(servoData.inputPin, inputISR, CHANGE);
+      }
+      if (inputConfig.containsKey("receiverOnly")) {
+        servoData.receiverInputOnly = (boolean) inputConfig["receiverOnly"];
+      }
+    }
+    //Only write to servo if the phone input for this servo has permission to do so
+    if (!servoData.receiverInputOnly) {
+      //Check for any servo output values to write to the servo
+      if (servoJson.containsKey("value")) {
+        if (servoData.servo.attached()) {
+          byte value = (byte) servoJson["value"];
+          servoData.servo.write(value);
+          sendJsonServoOutput(servoType, value);
+        } else {
+          sendJsonString("error", servoError);
+        }
+      }
+    }
+  } else {
+    sendJsonString("error", "Disable receiver control to configure servos");
+  }
+}
+
 //Interrupt Service Routine (ISR) for aileron receiver input
 void listenForAileron() {
   static uint32_t aileronInStart;
@@ -526,8 +531,7 @@ void listenForThrottle() {
 
 //Determines whether a given value is valid receiver input
 boolean isValidReceiverInput(uint16_t receiverInput) {
-  if (receiverInput < RECEIVER_INPUT_MAX && receiverInput > RECEIVER_INPUT_MIN) return true;
-  return false;
+  return receiverInput < RECEIVER_INPUT_MAX && receiverInput > RECEIVER_INPUT_MIN;
 }
 
 //Processes receiver input for a given servo and writes the converted output to the servo
@@ -540,6 +544,8 @@ void processServoInput(ServoData& servoData, uint16_t servoInputValue, const cha
     //Only write to servo if the receiver input for this servo has permission to do so
     } else if (receiverControl || (sharedControl && servoData.receiverInputOnly)) {
       if (servoData.servo.attached()) {
+        //Constrain the servo input value to be within the calibration range (since mapping won't constrain it)
+        servoInputValue = constrain(servoInputValue, servoData.inputMin, servoData.inputMax);
         //The receiverInput (in microseconds) is mapped to the min and max for the Servo.write function (degrees)
         byte convertedServoValue = map(servoInputValue, servoData.inputMin, servoData.inputMax, servoData.outputMin, servoData.outputMax);
         servoData.servo.write(convertedServoValue);
