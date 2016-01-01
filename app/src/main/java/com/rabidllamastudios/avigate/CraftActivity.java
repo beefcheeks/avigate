@@ -1,6 +1,7 @@
 package com.rabidllamastudios.avigate;
 
 import android.Manifest;
+import android.app.ActivityManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -9,6 +10,7 @@ import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.widget.TextView;
 
 import com.rabidllamastudios.avigate.model.ConnectionPacket;
@@ -22,13 +24,15 @@ import java.util.List;
 
 public class CraftActivity extends AppCompatActivity {
 
+    private static final String CLASS_NAME = CraftActivity.class.getSimpleName();
     //TODO adjust sensor rate with latency?
     //Sensor update rate in microseconds
     private static final int SENSOR_UPDATE_RATE = SensorManager.SENSOR_DELAY_UI;
 
-    private Intent mCommService;
-    private Intent mSensorService;
-    private Intent mUsbSerialService;
+    private Intent mCommService = null;
+    private Intent mFlightControlService = null;
+    private Intent mSensorService = null;
+    private Intent mUsbSerialService = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,9 +65,9 @@ public class CraftActivity extends AppCompatActivity {
         usbIntentFilter.addAction(UsbSerialService.INTENT_ACTION_USB_PERMISSION_NOT_GRANTED);
         registerReceiver(mUsbReceiver, usbIntentFilter);
 
-        //Initialize mServoOutputFilter IntentFilter
-        IntentFilter deviceOutputIntentFilter = new IntentFilter(ServoPacket.INTENT_ACTION_OUTPUT);
-        registerReceiver(mDeviceOutputReceiver, deviceOutputIntentFilter);
+        //Initialize mServoOutputFilter IntentFilter and register associated BroadcastReceiver
+        IntentFilter arduinoOutputIntentFilter = new IntentFilter(ServoPacket.INTENT_ACTION_OUTPUT);
+        registerReceiver(mArduinoOutputReceiver, arduinoOutputIntentFilter);
 
         //Configure and start the UsbSerialService
         mUsbSerialService = UsbSerialService.getConfiguredIntent(this);
@@ -72,9 +76,16 @@ public class CraftActivity extends AppCompatActivity {
         //Configure sensor service intent
         mSensorService = SensorService.getConfiguredIntent(this, SENSOR_UPDATE_RATE);
 
+        //Configure the start service intent
+        IntentFilter startServiceIntentFilter = new IntentFilter(
+                FlightControlService.INTENT_ACTION_CONFIGURE_FLIGHT_CONTROL_SERVICE);
+        registerReceiver(mStartServiceReceiver, startServiceIntentFilter);
+
         //Check for location permissions before starting the sensor service
-        PermissionsChecker permissionsChecker = new PermissionsChecker(this, mPermissionsCheckerCallback);
-        if (permissionsChecker.hasPermission(Manifest.permission.ACCESS_FINE_LOCATION, PermissionsChecker.PERMISSIONS_REQUEST_READ_LOCATION_FINE)) {
+        PermissionsChecker permissionsChecker =
+                new PermissionsChecker(this, mPermissionsCheckerCallback);
+        if (permissionsChecker.hasPermission(Manifest.permission.ACCESS_FINE_LOCATION,
+                PermissionsChecker.PERMISSIONS_REQUEST_READ_LOCATION_FINE)) {
             startService(mSensorService);
         }
 
@@ -110,14 +121,19 @@ public class CraftActivity extends AppCompatActivity {
 
     @Override
     public void onDestroy() {
-        //Stop all services and unregister all broadcast receivers
-        stopService(mCommService);
-        stopService(mSensorService);
-        stopService(mUsbSerialService);
+        //Unregister all receivers
+        unregisterReceiver(mArduinoOutputReceiver);
         unregisterReceiver(mConnectionReceiver);
-        unregisterReceiver(mDeviceOutputReceiver);
         unregisterReceiver(mSensorReceiver);
+        unregisterReceiver(mStartServiceReceiver);
         unregisterReceiver(mUsbReceiver);
+        //Stop all services (if running)
+        if (mCommService != null) stopService(mCommService);
+        if (mFlightControlService != null) stopService(mFlightControlService);
+        if (mSensorService != null) stopService(mSensorService);
+        if (mUsbSerialService != null) stopService(mUsbSerialService);
+
+        //Call super method
         super.onDestroy();
     }
 
@@ -142,13 +158,17 @@ public class CraftActivity extends AppCompatActivity {
     };
 
     //Listens for responses from the connected USB serial device and updates the output TextView
-    private final BroadcastReceiver mDeviceOutputReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver mArduinoOutputReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals(ServoPacket.INTENT_ACTION_OUTPUT)) {
                 ServoPacket servoPacket = new ServoPacket(intent.getExtras());
                 TextView outputTV = (TextView) findViewById(R.id.tv_craft_value_arduino_output);
 
+                //Updates outputTV if the incoming JSON contains a ready status
+                if (servoPacket.isStatusReady()) {
+                    outputTV.setText(getString(R.string.tv_arduino_value_ready));
+                }
                 //Updates outputTV if the incoming JSON contains calibration mode data
                 if (servoPacket.hasCalibrationMode()) {
                     String calibration = "Calibration mode: "
@@ -190,11 +210,13 @@ public class CraftActivity extends AppCompatActivity {
                 rollTV.setText(String.valueOf(orientationPacket.getOrientation().getYaw()));
             //If the intent is type gps packet, update corresponding textview values
             } else if (intent.getAction().equals(GPSPacket.INTENT_ACTION)) {
-                TextView gpsCoordinatesTV = (TextView) findViewById(R.id.tv_craft_value_gps_coordinates);
+                TextView gpsCoordinatesTV =
+                        (TextView) findViewById(R.id.tv_craft_value_gps_coordinates);
                 TextView gpsAccuracyTV = (TextView) findViewById(R.id.tv_craft_value_gps_accuracy);
                 TextView gpsBearingTV = (TextView) findViewById(R.id.tv_craft_value_bearing);
                 GPSPacket gpsPacket = new GPSPacket(intent.getExtras());
-                String coordinates = String.valueOf(gpsPacket.getLatitude()) + " ," + String.valueOf(gpsPacket.getLongitude());
+                String coordinates = String.valueOf(gpsPacket.getLatitude()) + " ,"
+                        + String.valueOf(gpsPacket.getLongitude());
                 String accuracy = String.valueOf(gpsPacket.getAccuracy()) + " m";
                 gpsCoordinatesTV.setText(coordinates);
                 gpsAccuracyTV.setText(accuracy);
@@ -210,6 +232,22 @@ public class CraftActivity extends AppCompatActivity {
                 PressurePacket pressurePacket = new PressurePacket(intent.getExtras());
                 String altitude = String.valueOf(pressurePacket.getPressure()) + " hPa";
                 pressureTV.setText(altitude);
+            }
+        }
+    };
+
+    //Listens for any intents that are used to start other services
+    private BroadcastReceiver mStartServiceReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals(
+                    FlightControlService.INTENT_ACTION_CONFIGURE_FLIGHT_CONTROL_SERVICE)) {
+                Log.i(CLASS_NAME, "FlightControlService start command received");
+                if (!isServiceRunning(FlightControlService.class)) {
+                    intent.setClass(getApplicationContext(), FlightControlService.class);
+                    mFlightControlService = intent;
+                    startService(mFlightControlService);
+                }
             }
         }
     };
@@ -245,5 +283,18 @@ public class CraftActivity extends AppCompatActivity {
             }
         }
     };
+
+    //Checks if a given service class is running
+    //Taken from: http://stackoverflow.com/a/5921190
+    private boolean isServiceRunning(Class<?> serviceClass) {
+        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service :
+                manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
+    }
 
 }

@@ -187,7 +187,11 @@ public class SelectCraftActivity extends AppCompatActivity {
             holder.mFlyButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    //TODO implement method
+                    Intent controllerIntent = new Intent(SelectCraftActivity.this,
+                            ControllerActivity.class);
+                    controllerIntent.putExtra(SharedPreferencesManager.KEY_CRAFT_NAME,
+                            craftName);
+                    startActivity(controllerIntent);
                 }
             });
             //Set the behavior for the overflow menu
