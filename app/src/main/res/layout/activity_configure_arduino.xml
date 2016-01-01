@@ -67,12 +67,11 @@
                 android:layout_height="wrap_content"
                 android:paddingLeft="8dp"
                 android:textSize="18sp"
-                android:text="@string/tv_arduino_value_status"
+                android:text="@string/tv_usb_value_not_connected"
                 android:id="@+id/tv_arduino_value_status" />
 
         </LinearLayout>
 
     </LinearLayout>
->>>>>>> 03db0a1... Overhaul ConfigureArduinoActivity
 
 </android.support.design.widget.CoordinatorLayout>

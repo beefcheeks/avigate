@@ -52,7 +52,7 @@
                     android:gravity="center_horizontal"
                     android:inputType="none"
                     android:textSize="20sp"
-                    android:text="@string/et_arduino_value_pin_output_aileron"
+                    android:text="@string/et_arduino_value_pin_default"
                     android:id="@+id/et_arduino_value_pin_output_aileron" />
 
             </RelativeLayout>
@@ -118,7 +118,7 @@
                     android:gravity="center_horizontal"
                     android:inputType="none"
                     android:textSize="20sp"
-                    android:text="@string/et_arduino_value_pin_output_elevator"
+                    android:text="@string/et_arduino_value_pin_default"
                     android:id="@+id/et_arduino_value_pin_output_elevator" />
 
             </RelativeLayout>
@@ -184,7 +184,7 @@
                     android:gravity="center_horizontal"
                     android:inputType="none"
                     android:textSize="20sp"
-                    android:text="@string/et_arduino_value_pin_output_rudder"
+                    android:text="@string/et_arduino_value_pin_default"
                     android:id="@+id/et_arduino_value_pin_output_rudder" />
 
             </RelativeLayout>
@@ -250,7 +250,7 @@
                     android:gravity="center_horizontal"
                     android:inputType="none"
                     android:textSize="20sp"
-                    android:text="@string/et_arduino_value_pin_output_throttle"
+                    android:text="@string/et_arduino_value_pin_default"
                     android:id="@+id/et_arduino_value_pin_output_throttle"/>
 
             </RelativeLayout>

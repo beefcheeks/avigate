@@ -3,9 +3,6 @@
 
     <string name="button_arduino_configure">Configure Arduino</string>
     <string name="button_calibrate">Calibrate</string>
-    <string name="button_cancel">Cancel</string>
-    <string name="button_configure_inputs">Configure Inputs</string>
-    <string name="button_configure_outputs">Configure Outputs</string>
     <string name="button_connect">Connect</string>
     <string name="button_connectivity_test">Connectivity Test</string>
     <string name="button_disconnect">Disconnect</string>
@@ -13,22 +10,13 @@
     <string name="button_module_controller">Controller Module</string>
     <string name="button_module_craft">Craft Module</string>
     <string name="button_publish">Publish</string>
+    <string name="button_recalibrate">Recalibrate</string>
     <string name="button_sensor_readings">Sensor Readings</string>
-    <string name="button_set">Set</string>
     <string name="button_stop_calibrating">Stop calibrating</string>
     <string name="button_subscribe">Subscribe</string>
     <string name="button_unsubscribe">Unsubscribe</string>
 
-    <string name="et_arduino_value_pin_output_aileron">7</string>
-    <string name="et_arduino_value_pin_output_elevator">9</string>
-    <string name="et_arduino_value_pin_output_rudder">8</string>
-    <string name="et_arduino_value_pin_output_throttle">10</string>
-
-    <string name="et_arduino_value_pin_input_aileron">6</string>
-    <string name="et_arduino_value_pin_input_cutover">2</string>
-    <string name="et_arduino_value_pin_input_elevator">4</string>
-    <string name="et_arduino_value_pin_input_rudder">3</string>
-    <string name="et_arduino_value_pin_input_throttle">5</string>
+    <string name="et_arduino_value_pin_default">Set</string>
 
     <string name="et_connect_hint_server">Server URL or IP</string>
     <string name="et_connect_hint_topic">Topic</string>
@@ -48,10 +36,12 @@
     <string name="tv_arduino_label_throttle">Throttle</string>
     <string name="tv_arduino_label_status">Status: </string>
 
-    <string name="tv_arduino_value_status">USB disconnected</string>
+    <string name="tv_arduino_value_status_connected">Connected to server</string>
+    <string name="tv_arduino_value_status_disconnected">Disconnected from server</string>
     <string name="tv_arduino_value_ready">Arduino is ready</string>
     <string name="tv_arduino_value_calibrating">Calibrating receiver inputs&#8230;</string>
     <string name="tv_arduino_value_calibration_stopped">Calibration stopped</string>
+    <string name="tv_arduino_value_calibration_success">Calibration successfully completed</string>
 
     <string name="tv_craft_title_connection">Connection</string>
     <string name="tv_craft_label_connection">Connection status:</string>

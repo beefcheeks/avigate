@@ -26,15 +26,18 @@ public class ServoInputFragment extends Fragment implements NumberPicker.OnValue
     private static final int PIN_MAX = 12;
     private static final int PIN_MIN = 0;
 
-    private Callback mCallback;
+    private Callback mCallback = null;
     private View mRootView;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         mRootView = inflater.inflate(R.layout.fragment_servo_inputs, container, false);
+
+        //Configure UI
         configurePinEditText();
         configureCheckBoxes();
+
         return mRootView;
     }
 
@@ -44,37 +47,13 @@ public class ServoInputFragment extends Fragment implements NumberPicker.OnValue
         mCallback = callback;
     }
 
-    //Configures all input pins based the corresponding EditText input pin values
-    public void configureInputPins() {
-        EditText aileronEditText = (EditText) mRootView.findViewById(
-                R.id.et_arduino_value_pin_input_aileron);
-        EditText cutoverEditText = (EditText) mRootView.findViewById(
-                R.id.et_arduino_value_pin_input_cutover);
-        EditText elevatorEditText = (EditText) mRootView.findViewById(
-                R.id.et_arduino_value_pin_input_elevator);
-        EditText rudderEditText = (EditText) mRootView.findViewById(
-                R.id.et_arduino_value_pin_input_rudder);
-        EditText throttleEditText = (EditText) mRootView.findViewById(
-                R.id.et_arduino_value_pin_input_throttle);
-        mCallback.setServoInputPin(ServoPacket.ServoType.AILERON,
-                Integer.parseInt(aileronEditText.getText().toString()));
-        mCallback.setServoInputPin(ServoPacket.ServoType.CUTOVER,
-                Integer.parseInt(cutoverEditText.getText().toString()));
-        mCallback.setServoInputPin(ServoPacket.ServoType.ELEVATOR,
-                Integer.parseInt(elevatorEditText.getText().toString()));
-        mCallback.setServoInputPin(ServoPacket.ServoType.RUDDER,
-                Integer.parseInt(rudderEditText.getText().toString()));
-        mCallback.setServoInputPin(ServoPacket.ServoType.THROTTLE,
-                Integer.parseInt(throttleEditText.getText().toString()));
-    }
-
     //Configures all input pin EditTexts
     private void configurePinEditText() {
         configureInputPinEditText(ServoPacket.ServoType.AILERON);
-        configureInputPinEditText(ServoPacket.ServoType.CUTOVER);
         configureInputPinEditText(ServoPacket.ServoType.ELEVATOR);
         configureInputPinEditText(ServoPacket.ServoType.RUDDER);
         configureInputPinEditText(ServoPacket.ServoType.THROTTLE);
+        configureInputPinEditText(ServoPacket.ServoType.CUTOVER);
     }
 
     //Configures all checkboxes in the layout
@@ -96,8 +75,15 @@ public class ServoInputFragment extends Fragment implements NumberPicker.OnValue
                 final NumberPicker numberPicker = new NumberPicker(getActivity());
                 numberPicker.setMaxValue(PIN_MAX);
                 numberPicker.setMinValue(PIN_MIN);
-                numberPicker.setValue(Integer.parseInt(editText.getText().toString()));
-                numberPicker.setWrapSelectorWheel(false);
+                if (editText.getText().toString().equals(getString(
+                        R.string.et_arduino_value_pin_default))) {
+                    //If there is no output pin yet set, set selector to middle value
+                    int middlePinValue = (PIN_MAX - PIN_MIN)/2;
+                    numberPicker.setValue(middlePinValue);
+                } else {
+                    //If there is already an output pin set, set selector to this value
+                    numberPicker.setValue(Integer.parseInt(editText.getText().toString()));
+                }                numberPicker.setWrapSelectorWheel(false);
                 //Create numPickFrameLayout to properly center numberPicker
                 final FrameLayout numPickFrameLayout = new FrameLayout(getActivity());
                 numPickFrameLayout.addView(numberPicker, new FrameLayout.LayoutParams(
@@ -118,7 +104,6 @@ public class ServoInputFragment extends Fragment implements NumberPicker.OnValue
                         int value = numberPicker.getValue();
                         mCallback.setServoInputPin(servoType, value);
                         editText.setText(String.valueOf(value));
-                        dialog.dismiss();
                     }
                 });
                 //Set the title
@@ -141,6 +126,8 @@ public class ServoInputFragment extends Fragment implements NumberPicker.OnValue
                     mCallback.setControlType(servoType, !isChecked);
                 }
             });
+            //In case the control type has not yet been set
+            mCallback.setControlType(servoType, !checkBox.isChecked());
         }
     }
 
@@ -150,14 +137,14 @@ public class ServoInputFragment extends Fragment implements NumberPicker.OnValue
         switch (servoType) {
             case AILERON:
                 return (EditText) mRootView.findViewById(R.id.et_arduino_value_pin_input_aileron);
-            case CUTOVER:
-                return (EditText) mRootView.findViewById(R.id.et_arduino_value_pin_input_cutover);
             case ELEVATOR:
                 return (EditText) mRootView.findViewById(R.id.et_arduino_value_pin_input_elevator);
             case RUDDER:
                 return (EditText) mRootView.findViewById(R.id.et_arduino_value_pin_input_rudder);
             case THROTTLE:
                 return (EditText) mRootView.findViewById(R.id.et_arduino_value_pin_input_throttle);
+            case CUTOVER:
+                return (EditText) mRootView.findViewById(R.id.et_arduino_value_pin_input_cutover);
             default:
                 return null;
         }
@@ -183,7 +170,9 @@ public class ServoInputFragment extends Fragment implements NumberPicker.OnValue
     }
 
     @Override
-    public void onValueChange(NumberPicker picker, int oldVal, int newVal) {}
+    public void onValueChange(NumberPicker picker, int oldVal, int newVal) {
+        //Required method for implementing the NumberPicker class
+    }
 
     /**
      * This is the callback class for ServoInputFragment

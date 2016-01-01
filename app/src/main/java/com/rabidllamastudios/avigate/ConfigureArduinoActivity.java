@@ -26,13 +26,10 @@ import java.util.List;
  * This activity is intended as a test for USB-OTG connected CDC-ACM devices (e.g. Arduino)
  * Some code adapted from: https://github.com/felHR85/SerialPortExample
  */
-
 public class ConfigureArduinoActivity extends AppCompatActivity {
 
     private static final int BAUD_RATE = 115200;
 
-    private boolean mCalibrationMode = false;
-    private boolean mReceiverOnly = false;
     private boolean mUsbSerialIsReady = false;
 
     private Intent mCommService;
@@ -106,7 +103,7 @@ public class ConfigureArduinoActivity extends AppCompatActivity {
             e.printStackTrace();
         }
         try {
-            unregisterReceiver(mDeviceOutputReceiver);
+            unregisterReceiver(mArduinoOutputReceiver);
         } catch (IllegalArgumentException e) {
             e.printStackTrace();
         }
@@ -125,7 +122,7 @@ public class ConfigureArduinoActivity extends AppCompatActivity {
         //Register receivers and start CommunicationsService and UsbSerialService
         registerReceiver(mConnectionReceiver, mConnectionIntentFilter);
         registerReceiver(mUsbReceiver, mUsbIntentFilter);
-        registerReceiver(mDeviceOutputReceiver, mDeviceOutputIntentFilter);
+        registerReceiver(mArduinoOutputReceiver, mDeviceOutputIntentFilter);
         //Get the configured intent to start the UsbSerialService
         mUsbSerialService = UsbSerialService.getConfiguredIntent(this, BAUD_RATE);
         startService(mUsbSerialService);
@@ -203,27 +200,27 @@ public class ConfigureArduinoActivity extends AppCompatActivity {
                 servoPacket.setCalibrationMode(calibrationMode);
                 sendBroadcast(servoPacket.toIntent(ServoPacket.INTENT_ACTION_INPUT));
             } else {
-                new AlertDialog.Builder(ConfigureArduinoActivity.this)
-                        .setTitle("No USB device connected")
-                        .setMessage("The Arduino cannot be calibrated until it is connected " +
-                                "to an Android phone via USB.")
-                        .setPositiveButton(android.R.string.ok,
-                                new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int which) {}
-                        })
-                        .show();
+                mReceiverCalibrationFragment.showNoUsbDeviceCalibrationWarningDialog();
             }
         }
-    };
 
 
     private final BroadcastReceiver mConnectionReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals(ConnectionPacket.INTENT_ACTION)) {
-                ServoPacket statusRequestServoPacket = new ServoPacket();
-                statusRequestServoPacket.addStatusRequest();
-                sendBroadcast(statusRequestServoPacket.toIntent(ServoPacket.INTENT_ACTION_INPUT));
+                TextView statusTV = (TextView) findViewById(R.id.tv_arduino_value_status);
+                //If connected, query the status of the Arduino
+                if (new ConnectionPacket(intent.getExtras()).isConnected()) {
+                    ServoPacket statusRequestServoPacket = new ServoPacket();
+                    statusRequestServoPacket.addStatusRequest();
+                    sendBroadcast(
+                            statusRequestServoPacket.toIntent(ServoPacket.INTENT_ACTION_INPUT));
+                    statusTV.setText(getString(R.string.tv_arduino_value_status_connected));
+                } else {
+                    //If disconnected, inform the user
+                    statusTV.setText(getString(R.string.tv_arduino_value_status_disconnected));
+                }
             }
         }
     };
@@ -261,7 +258,7 @@ public class ConfigureArduinoActivity extends AppCompatActivity {
     };
 
     //Listens for responses from the connected USB serial device and updates the output TextView
-    private final BroadcastReceiver mDeviceOutputReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver mArduinoOutputReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals(ServoPacket.INTENT_ACTION_OUTPUT)) {
@@ -274,36 +271,37 @@ public class ConfigureArduinoActivity extends AppCompatActivity {
                 if (servoPacket.isStatusReady()) {
                     if (!mUsbSerialIsReady) mUsbSerialIsReady = true;
                     statusTV.setText(getString(R.string.tv_arduino_value_ready));
-                    mServoOutputFragment.configureOutputPins();
-                    mServoInputFragment.configureInputPins();
                 }
 
                 //If the ServoPacket contains the receiverControl json key, set mReceiverOnly
                 if (servoPacket.hasReceiverControl()) {
-                    mReceiverOnly = servoPacket.isReceiverControl();
+                    String receiverControl = "Receiver control: "
+                            + String.valueOf(servoPacket.isReceiverControl());
+                    statusTV.setText(receiverControl);
                 }
 
                 //If the ServoPacket contains the calibrationMode, set text and buttons accordingly
                 if (servoPacket.hasCalibrationMode()) {
-                    mCalibrationMode = servoPacket.isCalibrationMode();
                     //If the arduino is in calibration mode, inform the user
-                    if (mCalibrationMode) {
+                    if (servoPacket.isCalibrationMode()) {
                         statusTV.setText(getString(R.string.tv_arduino_value_calibrating));
                         mReceiverCalibrationFragment.calibrationStarted();
 
                     //If the arduino is no longer in calibration mode, inform the user
                     } else {
-                        mReceiverCalibrationFragment.calibrationStopped();
+                        mReceiverCalibrationFragment.calibrationStopped(false);
                     }
                 }
 
                 //If the ServoPacket contains receiver input calibration ranges, show them on screen
                 if (servoPacket.hasInputRanges()) {
+                    statusTV.setText(getString(R.string.tv_arduino_value_calibration_success));
                     showCalibrationRange(ServoPacket.ServoType.AILERON, servoPacket);
                     showCalibrationRange(ServoPacket.ServoType.CUTOVER, servoPacket);
                     showCalibrationRange(ServoPacket.ServoType.ELEVATOR, servoPacket);
                     showCalibrationRange(ServoPacket.ServoType.RUDDER, servoPacket);
                     showCalibrationRange(ServoPacket.ServoType.THROTTLE, servoPacket);
+                    mReceiverCalibrationFragment.calibrationStopped(true);
                 }
 
                 //If the ServoPacket contains an error message, display the message to the user

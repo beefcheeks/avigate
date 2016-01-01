@@ -9,6 +9,11 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 /**
  * Created by Ryan on 11/30/15.
  * A data model class to communicate servo data to and from the USB serial device
@@ -19,8 +24,11 @@ public class ServoPacket {
     private static final String PACKAGE_NAME = AvigateApplication.class.getPackage().getName();
 
     //Intent actions
-    public static final String INTENT_ACTION_INPUT = PACKAGE_NAME + ".action.SERVO_INPUT_DATA";
-    public static final String INTENT_ACTION_OUTPUT = PACKAGE_NAME + ".action.SERVO_OUTPUT_DATA";
+    public static final String INTENT_ACTION_INPUT = PACKAGE_NAME + ".action.ARDUINO_INPUT";
+    public static final String INTENT_ACTION_OUTPUT = PACKAGE_NAME + ".action.ARDUINO_OUTPUT";
+
+    //Key for the entire root JSON String of the ServoPacket (value) when stored as an Intent extra
+    private static final String KEY_ROOT = "json";
 
     //JSON keys for key value pairs
     private static final String KEY_CALIBRATION_MODE = "calibrationMode";
@@ -42,21 +50,21 @@ public class ServoPacket {
 
     //Denotes the type of servo
     public enum ServoType {
-        AILERON, CUTOVER, ELEVATOR, RUDDER, THROTTLE;
+        AILERON, ELEVATOR, RUDDER, THROTTLE, CUTOVER;
 
         //Returns the corresponding JSON String key
         public String getStringValue() {
             switch (this) {
                 case AILERON:
                     return "aileron";
-                case CUTOVER:
-                    return "cutover";
                 case ELEVATOR:
                     return "elevator";
                 case RUDDER:
                     return "rudder";
                 case THROTTLE:
                     return "throttle";
+                case CUTOVER:
+                    return "cutover";
             }
             return null;
         }
@@ -68,6 +76,7 @@ public class ServoPacket {
         rootJson = new JSONObject();
     }
 
+    //Creates a ServoPacket from a JSON String
     public ServoPacket(String jsonString) {
         rootJson = new JSONObject();
         try {
@@ -77,18 +86,20 @@ public class ServoPacket {
         }
     }
 
+    //Creates a ServoPacket from a bundle (e.g. Intent Extra)
     public ServoPacket(Bundle bundle) {
         rootJson = new JSONObject();
         try {
-            rootJson = (JSONObject) new JSONParser().parse(bundle.getString("json"));
+            rootJson = (JSONObject) new JSONParser().parse(bundle.getString(KEY_ROOT));
         } catch (ParseException e) {
             e.printStackTrace();
         }
     }
 
+    //Returns an Intent with the ServoPacket contents as an Intent Extra
     public Intent toIntent(String intentAction) {
         Intent intent = new Intent(intentAction);
-        intent.putExtra("json", rootJson.toJSONString());
+        intent.putExtra(KEY_ROOT, rootJson.toJSONString());
         return intent;
     }
 
@@ -97,15 +108,51 @@ public class ServoPacket {
         return rootJson.toJSONString();
     }
 
-    //Returns true if the ready status key value pair is present in the stored JSON object
-    public boolean isStatusReady() {
-        return rootJson.containsKey(KEY_STATUS) && rootJson.get(KEY_STATUS).equals(VALUE_STATUS_READY);
-    }
-
     //Adds an arduino status request to the rootJson object
     @SuppressWarnings("unchecked")
     public void addStatusRequest() {
         rootJson.put(KEY_REQUEST, KEY_STATUS);
+    }
+
+
+    //Takes a ServoPacket and compares configurations with the rootJson object
+    @Override
+    public boolean equals(Object servoPacketObject) {
+        if (servoPacketObject == null) return false;
+        if (!(servoPacketObject instanceof ServoPacket)) return false;
+        ServoPacket servoPacket = (ServoPacket) servoPacketObject;
+        String servoPacketJsonString = servoPacket.toJsonString();
+        if (servoPacketJsonString == null) return false;
+        JSONObject otherRootJson = new JSONObject();
+        try {
+            otherRootJson = (JSONObject) new JSONParser().parse(servoPacketJsonString);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return servoEquals(otherRootJson, ServoType.AILERON)
+                && servoEquals(otherRootJson, ServoType.ELEVATOR)
+                && servoEquals(otherRootJson, ServoType.RUDDER)
+                && servoEquals(otherRootJson, ServoType.THROTTLE)
+                && servoEquals(otherRootJson, ServoType.CUTOVER);
+    }
+
+    //Returns a JSON String containing all config values for a given servo except input min and max
+    //Returns null if no configuration for that servo exists
+    @SuppressWarnings("unchecked")
+    public String getConfigJson(ServoType servoType) {
+        if (rootJson.containsKey(servoType.getStringValue())) {
+            JSONObject servoJson = (JSONObject) rootJson.get(servoType.getStringValue());
+            if (servoJson.containsKey(KEY_INPUT_CONFIG)) {
+                JSONObject inputConfigJson = (JSONObject) servoJson.get(KEY_INPUT_CONFIG);
+                if (inputConfigJson.containsKey(KEY_MAX)) inputConfigJson.remove(KEY_MAX);
+                if (inputConfigJson.containsKey(KEY_MIN)) inputConfigJson.remove(KEY_MIN);
+                servoJson.put(KEY_INPUT_CONFIG, inputConfigJson);
+                JSONObject newRootJson = new JSONObject();
+                newRootJson.put(servoType.getStringValue(), servoJson);
+                return newRootJson.toJSONString();
+            }
+        }
+        return null;
     }
 
     //Retrieves any error message if present
@@ -114,9 +161,10 @@ public class ServoPacket {
         return null;
     }
 
-    //Returns a JSON object containing the min and max values (in microseconds) for a ServoType
+    //Returns a JsonObject that contains the min and max receiver input values for a given ServoType
+    //Returns null if no min and max values for that ServoType exists
     @SuppressWarnings("unchecked")
-    public JSONObject getInputRange(ServoType servoType) {
+    public String getInputRangeJson(ServoType servoType) {
         if (rootJson.containsKey(servoType.getStringValue())) {
             JSONObject servoJson = (JSONObject) rootJson.get(servoType.getStringValue());
             if (servoJson.containsKey(KEY_INPUT_CONFIG)) {
@@ -125,11 +173,11 @@ public class ServoPacket {
                     JSONObject inputRangeJson = new JSONObject();
                     inputRangeJson.put(KEY_MAX, inputConfigJson.get(KEY_MAX));
                     inputRangeJson.put(KEY_MIN, inputConfigJson.get(KEY_MIN));
-                    JSONObject servoRangeJson = new JSONObject();
-                    servoRangeJson.put(KEY_INPUT_CONFIG, inputRangeJson);
-                    JSONObject rootRangeJson = new JSONObject();
-                    rootRangeJson.put(servoType, servoRangeJson);
-                    return rootRangeJson;
+                    JSONObject newServoJson = new JSONObject();
+                    newServoJson.put(KEY_INPUT_CONFIG, inputRangeJson);
+                    JSONObject newRootJson = new JSONObject();
+                    newRootJson.put(servoType.getStringValue(), newServoJson);
+                    return newRootJson.toJSONString();
                 }
             }
         }
@@ -139,19 +187,87 @@ public class ServoPacket {
     //Returns the max receiver input value for a given ServoType
     //Returns -1 if said value does not exist
     public int getInputMax(ServoType servoType) {
-        return getInputValue(servoType, KEY_MAX);
+        Number inputMax = (Number) getInputConfigValue(servoType, KEY_MAX);
+        if (inputMax == null) return -1;
+        return inputMax.intValue();
     }
-
 
     //Returns the min receiver input value for a given ServoType
     //Returns -1 if said value does not exist
     public int getInputMin(ServoType servoType) {
-        return getInputValue(servoType, KEY_MIN);
+        Number inputMin = (Number) getInputConfigValue(servoType, KEY_MIN);
+        if (inputMin == null) return -1;
+        return inputMin.intValue();
+    }
+
+    //Returns the input pin
+    //Returns -1 if said value does not exist
+    public int getInputPin(ServoType servoType) {
+        Number inputPin = (Number) getInputConfigValue(servoType, KEY_PIN);
+        if (inputPin == null) return -1;
+        return inputPin.intValue();
+    }
+
+    //Returns the max servo output value for a given ServoType
+    //Returns -1 if said value does not exist
+    public int getOutputMax(ServoPacket.ServoType servoType) {
+        Number outputMax = getOutputConfigValue(servoType, KEY_MAX);
+        if (outputMax == null) return -1;
+        return outputMax.intValue();
+    }
+
+    //Returns the min servo output value for a given ServoType
+    //Returns -1 if said value does not exist
+    public int getOutputMin(ServoPacket.ServoType servoType) {
+        Number outputMin = getOutputConfigValue(servoType, KEY_MIN);
+        if (outputMin == null) return -1;
+        return outputMin.intValue();
+    }
+
+    //Returns the input pin of a given ServoType
+    //Returns -1 if said value does not exist
+    public int getOutputPin(ServoType servoType) {
+        Number outputPin =  getOutputConfigValue(servoType, KEY_PIN);
+        if (outputPin == null) return -1;
+        return outputPin.intValue();
+    }
+
+    //Returns the value of a given ServoType
+    public int getServoValue(ServoType servoType) {
+        //Returns -1 if said value does not exist
+        if (rootJson.containsKey(servoType.getStringValue())) {
+            JSONObject servoJson = (JSONObject) rootJson.get(servoType.getStringValue());
+            if (servoJson.containsKey(KEY_VALUE)) {
+                Number value = (Number) servoJson.get(KEY_VALUE);
+                if (value != null) return value.intValue();
+            }
+        }
+        return -1;
     }
 
     //Checks whether rootJson contains the calibrationMode JSON key
     public boolean hasCalibrationMode() {
         return rootJson.containsKey(KEY_CALIBRATION_MODE);
+    }
+
+    //Checks whether rootJson contains the error JSON key
+    public boolean hasErrorMessage() {
+        return rootJson.containsKey(KEY_ERROR);
+    }
+
+    //Checks whether rootJson contains a receiver input max value for a given ServoType
+    public boolean hasInputMax(ServoType servoType) {
+        return hasInputConfigValue(servoType, KEY_MAX);
+    }
+
+    //Checks whether rootJson contains a receiver input min value for a given ServoType
+    public boolean hasInputMin(ServoType servoType) {
+        return hasInputConfigValue(servoType, KEY_MIN);
+    }
+
+    //Checks whether rootJson contains a receiver input pin for a given ServoType
+    public boolean hasInputPin(ServoType servoType) {
+        return hasInputConfigValue(servoType, KEY_PIN);
     }
 
     //Checks whether rootJson contains all of the receiver input values set via calibration
@@ -161,14 +277,28 @@ public class ServoPacket {
                 && hasInputRange(ServoType.THROTTLE));
     }
 
-    //Checks whether rootJson contains the error JSON key
-    public boolean hasErrorMessage() {
-        return rootJson.containsKey(KEY_ERROR);
+    //Checks whether rootJson contains an output max value for a given ServoType
+    public boolean hasOutputMax(ServoType servoType) {
+        return hasOutputConfigValue(servoType, KEY_MAX);
+    }
+
+    //Checks whether rootJson contains an output min value for a given ServoType
+    public boolean hasOutputMin(ServoType servoType) {
+        return hasOutputConfigValue(servoType, KEY_MIN);
+    }
+
+    //Checks whether rootJson contains an output pin for a given ServoType
+    public boolean hasOutputPin(ServoType servoType) {
+        return hasOutputConfigValue(servoType, KEY_PIN);
     }
 
     //Checks whether rootJson contains the receiverControl JSON key
     public boolean hasReceiverControl() {
         return rootJson.containsKey(KEY_RECEIVER_CONTROL);
+    }
+
+    public boolean hasReceiverOnly(ServoType servoType) {
+        return hasInputConfigValue(servoType, KEY_RECEIVER_ONLY);
     }
 
     //Checks whether rootJson contains any servo output values
@@ -187,6 +317,16 @@ public class ServoPacket {
     //Use hasReceiverControl method to determine whether to use this method
     public boolean isReceiverControl() {
         return (boolean) rootJson.get(KEY_RECEIVER_CONTROL);
+    }
+
+    public boolean isReceiverOnly(ServoType servoType) {
+        return (boolean) getInputConfigValue(servoType, KEY_RECEIVER_ONLY);
+    }
+
+    //Returns true if the ready status key value pair is present in the stored JSON object
+    public boolean isStatusReady() {
+        return rootJson.containsKey(KEY_STATUS)
+                && rootJson.get(KEY_STATUS).equals(VALUE_STATUS_READY);
     }
 
     //Sets the calibrationMode JSON boolean via boolean parameter calibrationMode
@@ -212,7 +352,7 @@ public class ServoPacket {
         }
         inputConfigJson.put(KEY_RECEIVER_ONLY, receiverOnly);
         servoJson.put(KEY_INPUT_CONFIG, inputConfigJson);
-        rootJson.put(servoType, servoJson);
+        rootJson.put(servoType.getStringValue(), servoJson);
     }
 
     //Sets the receiver input pin for the given ServoType
@@ -222,7 +362,7 @@ public class ServoPacket {
         JSONObject inputConfigJson = new JSONObject();
         if (rootJson.containsKey(servoType.getStringValue())) {
             servoJson = (JSONObject) rootJson.get(servoType.getStringValue());
-            if (servoJson.containsKey(servoType.getStringValue())) {
+            if (servoJson.containsKey(KEY_INPUT_CONFIG)) {
                 inputConfigJson = (JSONObject) servoJson.get(KEY_INPUT_CONFIG);
             }
         }
@@ -238,7 +378,7 @@ public class ServoPacket {
         JSONObject inputConfigJson = new JSONObject();
         if (rootJson.containsKey(servoType.getStringValue())) {
             servoJson = (JSONObject) rootJson.get(servoType.getStringValue());
-            if (rootJson.containsKey(servoType.getStringValue())) {
+            if (servoJson.containsKey(KEY_INPUT_CONFIG)) {
                 inputConfigJson = (JSONObject) servoJson.get(KEY_INPUT_CONFIG);
             }
         }
@@ -255,7 +395,7 @@ public class ServoPacket {
         JSONObject outputConfigJson = new JSONObject();
         if (rootJson.containsKey(servoType.getStringValue())) {
             servoJson = (JSONObject) rootJson.get(servoType.getStringValue());
-            if (servoJson.containsKey(servoType.getStringValue())) {
+            if (servoJson.containsKey(KEY_OUTPUT_CONFIG)) {
                 outputConfigJson = (JSONObject) servoJson.get(KEY_OUTPUT_CONFIG);
             }
         }
@@ -272,7 +412,7 @@ public class ServoPacket {
         JSONObject outputConfigJson = new JSONObject();
         if (rootJson.containsKey(servoType.getStringValue())) {
             servoJson = (JSONObject) rootJson.get(servoType.getStringValue());
-            if (servoJson.containsKey(servoType.getStringValue())) {
+            if (servoJson.containsKey(KEY_OUTPUT_CONFIG)) {
                 outputConfigJson = (JSONObject) servoJson.get(KEY_OUTPUT_CONFIG);
             }
         }
@@ -292,28 +432,58 @@ public class ServoPacket {
         rootJson.put(servoType.getStringValue(), servoJson);
     }
 
-    //Returns the input min or max (as specified by jsonMinMaxKey)
-    private int getInputValue(ServoType servoType, String jsonMinMaxKey) {
+    //Returns the input min, max, or pin (as specified by jsonMinMaxKey)
+    private Object getInputConfigValue(ServoType servoType, String jsonKey) {
         if (rootJson.containsKey(servoType.getStringValue())) {
             JSONObject servoJson = (JSONObject) rootJson.get(servoType.getStringValue());
             if (servoJson.containsKey(KEY_INPUT_CONFIG)) {
                 JSONObject inputConfigJson = (JSONObject) servoJson.get(KEY_INPUT_CONFIG);
-                if (inputConfigJson.containsKey(jsonMinMaxKey)) {
-                    return (int) inputConfigJson.get(jsonMinMaxKey);
+                if (inputConfigJson.containsKey(jsonKey)) {
+                    return inputConfigJson.get(jsonKey);
                 }
             }
         }
-        return -1;
+        return null;
     }
 
-    //Checks whether rootJson contains the receiver input calibration range for a given ServoType
-    private boolean hasInputRange(ServoType servoType) {
+    //Returns the output min, max, or pin (as specified by jsonMinMaxKey)
+    private Number getOutputConfigValue(ServoType servoType, String jsonKey) {
+        if (rootJson.containsKey(servoType.getStringValue())) {
+            JSONObject servoJson = (JSONObject) rootJson.get(servoType.getStringValue());
+            if (servoJson.containsKey(KEY_OUTPUT_CONFIG)) {
+                JSONObject outputConfigJson = (JSONObject) servoJson.get(KEY_OUTPUT_CONFIG);
+                if (outputConfigJson.containsKey(jsonKey)) {
+                    return (Number) outputConfigJson.get(jsonKey);
+                }
+            }
+        }
+        return null;
+    }
+
+    //Checks whether rootJson contains an inputConfig that contains a jsonKey for a given ServoType
+    private boolean hasInputConfigValue(ServoType servoType, String jsonKey) {
         if (rootJson.containsKey(servoType.getStringValue())) {
             JSONObject servoJson = (JSONObject) rootJson.get(servoType.getStringValue());
             if (servoJson.containsKey(KEY_INPUT_CONFIG)) {
                 JSONObject inputConfigJson = (JSONObject) servoJson.get(KEY_INPUT_CONFIG);
-                return (inputConfigJson.containsKey(KEY_MAX)
-                        && inputConfigJson.containsKey(KEY_MIN));
+                return inputConfigJson.containsKey(jsonKey);
+            }
+        }
+        return false;
+    }
+
+    //Checks whether rootJson contains receiver input min and max values for a given ServoType
+    private boolean hasInputRange(ServoType servoType) {
+        return (hasInputConfigValue(servoType, KEY_MIN) && hasInputConfigValue(servoType, KEY_MAX));
+    }
+
+    //Checks whether rootJson contains an outputConfig that contains a jsonKey for a given ServoType
+    private boolean hasOutputConfigValue(ServoType servoType, String jsonKey) {
+        if (rootJson.containsKey(servoType.getStringValue())) {
+            JSONObject servoJson = (JSONObject) rootJson.get(servoType.getStringValue());
+            if (servoJson.containsKey(KEY_OUTPUT_CONFIG)) {
+                JSONObject outputConfigJson = (JSONObject) servoJson.get(KEY_OUTPUT_CONFIG);
+                return outputConfigJson.containsKey(jsonKey);
             }
         }
         return false;
