@@ -20,14 +20,14 @@ import java.util.Set;
  * For convenience, this class can convert to and between Bundle and Intent
  * This class stores servo data as a JSON object and can return a JSON string
  **/
-public class ServoPacket {
+public class ArduinoPacket {
     private static final String PACKAGE_NAME = AvigateApplication.class.getPackage().getName();
 
     //Intent actions
     public static final String INTENT_ACTION_INPUT = PACKAGE_NAME + ".action.ARDUINO_INPUT";
     public static final String INTENT_ACTION_OUTPUT = PACKAGE_NAME + ".action.ARDUINO_OUTPUT";
 
-    //Key for the entire root JSON String of the ServoPacket (value) when stored as an Intent extra
+    //Key for the entire root JSON String of the ArduinoPacket (value) when stored as an Intent extra
     private static final String KEY_ROOT = "json";
 
     //JSON keys for key value pairs
@@ -72,12 +72,12 @@ public class ServoPacket {
 
     private JSONObject rootJson;  //The JSON root object where all JSON data is stored
 
-    public ServoPacket() {
+    public ArduinoPacket() {
         rootJson = new JSONObject();
     }
 
-    //Creates a ServoPacket from a JSON String
-    public ServoPacket(String jsonString) {
+    //Creates a ArduinoPacket from a JSON String
+    public ArduinoPacket(String jsonString) {
         rootJson = new JSONObject();
         try {
             rootJson = (JSONObject) new JSONParser().parse(jsonString);
@@ -86,8 +86,8 @@ public class ServoPacket {
         }
     }
 
-    //Creates a ServoPacket from a bundle (e.g. Intent Extra)
-    public ServoPacket(Bundle bundle) {
+    //Creates a ArduinoPacket from a bundle (e.g. Intent Extra)
+    public ArduinoPacket(Bundle bundle) {
         rootJson = new JSONObject();
         try {
             rootJson = (JSONObject) new JSONParser().parse(bundle.getString(KEY_ROOT));
@@ -96,7 +96,7 @@ public class ServoPacket {
         }
     }
 
-    //Returns an Intent with the ServoPacket contents as an Intent Extra
+    //Returns an Intent with the ArduinoPacket contents as an Intent Extra
     public Intent toIntent(String intentAction) {
         Intent intent = new Intent(intentAction);
         intent.putExtra(KEY_ROOT, rootJson.toJSONString());
@@ -115,13 +115,13 @@ public class ServoPacket {
     }
 
 
-    //Takes a ServoPacket and compares configurations with the rootJson object
+    //Takes a ArduinoPacket and compares configurations with the rootJson object
     @Override
     public boolean equals(Object servoPacketObject) {
         if (servoPacketObject == null) return false;
-        if (!(servoPacketObject instanceof ServoPacket)) return false;
-        ServoPacket servoPacket = (ServoPacket) servoPacketObject;
-        String servoPacketJsonString = servoPacket.toJsonString();
+        if (!(servoPacketObject instanceof ArduinoPacket)) return false;
+        ArduinoPacket arduinoPacket = (ArduinoPacket) servoPacketObject;
+        String servoPacketJsonString = arduinoPacket.toJsonString();
         if (servoPacketJsonString == null) return false;
         JSONObject otherRootJson = new JSONObject();
         try {
@@ -210,7 +210,7 @@ public class ServoPacket {
 
     //Returns the max servo output value for a given ServoType
     //Returns -1 if said value does not exist
-    public int getOutputMax(ServoPacket.ServoType servoType) {
+    public int getOutputMax(ArduinoPacket.ServoType servoType) {
         Number outputMax = getOutputConfigValue(servoType, KEY_MAX);
         if (outputMax == null) return -1;
         return outputMax.intValue();
@@ -218,7 +218,7 @@ public class ServoPacket {
 
     //Returns the min servo output value for a given ServoType
     //Returns -1 if said value does not exist
-    public int getOutputMin(ServoPacket.ServoType servoType) {
+    public int getOutputMin(ArduinoPacket.ServoType servoType) {
         Number outputMin = getOutputConfigValue(servoType, KEY_MIN);
         if (outputMin == null) return -1;
         return outputMin.intValue();

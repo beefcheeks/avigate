@@ -15,7 +15,7 @@ import android.widget.FrameLayout;
 import android.widget.NumberPicker;
 
 import com.rabidllamastudios.avigate.R;
-import com.rabidllamastudios.avigate.models.ServoPacket;
+import com.rabidllamastudios.avigate.models.ArduinoPacket;
 
 /**
  * Created by Ryan on 12/19/15.
@@ -49,47 +49,48 @@ public class ServoInputFragment extends Fragment implements NumberPicker.OnValue
         mCallback = callback;
     }
 
-    //Loads the servo input configuration into the fragment UI from the masterServoPacket parameter
-    public void loadInputConfiguration(ServoPacket masterServoPacket) {
-        loadServoInputConfig(masterServoPacket, ServoPacket.ServoType.AILERON);
-        loadServoInputConfig(masterServoPacket, ServoPacket.ServoType.ELEVATOR);
-        loadServoInputConfig(masterServoPacket, ServoPacket.ServoType.RUDDER);
-        loadServoInputConfig(masterServoPacket, ServoPacket.ServoType.THROTTLE);
-        loadServoInputConfig(masterServoPacket, ServoPacket.ServoType.CUTOVER);
+    //Loads the servo input configuration into the fragment UI from the masterArduinoPacket parameter
+    public void loadInputConfiguration(ArduinoPacket masterArduinoPacket) {
+        loadServoInputConfig(masterArduinoPacket, ArduinoPacket.ServoType.AILERON);
+        loadServoInputConfig(masterArduinoPacket, ArduinoPacket.ServoType.ELEVATOR);
+        loadServoInputConfig(masterArduinoPacket, ArduinoPacket.ServoType.RUDDER);
+        loadServoInputConfig(masterArduinoPacket, ArduinoPacket.ServoType.THROTTLE);
+        loadServoInputConfig(masterArduinoPacket, ArduinoPacket.ServoType.CUTOVER);
     }
 
-    //Loads the input pin and receiverOnly value from a ServoPacket for a given ServoType
-    private void loadServoInputConfig(ServoPacket servoPacket, ServoPacket.ServoType servoType) {
+    //Loads the input pin and receiverOnly value from a ArduinoPacket for a given ServoType
+    private void loadServoInputConfig(ArduinoPacket arduinoPacket,
+                                      ArduinoPacket.ServoType servoType) {
         EditText editText = getInputPinEditText(servoType);
-        if (editText != null && servoPacket.hasInputPin(servoType)) {
-            editText.setText(String.valueOf(servoPacket.getInputPin(servoType)));
+        if (editText != null && arduinoPacket.hasInputPin(servoType)) {
+            editText.setText(String.valueOf(arduinoPacket.getInputPin(servoType)));
         }
 
         CheckBox checkBox = getCheckBox(servoType);
-        if (checkBox != null && servoPacket.hasReceiverOnly(servoType)) {
-            checkBox.setChecked(!servoPacket.isReceiverOnly(servoType));
+        if (checkBox != null && arduinoPacket.hasReceiverOnly(servoType)) {
+            checkBox.setChecked(!arduinoPacket.isReceiverOnly(servoType));
         }
     }
 
     //Configures all input pin EditTexts
     private void configurePinEditText() {
-        configureInputPinEditText(ServoPacket.ServoType.AILERON);
-        configureInputPinEditText(ServoPacket.ServoType.ELEVATOR);
-        configureInputPinEditText(ServoPacket.ServoType.RUDDER);
-        configureInputPinEditText(ServoPacket.ServoType.THROTTLE);
-        configureInputPinEditText(ServoPacket.ServoType.CUTOVER);
+        configureInputPinEditText(ArduinoPacket.ServoType.AILERON);
+        configureInputPinEditText(ArduinoPacket.ServoType.ELEVATOR);
+        configureInputPinEditText(ArduinoPacket.ServoType.RUDDER);
+        configureInputPinEditText(ArduinoPacket.ServoType.THROTTLE);
+        configureInputPinEditText(ArduinoPacket.ServoType.CUTOVER);
     }
 
     //Configures all checkboxes in the layout
     private void configureCheckBoxes() {
-        configureCheckBox(ServoPacket.ServoType.AILERON);
-        configureCheckBox(ServoPacket.ServoType.ELEVATOR);
-        configureCheckBox(ServoPacket.ServoType.RUDDER);
-        configureCheckBox(ServoPacket.ServoType.THROTTLE);
+        configureCheckBox(ArduinoPacket.ServoType.AILERON);
+        configureCheckBox(ArduinoPacket.ServoType.ELEVATOR);
+        configureCheckBox(ArduinoPacket.ServoType.RUDDER);
+        configureCheckBox(ArduinoPacket.ServoType.THROTTLE);
     }
 
     //Configures a servo input pin EditText based on the given ServoType
-    private void configureInputPinEditText(final ServoPacket.ServoType servoType) {
+    private void configureInputPinEditText(final ArduinoPacket.ServoType servoType) {
         final EditText editText = getInputPinEditText(servoType);
         if (editText != null ) editText.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -140,7 +141,7 @@ public class ServoInputFragment extends Fragment implements NumberPicker.OnValue
     }
 
     //Configures a checkbox for a given ServoType
-    private void configureCheckBox(final ServoPacket.ServoType servoType) {
+    private void configureCheckBox(final ArduinoPacket.ServoType servoType) {
         CheckBox checkBox = getCheckBox(servoType);
         if (checkBox != null) {
             checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -157,7 +158,7 @@ public class ServoInputFragment extends Fragment implements NumberPicker.OnValue
 
     //Takes a ServoType and returns the EditText that contains that ServoType's input pin value
     @SuppressWarnings("ConstantConditions")
-    private EditText getInputPinEditText(ServoPacket.ServoType servoType) {
+    private EditText getInputPinEditText(ArduinoPacket.ServoType servoType) {
         switch (servoType) {
             case AILERON:
                 return (EditText) mRootView.findViewById(R.id.et_arduino_value_pin_input_aileron);
@@ -176,7 +177,7 @@ public class ServoInputFragment extends Fragment implements NumberPicker.OnValue
 
     //Takes a ServoType and returns the corresponding CheckBox
     @SuppressWarnings("ConstantConditions")
-    private CheckBox getCheckBox(ServoPacket.ServoType servoType) {
+    private CheckBox getCheckBox(ArduinoPacket.ServoType servoType) {
         switch(servoType) {
             case AILERON:
                 return (CheckBox) mRootView.findViewById(R.id.checkbox_arduino_input_phone_aileron);
@@ -206,9 +207,9 @@ public class ServoInputFragment extends Fragment implements NumberPicker.OnValue
         void loadInputConfiguration();
 
         //Sets the control type for a given ServoType (e.g. shared control or receiver only)
-        void setControlType(ServoPacket.ServoType servoType, boolean receiverOnly);
+        void setControlType(ArduinoPacket.ServoType servoType, boolean receiverOnly);
 
         //Sets the receiver input pin number for a given ServoType
-        void setServoInputPin(ServoPacket.ServoType servoType, int pinValue);
+        void setServoInputPin(ArduinoPacket.ServoType servoType, int pinValue);
     }
 }

@@ -11,7 +11,7 @@ import android.support.v7.widget.Toolbar;
 import com.rabidllamastudios.avigate.R;
 import com.rabidllamastudios.avigate.helpers.SharedPreferencesManager;
 import com.rabidllamastudios.avigate.models.ConnectionPacket;
-import com.rabidllamastudios.avigate.models.ServoPacket;
+import com.rabidllamastudios.avigate.models.ArduinoPacket;
 import com.rabidllamastudios.avigate.services.CommunicationsService;
 import com.rabidllamastudios.avigate.services.FlightControlService;
 
@@ -21,7 +21,7 @@ import java.util.List;
 public class ControllerActivity extends AppCompatActivity {
 
     private Intent mCommService;
-    private ServoPacket mConfigServoPacket;
+    private ArduinoPacket mConfigArduinoPacket;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,16 +40,16 @@ public class ControllerActivity extends AppCompatActivity {
         IntentFilter connectionIntentFilter = new IntentFilter(ConnectionPacket.INTENT_ACTION);
         registerReceiver(mConnectionReceiver, connectionIntentFilter);
 
-        //Register a ServoPacket output IntentFilter and associated Broadcast Receiver
-        IntentFilter servoPacketIntentFilter = new IntentFilter(ServoPacket.INTENT_ACTION_OUTPUT);
+        //Register a ArduinoPacket output IntentFilter and associated Broadcast Receiver
+        IntentFilter servoPacketIntentFilter = new IntentFilter(ArduinoPacket.INTENT_ACTION_OUTPUT);
         registerReceiver(mArduinoOutputReceiver, servoPacketIntentFilter);
 
         //Configure and start CommunicationsService
         List<String> localSubs = new ArrayList<>();
         List<String> remoteSubs = new ArrayList<>();
         localSubs.add(FlightControlService.INTENT_ACTION_CONFIGURE_FLIGHT_CONTROL_SERVICE);
-        localSubs.add(ServoPacket.INTENT_ACTION_INPUT);
-        remoteSubs.add(ServoPacket.INTENT_ACTION_OUTPUT);
+        localSubs.add(ArduinoPacket.INTENT_ACTION_INPUT);
+        remoteSubs.add(ArduinoPacket.INTENT_ACTION_OUTPUT);
         mCommService = CommunicationsService.getConfiguredIntent(this, localSubs, remoteSubs,
                 CommunicationsService.DeviceType.CONTROLLER);
         startService(mCommService);
@@ -69,11 +69,11 @@ public class ControllerActivity extends AppCompatActivity {
     private BroadcastReceiver mArduinoOutputReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (intent.getAction().equals(ServoPacket.INTENT_ACTION_OUTPUT)) {
-                ServoPacket servoPacket = new ServoPacket(intent.getExtras());
-                if (servoPacket.isStatusReady()) {
+            if (intent.getAction().equals(ArduinoPacket.INTENT_ACTION_OUTPUT)) {
+                ArduinoPacket arduinoPacket = new ArduinoPacket(intent.getExtras());
+                if (arduinoPacket.isStatusReady()) {
                     Intent flightControlServiceIntent =
-                            FlightControlService.getConfiguredIntent(mConfigServoPacket);
+                            FlightControlService.getConfiguredIntent(mConfigArduinoPacket);
                     sendBroadcast(flightControlServiceIntent);
                 }
             }
@@ -89,9 +89,9 @@ public class ControllerActivity extends AppCompatActivity {
                 ConnectionPacket connectionPacket = new ConnectionPacket(intent.getExtras());
                 if (connectionPacket.isConnected()) {
                     //Request the status of the Arduino after a connection is established
-                    ServoPacket servoPacket = new ServoPacket();
-                    servoPacket.addStatusRequest();
-                    sendBroadcast(servoPacket.toIntent(ServoPacket.INTENT_ACTION_INPUT));
+                    ArduinoPacket arduinoPacket = new ArduinoPacket();
+                    arduinoPacket.addStatusRequest();
+                    sendBroadcast(arduinoPacket.toIntent(ArduinoPacket.INTENT_ACTION_INPUT));
                 } else {
                     //TODO do stuff when disconnected
                 }
@@ -99,15 +99,15 @@ public class ControllerActivity extends AppCompatActivity {
         }
     };
 
-    //Loads the Arduino configuration into a ServoPacket from SharedPreferences
+    //Loads the Arduino configuration into a ArduinoPacket from SharedPreferences
     private void loadArduinoConfiguration(Intent intent) {
-        mConfigServoPacket = new ServoPacket();
+        mConfigArduinoPacket = new ArduinoPacket();
         String craftProfileName = intent.getStringExtra(SharedPreferencesManager.KEY_CRAFT_NAME);
         SharedPreferencesManager sharedPreferencesManager = new SharedPreferencesManager(this);
         if (craftProfileName != null) {
             String config = sharedPreferencesManager.getCraftConfiguration(craftProfileName);
             if (config != null) {
-                mConfigServoPacket = new ServoPacket(config);
+                mConfigArduinoPacket = new ArduinoPacket(config);
             }
         }
     }

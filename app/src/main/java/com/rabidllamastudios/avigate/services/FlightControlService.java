@@ -9,7 +9,7 @@ import android.os.IBinder;
 import android.util.Log;
 
 import com.rabidllamastudios.avigate.AvigateApplication;
-import com.rabidllamastudios.avigate.models.ServoPacket;
+import com.rabidllamastudios.avigate.models.ArduinoPacket;
 
 /**
  * Service responsible for maintaining craft stability
@@ -28,7 +28,7 @@ public class FlightControlService extends Service {
     private boolean mUsbSerialIsReady = false;
 
     private BroadcastReceiver mArduinoOutputReceiver = null;
-    private ServoPacket mConfigServoPacket = null;
+    private ArduinoPacket mConfigArduinoPacket = null;
 
     public FlightControlService() {}
 
@@ -37,14 +37,14 @@ public class FlightControlService extends Service {
         if (intent != null && intent.getAction().equals(
                 INTENT_ACTION_CONFIGURE_FLIGHT_CONTROL_SERVICE)) {
             if (intent.hasExtra(EXTRA_CONFIG))
-                mConfigServoPacket = new ServoPacket(intent.getStringExtra(EXTRA_CONFIG));
+                mConfigArduinoPacket = new ArduinoPacket(intent.getStringExtra(EXTRA_CONFIG));
 
             if (mArduinoOutputReceiver != null) {
                 unregisterReceiver(mArduinoOutputReceiver);
                 mArduinoOutputReceiver = null;
             }
             mArduinoOutputReceiver = createArduinoOutputReceiver();
-            IntentFilter intentFilter = new IntentFilter(ServoPacket.INTENT_ACTION_OUTPUT);
+            IntentFilter intentFilter = new IntentFilter(ArduinoPacket.INTENT_ACTION_OUTPUT);
             registerReceiver(mArduinoOutputReceiver, intentFilter);
         }
         Log.i(CLASS_NAME, "Service started");
@@ -66,11 +66,11 @@ public class FlightControlService extends Service {
         return null;
     }
 
-    public static Intent getConfiguredIntent(ServoPacket configServoPacket){
-        if (configServoPacket != null) {
+    public static Intent getConfiguredIntent(ArduinoPacket configArduinoPacket){
+        if (configArduinoPacket != null) {
             //Don't set class/component so that CommunicationsService can handle the intent
             Intent intent = new Intent(INTENT_ACTION_CONFIGURE_FLIGHT_CONTROL_SERVICE);
-            intent.putExtra(EXTRA_CONFIG, configServoPacket.toJsonString());
+            intent.putExtra(EXTRA_CONFIG, configArduinoPacket.toJsonString());
             return intent;
         }
         return null;
@@ -81,41 +81,41 @@ public class FlightControlService extends Service {
         return new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                if (intent.getAction().equals(ServoPacket.INTENT_ACTION_OUTPUT)) {
-                    ServoPacket servoPacket = new ServoPacket(intent.getExtras());
+                if (intent.getAction().equals(ArduinoPacket.INTENT_ACTION_OUTPUT)) {
+                    ArduinoPacket arduinoPacket = new ArduinoPacket(intent.getExtras());
 
                     //If the device sent out a ready status
-                    if (servoPacket.isStatusReady()) {
+                    if (arduinoPacket.isStatusReady()) {
                         if (!mUsbSerialIsReady) mUsbSerialIsReady = true;
                         //Send the config for each servo to the Arduino
-                        sendServoConfig(ServoPacket.ServoType.AILERON);
-                        sendServoConfig(ServoPacket.ServoType.ELEVATOR);
-                        sendServoConfig(ServoPacket.ServoType.RUDDER);
-                        sendServoConfig(ServoPacket.ServoType.THROTTLE);
-                        sendServoConfig(ServoPacket.ServoType.CUTOVER);
+                        sendServoConfig(ArduinoPacket.ServoType.AILERON);
+                        sendServoConfig(ArduinoPacket.ServoType.ELEVATOR);
+                        sendServoConfig(ArduinoPacket.ServoType.RUDDER);
+                        sendServoConfig(ArduinoPacket.ServoType.THROTTLE);
+                        sendServoConfig(ArduinoPacket.ServoType.CUTOVER);
                     }
 
-                    //If the ServoPacket contains the receiverControl json key, set mReceiverOnly
-                    if (servoPacket.hasReceiverControl()) {
-                        mReceiverControl = servoPacket.isReceiverControl();
+                    //If the ArduinoPacket contains the receiverControl json key, set mReceiverOnly
+                    if (arduinoPacket.hasReceiverControl()) {
+                        mReceiverControl = arduinoPacket.isReceiverControl();
                     }
 
-                    //If the ServoPacket contains the calibrationMode, set text and buttons accordingly
-                    if (servoPacket.hasCalibrationMode()) {
+                    //If the ArduinoPacket contains the calibrationMode, log it accordingly
+                    if (arduinoPacket.hasCalibrationMode()) {
                         //If the arduino is in calibration mode, inform the user
                         String output = "Calibration Mode: "
-                                + String.valueOf(servoPacket.isCalibrationMode());
+                                + String.valueOf(arduinoPacket.isCalibrationMode());
                         Log.i(CLASS_NAME, output);
                     }
 
-                    //If the ServoPacket contains receiver input calibration ranges, show them on screen
-                    if (servoPacket.hasInputRanges()) {
+                    //If the ArduinoPacket contains receiver calibration ranges, log it accordingly
+                    if (arduinoPacket.hasInputRanges()) {
                         Log.i(CLASS_NAME, "Calibration ranges received");
                     }
 
-                    //If the ServoPacket contains an error message, display the message to the user
-                    if (servoPacket.hasErrorMessage()) {
-                        String error = "Error: " + servoPacket.getErrorMessage();
+                    //If the ArduinoPacket contains an error message, log it accordingly
+                    if (arduinoPacket.hasErrorMessage()) {
+                        String error = "Error: " + arduinoPacket.getErrorMessage();
                         Log.i(CLASS_NAME, error);
                     }
                 }
@@ -124,16 +124,16 @@ public class FlightControlService extends Service {
     }
 
     //Sends the configuration (minus the receiver input min and max) for a given ServoType
-    private void sendServoConfig(ServoPacket.ServoType servoType) {
-        String servoConfigJson = mConfigServoPacket.getConfigJson(servoType);
+    private void sendServoConfig(ArduinoPacket.ServoType servoType) {
+        String servoConfigJson = mConfigArduinoPacket.getConfigJson(servoType);
         if (servoConfigJson != null) {
-            ServoPacket servoPacket = new ServoPacket(servoConfigJson);
-            sendBroadcast(servoPacket.toIntent(ServoPacket.INTENT_ACTION_INPUT));
+            ArduinoPacket arduinoPacket = new ArduinoPacket(servoConfigJson);
+            sendBroadcast(arduinoPacket.toIntent(ArduinoPacket.INTENT_ACTION_INPUT));
         }
-        String servoInputRangeJson = mConfigServoPacket.getInputRangeJson(servoType);
+        String servoInputRangeJson = mConfigArduinoPacket.getInputRangeJson(servoType);
         if (servoInputRangeJson != null) {
-            ServoPacket servoPacket = new ServoPacket(servoInputRangeJson);
-            sendBroadcast(servoPacket.toIntent(ServoPacket.INTENT_ACTION_INPUT));
+            ArduinoPacket arduinoPacket = new ArduinoPacket(servoInputRangeJson);
+            sendBroadcast(arduinoPacket.toIntent(ArduinoPacket.INTENT_ACTION_INPUT));
         }
     }
 }

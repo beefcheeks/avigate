@@ -8,7 +8,7 @@ import com.felhr.usbserial.CDCSerialDevice;
 import com.felhr.usbserial.UsbSerialDevice;
 import com.felhr.usbserial.UsbSerialInterface;
 import com.rabidllamastudios.avigate.AvigateApplication;
-import com.rabidllamastudios.avigate.models.ServoPacket;
+import com.rabidllamastudios.avigate.models.ArduinoPacket;
 
 import android.app.PendingIntent;
 import android.app.Service;
@@ -208,13 +208,13 @@ public class UsbSerialService extends Service {
                 String jsonDataFull = mReceivedJsonData.concat(incomingSerialData.substring(0,
                         endMarkerIndex));
                 Log.i(CLASS_NAME, jsonDataFull);
-                ServoPacket servoPacket = new ServoPacket(jsonDataFull);
+                ArduinoPacket arduinoPacket = new ArduinoPacket(jsonDataFull);
                 //TODO implement throttling and recording of servo values
                 //Ignore incoming data with servo output values until throttling is implemented
-                if (!servoPacket.hasServoValues()) {
-                    //Broadcast the JSON string as a ServoPacket output Intent
-                    Intent servoOutputIntent = new ServoPacket(jsonDataFull).toIntent(
-                            ServoPacket.INTENT_ACTION_OUTPUT);
+                if (!arduinoPacket.hasServoValues()) {
+                    //Broadcast the JSON string as a ArduinoPacket output Intent
+                    Intent servoOutputIntent = new ArduinoPacket(jsonDataFull).toIntent(
+                            ArduinoPacket.INTENT_ACTION_OUTPUT);
                     sendBroadcast(servoOutputIntent);
                 }
                 //If there is still more data beyond the end marker, process the data
@@ -246,7 +246,7 @@ public class UsbSerialService extends Service {
             if (mSerialPortConnected) {
                 Bundle bundle = intent.getExtras();
                 if (bundle == null) return;
-                String servoInputJson = new ServoPacket(bundle).toJsonString();
+                String servoInputJson = new ArduinoPacket(bundle).toJsonString();
                 servoInputJson = SERIAL_START_MARKER + servoInputJson + SERIAL_END_MARKER;
                 Log.i(CLASS_NAME, servoInputJson);
                 mSerialPort.write(servoInputJson.getBytes());
@@ -311,7 +311,7 @@ public class UsbSerialService extends Service {
 
                     //Set up servo input intent filter
                     IntentFilter servoInputFilter =
-                            new IntentFilter(ServoPacket.INTENT_ACTION_INPUT);
+                            new IntentFilter(ArduinoPacket.INTENT_ACTION_INPUT);
                     registerReceiver(mServoInputReceiver, servoInputFilter);
 
                     //Send out an intent that the USB serial interface is ready
@@ -319,9 +319,9 @@ public class UsbSerialService extends Service {
                     mContext.sendBroadcast(intent);
 
                     //Request status from device in case the device is already running
-                    ServoPacket statusServoPacket = new ServoPacket();
-                    statusServoPacket.addStatusRequest();
-                    sendBroadcast(statusServoPacket.toIntent(ServoPacket.INTENT_ACTION_INPUT));
+                    ArduinoPacket statusArduinoPacket = new ArduinoPacket();
+                    statusArduinoPacket.addStatusRequest();
+                    sendBroadcast(statusArduinoPacket.toIntent(ArduinoPacket.INTENT_ACTION_INPUT));
                     Log.i(CLASS_NAME, "Sending status request to Arduino");
 
                 } else {

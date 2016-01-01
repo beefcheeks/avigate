@@ -18,7 +18,7 @@ import android.widget.NumberPicker;
 import android.widget.SeekBar;
 
 import com.rabidllamastudios.avigate.R;
-import com.rabidllamastudios.avigate.models.ServoPacket;
+import com.rabidllamastudios.avigate.models.ArduinoPacket;
 
 import org.florescu.android.rangeseekbar.RangeSeekBar;
 
@@ -90,12 +90,12 @@ public class ServoOutputFragment extends Fragment implements NumberPicker.OnValu
         }
     }
 
-    //Loads the servo output configuration into the fragment UI from the masterServoPacket parameter
-    public void loadOutputConfiguration(ServoPacket masterServoPacket) {
-        loadServoOutputConfig(masterServoPacket, ServoPacket.ServoType.AILERON);
-        loadServoOutputConfig(masterServoPacket, ServoPacket.ServoType.ELEVATOR);
-        loadServoOutputConfig(masterServoPacket, ServoPacket.ServoType.RUDDER);
-        loadServoOutputConfig(masterServoPacket, ServoPacket.ServoType.THROTTLE);
+    //Loads the servo output configuration into the UI from the masterArduinoPacket parameter
+    public void loadOutputConfiguration(ArduinoPacket masterArduinoPacket) {
+        loadServoOutputConfig(masterArduinoPacket, ArduinoPacket.ServoType.AILERON);
+        loadServoOutputConfig(masterArduinoPacket, ArduinoPacket.ServoType.ELEVATOR);
+        loadServoOutputConfig(masterArduinoPacket, ArduinoPacket.ServoType.RUDDER);
+        loadServoOutputConfig(masterArduinoPacket, ArduinoPacket.ServoType.THROTTLE);
     }
 
     //Set the callback for ServoInputFragment
@@ -120,23 +120,24 @@ public class ServoOutputFragment extends Fragment implements NumberPicker.OnValu
         Snackbar.make(mRootView, "Servo values have been reset", Snackbar.LENGTH_SHORT).show();
     }
 
-    //Loads the output configuration from a ServoPacket for a given ServoType
-    private void loadServoOutputConfig(ServoPacket servoPacket, ServoPacket.ServoType servoType) {
+    //Loads the output configuration from a ArduinoPacket for a given ServoType
+    private void loadServoOutputConfig(ArduinoPacket arduinoPacket,
+                                       ArduinoPacket.ServoType servoType) {
         //If the config has an output pin set, set the output pin EditText for that ServoType
         EditText editText = getOutputPinEditText(servoType);
-        if (editText != null && servoPacket.hasOutputPin(servoType)) {
-            editText.setText(String.valueOf(servoPacket.getOutputPin(servoType)));
+        if (editText != null && arduinoPacket.hasOutputPin(servoType)) {
+            editText.setText(String.valueOf(arduinoPacket.getOutputPin(servoType)));
         }
 
         //If the config contains an output min, set that setOutputMin for that ServoType
-        if (servoPacket.hasOutputMin(servoType)) {
-            int min = servoPacket.getOutputMin(servoType);
+        if (arduinoPacket.hasOutputMin(servoType)) {
+            int min = arduinoPacket.getOutputMin(servoType);
             if (min != -1) setOutputMin(servoType, min);
         }
 
         //If the config contains an output max, set that setOutputMin for that ServoType
-        if (servoPacket.hasOutputMax(servoType)) {
-            int max = servoPacket.getOutputMax(servoType);
+        if (arduinoPacket.hasOutputMax(servoType)) {
+            int max = arduinoPacket.getOutputMax(servoType);
             if (max != -1) setOutputMax(servoType, max);
         }
     }
@@ -144,30 +145,30 @@ public class ServoOutputFragment extends Fragment implements NumberPicker.OnValu
     //Configures all SeekBars in the layout
     private void configureSeekBars() {
         //Set control surfaces to neutral position
-        configureSeekbar(ServoPacket.ServoType.AILERON, (mAileronMax - mAileronMin)/2);
-        configureSeekbar(ServoPacket.ServoType.ELEVATOR, (mElevatorMax - mElevatorMin)/2);
-        configureSeekbar(ServoPacket.ServoType.RUDDER, (mRudderMax - mRudderMin)/2);
+        configureSeekbar(ArduinoPacket.ServoType.AILERON, (mAileronMax - mAileronMin)/2);
+        configureSeekbar(ArduinoPacket.ServoType.ELEVATOR, (mElevatorMax - mElevatorMin)/2);
+        configureSeekbar(ArduinoPacket.ServoType.RUDDER, (mRudderMax - mRudderMin)/2);
         //Set throttle to minimum
-        configureSeekbar(ServoPacket.ServoType.THROTTLE, SERVO_MIN);
+        configureSeekbar(ArduinoPacket.ServoType.THROTTLE, SERVO_MIN);
     }
 
     //Configures all EditTexts in the layout
     private void configureEditTexts() {
         //Configure output pin EditTexts
-        configureOutputPinEditText(ServoPacket.ServoType.AILERON);
-        configureOutputPinEditText(ServoPacket.ServoType.ELEVATOR);
-        configureOutputPinEditText(ServoPacket.ServoType.RUDDER);
-        configureOutputPinEditText(ServoPacket.ServoType.THROTTLE);
+        configureOutputPinEditText(ArduinoPacket.ServoType.AILERON);
+        configureOutputPinEditText(ArduinoPacket.ServoType.ELEVATOR);
+        configureOutputPinEditText(ArduinoPacket.ServoType.RUDDER);
+        configureOutputPinEditText(ArduinoPacket.ServoType.THROTTLE);
 
         //Configure servo value EditTexts
-        configureServoValueEditText(ServoPacket.ServoType.AILERON);
-        configureServoValueEditText(ServoPacket.ServoType.ELEVATOR);
-        configureServoValueEditText(ServoPacket.ServoType.RUDDER);
-        configureServoValueEditText(ServoPacket.ServoType.THROTTLE);
+        configureServoValueEditText(ArduinoPacket.ServoType.AILERON);
+        configureServoValueEditText(ArduinoPacket.ServoType.ELEVATOR);
+        configureServoValueEditText(ArduinoPacket.ServoType.RUDDER);
+        configureServoValueEditText(ArduinoPacket.ServoType.THROTTLE);
     }
 
     //Configures the SeekBar and OnSeekBarChangeListener
-    private void configureSeekbar(final ServoPacket.ServoType servoType, int progress) {
+    private void configureSeekbar(final ArduinoPacket.ServoType servoType, int progress) {
         final EditText editText = getServoEditText(servoType);
         SeekBar seekBar = getSeekBar(servoType);
         if (editText != null && seekBar != null) {
@@ -208,7 +209,7 @@ public class ServoOutputFragment extends Fragment implements NumberPicker.OnValu
     }
 
     //Configures the EditText field to be clickable and bring up a NumberPicker AlertDialog
-    private void configureOutputPinEditText(final ServoPacket.ServoType servoType) {
+    private void configureOutputPinEditText(final ArduinoPacket.ServoType servoType) {
         final EditText editText = getOutputPinEditText(servoType);
         if (editText != null ) {
             editText.setOnClickListener(new View.OnClickListener() {
@@ -226,7 +227,7 @@ public class ServoOutputFragment extends Fragment implements NumberPicker.OnValu
     }
 
     //Configures the EditText field to be clickable and bring up a NumberPicker AlertDialog
-    private void configureServoValueEditText(final ServoPacket.ServoType servoType) {
+    private void configureServoValueEditText(final ArduinoPacket.ServoType servoType) {
         final EditText editText = getServoEditText(servoType);
         if (editText != null ) {
             editText.setOnClickListener(new View.OnClickListener() {
@@ -251,7 +252,7 @@ public class ServoOutputFragment extends Fragment implements NumberPicker.OnValu
 
     //Creates a customized AlertDialogBuilder that includes a NumberPicker
     private AlertDialog.Builder getNumPickAlertDialogBuilder(final EditText editText,
-                                                             final ServoPacket.ServoType servoType,
+                                                             final ArduinoPacket.ServoType servoType,
                                                              final boolean isPinDialog) {
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getActivity());
         final NumberPicker numberPicker = new NumberPicker(getActivity());
@@ -268,7 +269,8 @@ public class ServoOutputFragment extends Fragment implements NumberPicker.OnValu
                 numberPicker.setMinValue(min);
             }
         }
-        if (editText.getText().toString().equals(getString(R.string.et_arduino_value_pin_default))) {
+        if (editText.getText().toString().equals(
+                getString(R.string.et_arduino_value_pin_default))) {
             //If there is no output pin yet set, set selector to middle value in pin min/max range
             int middlePinValue = (PIN_MAX - PIN_MIN)/2;
             numberPicker.setValue(middlePinValue);
@@ -311,7 +313,7 @@ public class ServoOutputFragment extends Fragment implements NumberPicker.OnValu
     }
 
     //Prompts the user to set the value range for a given servo type
-    private void configureRangeAlertDialog (final ServoPacket.ServoType servoType) {
+    private void configureRangeAlertDialog (final ArduinoPacket.ServoType servoType) {
         final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getActivity());
         alertDialogBuilder.setTitle("Set " + servoType.getStringValue() + " output range");
         mRangeSeekBar.setRangeValues(SERVO_MIN, SERVO_MAX);
@@ -364,7 +366,7 @@ public class ServoOutputFragment extends Fragment implements NumberPicker.OnValu
 
     //Takes a ServoType and returns the corresponding SeekBar
     @SuppressWarnings("ConstantConditions")
-    private SeekBar getSeekBar(ServoPacket.ServoType servoType) {
+    private SeekBar getSeekBar(ArduinoPacket.ServoType servoType) {
         switch(servoType) {
             case AILERON:
                 return (SeekBar) mRootView.findViewById(R.id.seekbar_aileron);
@@ -381,7 +383,7 @@ public class ServoOutputFragment extends Fragment implements NumberPicker.OnValu
 
     //Takes a ServoType and returns the EditText that contains that ServoType's output pin value
     @SuppressWarnings("ConstantConditions")
-    private EditText getOutputPinEditText(ServoPacket.ServoType servoType) {
+    private EditText getOutputPinEditText(ArduinoPacket.ServoType servoType) {
         switch(servoType) {
             case AILERON:
                 return (EditText) mRootView.findViewById(R.id.et_arduino_value_pin_output_aileron);
@@ -398,7 +400,7 @@ public class ServoOutputFragment extends Fragment implements NumberPicker.OnValu
 
     //Takes a ServoType and return the EditText that contains that ServoType's servo value
     @SuppressWarnings("ConstantConditions")
-    private EditText getServoEditText(ServoPacket.ServoType servoType) {
+    private EditText getServoEditText(ArduinoPacket.ServoType servoType) {
         switch(servoType) {
             case AILERON:
                 return (EditText) mRootView.findViewById(R.id.et_arduino_value_output_aileron);
@@ -414,7 +416,7 @@ public class ServoOutputFragment extends Fragment implements NumberPicker.OnValu
     }
 
     //Takes a ServoType and returns the corresponding current max range value
-    private int getServoMax(ServoPacket.ServoType servoType) {
+    private int getServoMax(ArduinoPacket.ServoType servoType) {
         switch (servoType) {
             case AILERON:
                 return mAileronMax;
@@ -429,7 +431,7 @@ public class ServoOutputFragment extends Fragment implements NumberPicker.OnValu
         }
     }
     //Takes a ServoType and returns the corresponding current min range value
-    private int getServoMin(ServoPacket.ServoType servoType) {
+    private int getServoMin(ArduinoPacket.ServoType servoType) {
         switch (servoType) {
             case AILERON:
                 return mAileronMin;
@@ -445,7 +447,7 @@ public class ServoOutputFragment extends Fragment implements NumberPicker.OnValu
     }
 
     //Takes a ServoType and sets the corresponding max output value to the outputMax parameter
-    private void setOutputMax(ServoPacket.ServoType servoType, int outputMax) {
+    private void setOutputMax(ArduinoPacket.ServoType servoType, int outputMax) {
         switch (servoType) {
             case AILERON:
                 mAileronMax = outputMax;
@@ -462,7 +464,7 @@ public class ServoOutputFragment extends Fragment implements NumberPicker.OnValu
     }
 
     //Takes a ServoType and sets the corresponding min output value to the outputMin parameter
-    private void setOutputMin(ServoPacket.ServoType servoType, int outputMin) {
+    private void setOutputMin(ArduinoPacket.ServoType servoType, int outputMin) {
         switch (servoType) {
             case AILERON:
                 mAileronMin = outputMin;
@@ -485,13 +487,13 @@ public class ServoOutputFragment extends Fragment implements NumberPicker.OnValu
         void loadOutputConfiguration();
 
         //Sets the pin number for a given ServoType
-        void setServoOutputPin(ServoPacket.ServoType servoType, int pinValue);
+        void setServoOutputPin(ArduinoPacket.ServoType servoType, int pinValue);
 
         //Configures the servo output range for a given ServoType
-        void setServoOutputRange(ServoPacket.ServoType servoType, int outputMin, int outputMax);
+        void setServoOutputRange(ArduinoPacket.ServoType servoType, int outputMin, int outputMax);
 
         //Sets the servo value for a given ServoType
-        void setServoValue(ServoPacket.ServoType servoType, int servoValue);
+        void setServoValue(ArduinoPacket.ServoType servoType, int servoValue);
 
     }
 

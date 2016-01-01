@@ -14,7 +14,7 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.rabidllamastudios.avigate.R;
-import com.rabidllamastudios.avigate.models.ServoPacket;
+import com.rabidllamastudios.avigate.models.ArduinoPacket;
 
 /**
  * Created by Ryan on 12/19/15.
@@ -87,13 +87,13 @@ public class ReceiverCalibrationFragment extends Fragment {
     }
 
     //Loads the receiver input ranges for each servo (if they already exist)
-    public void loadCalibrationConfig(ServoPacket masterServoPacket) {
-        if (masterServoPacket.hasInputRanges()) {
-            loadServoInputRange(masterServoPacket, ServoPacket.ServoType.AILERON);
-            loadServoInputRange(masterServoPacket, ServoPacket.ServoType.ELEVATOR);
-            loadServoInputRange(masterServoPacket, ServoPacket.ServoType.RUDDER);
-            loadServoInputRange(masterServoPacket, ServoPacket.ServoType.THROTTLE);
-            loadServoInputRange(masterServoPacket, ServoPacket.ServoType.CUTOVER);
+    public void loadCalibrationConfig(ArduinoPacket masterArduinoPacket) {
+        if (masterArduinoPacket.hasInputRanges()) {
+            loadServoInputRange(masterArduinoPacket, ArduinoPacket.ServoType.AILERON);
+            loadServoInputRange(masterArduinoPacket, ArduinoPacket.ServoType.ELEVATOR);
+            loadServoInputRange(masterArduinoPacket, ArduinoPacket.ServoType.RUDDER);
+            loadServoInputRange(masterArduinoPacket, ArduinoPacket.ServoType.THROTTLE);
+            loadServoInputRange(masterArduinoPacket, ArduinoPacket.ServoType.CUTOVER);
             //Sets the calibrate button text to "recalibrate" since there is an existing calibration
             mCalibrationButton.setText(getString(R.string.button_recalibrate));
         }
@@ -102,11 +102,11 @@ public class ReceiverCalibrationFragment extends Fragment {
     //When calibration is started, change the calibration button text and reset min/max values
     public void calibrationStarted() {
         mCalibrationButton.setText(getString(R.string.button_stop_calibrating));
-        resetServoCalibrationTextViews(ServoPacket.ServoType.AILERON);
-        resetServoCalibrationTextViews(ServoPacket.ServoType.ELEVATOR);
-        resetServoCalibrationTextViews(ServoPacket.ServoType.RUDDER);
-        resetServoCalibrationTextViews(ServoPacket.ServoType.THROTTLE);
-        resetServoCalibrationTextViews(ServoPacket.ServoType.CUTOVER);
+        resetServoCalibrationTextViews(ArduinoPacket.ServoType.AILERON);
+        resetServoCalibrationTextViews(ArduinoPacket.ServoType.ELEVATOR);
+        resetServoCalibrationTextViews(ArduinoPacket.ServoType.RUDDER);
+        resetServoCalibrationTextViews(ArduinoPacket.ServoType.THROTTLE);
+        resetServoCalibrationTextViews(ArduinoPacket.ServoType.CUTOVER);
     }
 
     //When calibration is stopped, change the calibration button text
@@ -119,7 +119,7 @@ public class ReceiverCalibrationFragment extends Fragment {
     }
 
     //Displays the receiver input min and max values in the corresponding TextViews
-    public void showCalibrationRange(ServoPacket.ServoType servoType, long inputMin,
+    public void showCalibrationRange(ArduinoPacket.ServoType servoType, long inputMin,
                                      long inputMax) {
         TextView calibrationMinTextView = getCalibrationMinTextView(servoType);
         TextView calibrationMaxTextView = getCalibrationMaxTextView(servoType);
@@ -195,22 +195,23 @@ public class ReceiverCalibrationFragment extends Fragment {
         alertDialogBuilder.show();
     }
 
-    //Loads the receiver input range from a ServoPacket for a given ServoType
-    private void loadServoInputRange(ServoPacket servoPacket, ServoPacket.ServoType servoType) {
+    //Loads the receiver input range from a ArduinoPacket for a given ServoType
+    private void loadServoInputRange(ArduinoPacket arduinoPacket,
+                                     ArduinoPacket.ServoType servoType) {
         TextView inputMinTV = getCalibrationMinTextView(servoType);
-        if (inputMinTV != null && servoPacket.hasInputMin(servoType)) {
-            String minString = String.valueOf(servoPacket.getInputMin(servoType)) + MICROSECONDS;
+        if (inputMinTV != null && arduinoPacket.hasInputMin(servoType)) {
+            String minString = String.valueOf(arduinoPacket.getInputMin(servoType)) + MICROSECONDS;
             inputMinTV.setText(minString);
         }
         TextView inputMaxTV = getCalibrationMaxTextView(servoType);
-        if (inputMaxTV != null && servoPacket.hasInputMax(servoType)) {
-            String maxString = String.valueOf(servoPacket.getInputMax(servoType)) + MICROSECONDS;
+        if (inputMaxTV != null && arduinoPacket.hasInputMax(servoType)) {
+            String maxString = String.valueOf(arduinoPacket.getInputMax(servoType)) + MICROSECONDS;
             inputMaxTV.setText(maxString);
         }
     }
 
     //Resets the calibration min and max values to the default for a given ServoType
-    private void resetServoCalibrationTextViews(ServoPacket.ServoType servoType) {
+    private void resetServoCalibrationTextViews(ArduinoPacket.ServoType servoType) {
         TextView servoMinTextView = getCalibrationMinTextView(servoType);
         TextView servoMaxTextView = getCalibrationMaxTextView(servoType);
         if (servoMinTextView != null) {
@@ -222,7 +223,7 @@ public class ReceiverCalibrationFragment extends Fragment {
     }
 
     //Takes a ServoType and returns the corresponding receiver input min value
-    private TextView getCalibrationMinTextView(ServoPacket.ServoType servoType) {
+    private TextView getCalibrationMinTextView(ArduinoPacket.ServoType servoType) {
         switch(servoType) {
             case AILERON:
                 return (TextView) mRootView.findViewById(
@@ -245,7 +246,7 @@ public class ReceiverCalibrationFragment extends Fragment {
     }
 
     //Takes a ServoType and returns the corresponding receiver input max value
-    private TextView getCalibrationMaxTextView(ServoPacket.ServoType servoType) {
+    private TextView getCalibrationMaxTextView(ArduinoPacket.ServoType servoType) {
         switch (servoType) {
             case AILERON:
                 return (TextView) mRootView.findViewById(
