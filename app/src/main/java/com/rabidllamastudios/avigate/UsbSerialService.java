@@ -32,22 +32,35 @@ import android.util.Log;
 
 public class UsbSerialService extends Service {
 
+    private static final String CLASS_NAME = UsbSerialService.class.getSimpleName();
     private static final String PACKAGE_NAME = AvigateApplication.class.getPackage().getName();
 
-    public static final String ACTION_CDC_DRIVER_NOT_WORKING = PACKAGE_NAME + ".action.CDC_DRIVER_NOT_WORKING";
-    public static final String ACTION_NO_USB = PACKAGE_NAME + ".action.NO_USB";
-    public static final String ACTION_USB_DEVICE_NOT_WORKING = PACKAGE_NAME + ".action.USB_DEVICE_NOT_WORKING";
-    public static final String ACTION_USB_DISCONNECTED = PACKAGE_NAME + ".action.USB_DISCONNECTED";
-    public static final String ACTION_USB_NOT_SUPPORTED = PACKAGE_NAME + ".action.USB_NOT_SUPPORTED";
-    public static final String ACTION_USB_PERMISSION_GRANTED = PACKAGE_NAME + ".action.USB_PERMISSION_GRANTED";
-    public static final String ACTION_USB_PERMISSION_NOT_GRANTED = PACKAGE_NAME + ".action.USB_PERMISSION_NOT_GRANTED";
-    public static final String ACTION_USB_READY = PACKAGE_NAME + ".action.USB_READY";
+    //USB Intent Actions
+    public static final String INTENT_ACTION_CDC_DRIVER_NOT_WORKING =
+            PACKAGE_NAME + ".action.CDC_DRIVER_NOT_WORKING";
+    public static final String INTENT_ACTION_NO_USB = PACKAGE_NAME + ".action.NO_USB";
+    public static final String INTENT_ACTION_USB_DEVICE_NOT_WORKING =
+            PACKAGE_NAME + ".action.USB_DEVICE_NOT_WORKING";
+    public static final String INTENT_ACTION_USB_DISCONNECTED =
+            PACKAGE_NAME + ".action.USB_DISCONNECTED";
+    public static final String INTENT_ACTION_USB_NOT_SUPPORTED =
+            PACKAGE_NAME + ".action.USB_NOT_SUPPORTED";
+    public static final String INTENT_ACTION_USB_PERMISSION_GRANTED =
+            PACKAGE_NAME + ".action.USB_PERMISSION_GRANTED";
+    public static final String INTENT_ACTION_USB_PERMISSION_NOT_GRANTED =
+            PACKAGE_NAME + ".action.USB_PERMISSION_NOT_GRANTED";
+    public static final String INTENT_ACTION_USB_READY = PACKAGE_NAME + ".action.USB_READY";
 
-    private static final String ACTION_CONFIGURE_USB_SERIAL_SERVICE = PACKAGE_NAME + ".action.CONFIGURE_USB_SERIAL_SERVICE";
-    private static final String ACTION_USB_PERMISSION = PACKAGE_NAME + ".action.USB_PERMISSION";
+    //Configuration intent for UsbSerialService
+    private static final String INTENT_ACTION_CONFIGURE_USB_SERIAL_SERVICE =
+            PACKAGE_NAME + ".action.CONFIGURE_USB_SERIAL_SERVICE";
+    private static final String INTENT_ACTION_USB_PERMISSION =
+            PACKAGE_NAME + ".action.USB_PERMISSION";
+
+    //Baud rate extra name
     private static final String EXTRA_BAUD_RATE = PACKAGE_NAME + ".extra.BAUD_RATE";
 
-    //Start and end markers required for CDC device to recognize serial input as valid
+    //Start and end markers required for CDC device to recognize serial input as valid input
     private static final String SERIAL_START_MARKER = "@";
     private static final String SERIAL_END_MARKER = "#";
 
@@ -78,7 +91,7 @@ public class UsbSerialService extends Service {
         mUsbIntentFilter = new IntentFilter();
         mUsbIntentFilter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
         mUsbIntentFilter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
-        mUsbIntentFilter.addAction(ACTION_USB_PERMISSION);
+        mUsbIntentFilter.addAction(INTENT_ACTION_USB_PERMISSION);
     }
 
     //Return null since this service is not designed to bind to an activity
@@ -89,12 +102,14 @@ public class UsbSerialService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent != null && ACTION_CONFIGURE_USB_SERIAL_SERVICE.equals(intent.getAction())) {
+        if (intent != null
+                && INTENT_ACTION_CONFIGURE_USB_SERIAL_SERVICE.equals(intent.getAction())) {
             BAUD_RATE = intent.getIntExtra(EXTRA_BAUD_RATE, BAUD_RATE);
         }
         //Set up USB intent filter for Android system USB intents
         registerReceiver(mUsbReceiver, mUsbIntentFilter);
         findSerialPortDevice();
+        Log.i(CLASS_NAME, "Service started");
         return Service.START_STICKY;
     }
 
@@ -102,13 +117,14 @@ public class UsbSerialService extends Service {
     public void onDestroy() {
         unregisterReceiver(mUsbReceiver);
         if (mSerialPortConnected) closeSerialPort();
+        Log.i(CLASS_NAME, "Service stopped");
         super.onDestroy();
     }
 
     //Get a pre-configured intent for starting this service class (UsbSerialService)
     public static Intent getConfiguredIntent(Context context) {
         Intent configuredIntent = new Intent(context, UsbSerialService.class);
-        configuredIntent.setAction(ACTION_CONFIGURE_USB_SERIAL_SERVICE);
+        configuredIntent.setAction(INTENT_ACTION_CONFIGURE_USB_SERIAL_SERVICE);
         configuredIntent.putExtra(EXTRA_BAUD_RATE, BAUD_RATE);
         return configuredIntent;
     }
@@ -116,7 +132,7 @@ public class UsbSerialService extends Service {
     //Get a pre-configured intent for starting this service class (UsbSerialService)
     public static Intent getConfiguredIntent(Context context, int baudRate) {
         Intent configuredIntent = new Intent(context, UsbSerialService.class);
-        configuredIntent.setAction(ACTION_CONFIGURE_USB_SERIAL_SERVICE);
+        configuredIntent.setAction(INTENT_ACTION_CONFIGURE_USB_SERIAL_SERVICE);
         configuredIntent.putExtra(EXTRA_BAUD_RATE, baudRate);
         return configuredIntent;
     }
@@ -147,21 +163,21 @@ public class UsbSerialService extends Service {
             }
 
             if (!deviceChosen) {
-                //Send out an intent to notify that there are no USB devices connected (but usb host were listed).
-                Intent intent = new Intent(ACTION_NO_USB);
+                //Send out an intent to notify that there are no USB devices connected
+                Intent intent = new Intent(INTENT_ACTION_NO_USB);
                 sendBroadcast(intent);
             }
         } else {
             //Send out an intent to notify that there are no USB devices connected.
-            Intent intent = new Intent(ACTION_NO_USB);
+            Intent intent = new Intent(INTENT_ACTION_NO_USB);
             sendBroadcast(intent);
         }
     }
 
-
     //Request user permission. The response will be received in the BroadcastReceiver
     private void requestUserPermission() {
-        PendingIntent mPendingIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_USB_PERMISSION), 0);
+        PendingIntent mPendingIntent = PendingIntent.getBroadcast(this, 0,
+                new Intent(INTENT_ACTION_USB_PERMISSION), 0);
         mUsbManager.requestPermission(mUsbDevice, mPendingIntent);
     }
 
@@ -190,11 +206,16 @@ public class UsbSerialService extends Service {
                 //Create the full JSON string based on the end marker position
                 String jsonDataFull = mReceivedJsonData.concat(incomingSerialData.substring(0,
                         endMarkerIndex));
-                Log.i("UsbSerialService", jsonDataFull);
-                //Broadcast the JSON string as a ServoPacket output Intent
-                Intent servoOutputIntent = new ServoPacket(jsonDataFull).toIntent(
-                        ServoPacket.INTENT_ACTION_OUTPUT);
-                sendBroadcast(servoOutputIntent);
+                Log.i(CLASS_NAME, jsonDataFull);
+                ServoPacket servoPacket = new ServoPacket(jsonDataFull);
+                //TODO implement throttling and recording of servo values
+                //Ignore incoming data with servo output values until throttling is implemented
+                if (!servoPacket.hasServoValues()) {
+                    //Broadcast the JSON string as a ServoPacket output Intent
+                    Intent servoOutputIntent = new ServoPacket(jsonDataFull).toIntent(
+                            ServoPacket.INTENT_ACTION_OUTPUT);
+                    sendBroadcast(servoOutputIntent);
+                }
                 //If there is still more data beyond the end marker, process the data
                 if (endMarkerIndex < (incomingSerialData.length() - 1)) {
                     //Treat this data as if it is 'new' incoming serial data
@@ -226,31 +247,33 @@ public class UsbSerialService extends Service {
                 if (bundle == null) return;
                 String servoInputJson = new ServoPacket(bundle).toJsonString();
                 servoInputJson = SERIAL_START_MARKER + servoInputJson + SERIAL_END_MARKER;
-                Log.i("UsbSerialService", servoInputJson);
+                Log.i(CLASS_NAME, servoInputJson);
                 mSerialPort.write(servoInputJson.getBytes());
             }
         }
     };
 
     /*
-     * Different notifications from OS will be received here (USB attached, detached, permission responses...)
-     * About BroadcastReceiver: http://developer.android.com/reference/android/content/BroadcastReceiver.html
+     * Different USB notifications are received here (USB attached, detached, permission responses)
      */
     private final BroadcastReceiver mUsbReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (intent.getAction().equals(ACTION_USB_PERMISSION)) {
-                boolean permissionGranted = intent.getExtras().getBoolean(UsbManager.EXTRA_PERMISSION_GRANTED);
+            if (intent.getAction().equals(INTENT_ACTION_USB_PERMISSION)) {
+                boolean permissionGranted = intent.getExtras().getBoolean(
+                        UsbManager.EXTRA_PERMISSION_GRANTED);
                 if (permissionGranted) {
                     // User accepted our USB connection. Try to open the device as a serial port
-                    Intent permissionGrantedIntent = new Intent(ACTION_USB_PERMISSION_GRANTED);
+                    Intent permissionGrantedIntent =
+                            new Intent(INTENT_ACTION_USB_PERMISSION_GRANTED);
                     context.sendBroadcast(permissionGrantedIntent);
                     mUsbConnection = mUsbManager.openDevice(mUsbDevice);
                     mSerialPortConnected = true;
                     new ConnectionThread().run();
                 } else {
-                    // Send out an intent to notify that the user denies access to the USB connection.
-                    Intent permissionDeniedIntent = new Intent(ACTION_USB_PERMISSION_NOT_GRANTED);
+                    //Send out an intent to notify that the user denies access to the USB connection
+                    Intent permissionDeniedIntent =
+                            new Intent(INTENT_ACTION_USB_PERMISSION_NOT_GRANTED);
                     context.sendBroadcast(permissionDeniedIntent);
                 }
 
@@ -260,7 +283,7 @@ public class UsbSerialService extends Service {
 
             } else if (intent.getAction().equals(UsbManager.ACTION_USB_DEVICE_DETACHED)) {
                 // Usb device was disconnected. Stop listening for servo commands.
-                Intent usbDisconnectedIntent = new Intent(ACTION_USB_DISCONNECTED);
+                Intent usbDisconnectedIntent = new Intent(INTENT_ACTION_USB_DISCONNECTED);
                 context.sendBroadcast(usbDisconnectedIntent);
                 if (mSerialPortConnected) closeSerialPort();
             }
@@ -269,7 +292,7 @@ public class UsbSerialService extends Service {
 
     /*
      * A simple thread to open a serial port.
-     * Although it should be a fast operation. moving usb operations away from UI thread is a good thing.
+     * Although it is a fast operation, moving usb operations off of the UI thread is a good thing
      */
     private class ConnectionThread extends Thread {
         @Override
@@ -286,31 +309,34 @@ public class UsbSerialService extends Service {
                     mSerialPort.read(mCallback);
 
                     //Set up servo input intent filter
-                    IntentFilter servoInputFilter = new IntentFilter(ServoPacket.INTENT_ACTION_INPUT);
+                    IntentFilter servoInputFilter =
+                            new IntentFilter(ServoPacket.INTENT_ACTION_INPUT);
                     registerReceiver(mServoInputReceiver, servoInputFilter);
 
                     //Send out an intent that the USB serial interface is ready
-                    Intent intent = new Intent(ACTION_USB_READY);
+                    Intent intent = new Intent(INTENT_ACTION_USB_READY);
                     mContext.sendBroadcast(intent);
 
                     //Request status from device in case the device is already running
                     ServoPacket statusServoPacket = new ServoPacket();
                     statusServoPacket.addStatusRequest();
                     sendBroadcast(statusServoPacket.toIntent(ServoPacket.INTENT_ACTION_INPUT));
+                    Log.i(CLASS_NAME, "Sending status request to Arduino");
 
                 } else {
-                    //Send out an intent to notify that the serial port could not be opened, (e.g. I/O error or no driver)
+                    //Send out an intent to notify that the serial port could not be opened
+                    //(e.g. I/O error or no driver)
                     if (mSerialPort instanceof CDCSerialDevice) {
-                        Intent intent = new Intent(ACTION_CDC_DRIVER_NOT_WORKING);
+                        Intent intent = new Intent(INTENT_ACTION_CDC_DRIVER_NOT_WORKING);
                         mContext.sendBroadcast(intent);
                     } else {
-                        Intent intent = new Intent(ACTION_USB_DEVICE_NOT_WORKING);
+                        Intent intent = new Intent(INTENT_ACTION_USB_DEVICE_NOT_WORKING);
                         mContext.sendBroadcast(intent);
                     }
                 }
             } else {
                 // No driver for given device, even generic CDC driver could not be loaded
-                Intent intent = new Intent(ACTION_USB_NOT_SUPPORTED);
+                Intent intent = new Intent(INTENT_ACTION_USB_NOT_SUPPORTED);
                 mContext.sendBroadcast(intent);
             }
         }

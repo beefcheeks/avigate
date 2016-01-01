@@ -85,12 +85,12 @@ public class ConfigureArduinoActivity extends AppCompatActivity {
 
         //Initialize mUsbFilter IntentFilter
         mUsbIntentFilter = new IntentFilter();
-        mUsbIntentFilter.addAction(UsbSerialService.ACTION_USB_READY);
-        mUsbIntentFilter.addAction(UsbSerialService.ACTION_USB_PERMISSION_GRANTED);
-        mUsbIntentFilter.addAction(UsbSerialService.ACTION_NO_USB);
-        mUsbIntentFilter.addAction(UsbSerialService.ACTION_USB_DISCONNECTED);
-        mUsbIntentFilter.addAction(UsbSerialService.ACTION_USB_NOT_SUPPORTED);
-        mUsbIntentFilter.addAction(UsbSerialService.ACTION_USB_PERMISSION_NOT_GRANTED);
+        mUsbIntentFilter.addAction(UsbSerialService.INTENT_ACTION_USB_READY);
+        mUsbIntentFilter.addAction(UsbSerialService.INTENT_ACTION_USB_PERMISSION_GRANTED);
+        mUsbIntentFilter.addAction(UsbSerialService.INTENT_ACTION_NO_USB);
+        mUsbIntentFilter.addAction(UsbSerialService.INTENT_ACTION_USB_DISCONNECTED);
+        mUsbIntentFilter.addAction(UsbSerialService.INTENT_ACTION_USB_NOT_SUPPORTED);
+        mUsbIntentFilter.addAction(UsbSerialService.INTENT_ACTION_USB_PERMISSION_NOT_GRANTED);
 
         //Initialize mServoOutputFilter IntentFilter
         mDeviceOutputIntentFilter = new IntentFilter(ServoPacket.INTENT_ACTION_OUTPUT);
@@ -216,22 +216,6 @@ public class ConfigureArduinoActivity extends AppCompatActivity {
         }
     };
 
-    //Configure and start the communications service.
-    private void startCommunicationsService() {
-        List<String> localSubs = new ArrayList<>();
-        List<String> remoteSubs = new ArrayList<>();
-        localSubs.add(ServoPacket.INTENT_ACTION_INPUT);
-        remoteSubs.add(ServoPacket.INTENT_ACTION_OUTPUT);
-        remoteSubs.add(UsbSerialService.ACTION_USB_READY);
-        remoteSubs.add(UsbSerialService.ACTION_USB_PERMISSION_GRANTED);
-        remoteSubs.add(UsbSerialService.ACTION_NO_USB);
-        remoteSubs.add(UsbSerialService.ACTION_USB_DISCONNECTED);
-        remoteSubs.add(UsbSerialService.ACTION_USB_NOT_SUPPORTED);
-        remoteSubs.add(UsbSerialService.ACTION_USB_PERMISSION_NOT_GRANTED);
-        mCommService = CommunicationsService.getConfiguredIntent(this, localSubs, remoteSubs,
-                CommunicationsService.DeviceType.CONTROLLER);
-        startService(mCommService);
-    }
 
     private final BroadcastReceiver mConnectionReceiver = new BroadcastReceiver() {
         @Override
@@ -249,23 +233,28 @@ public class ConfigureArduinoActivity extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             TextView statusTV = (TextView) findViewById(R.id.tv_arduino_value_status);
-            if (intent.getAction().equals(UsbSerialService.ACTION_USB_READY)) {
+            if (intent.getAction().equals(UsbSerialService.INTENT_ACTION_USB_READY)) {
                 statusTV.setText(getString(R.string.tv_usb_value_ready));
-            } else if (intent.getAction().equals(UsbSerialService.ACTION_USB_DISCONNECTED)) {
+            } else if (intent.getAction().equals(
+                    UsbSerialService.INTENT_ACTION_USB_DISCONNECTED)) {
                 mUsbSerialIsReady = false;
                 statusTV.setText(getString(R.string.tv_usb_value_disconnected));
-            } else if (intent.getAction().equals(UsbSerialService.ACTION_USB_PERMISSION_GRANTED)) {
+            } else if (intent.getAction().equals(
+                    UsbSerialService.INTENT_ACTION_USB_PERMISSION_GRANTED)) {
                 statusTV.setText(getString(R.string.tv_usb_value_permission_granted));
             } else if (intent.getAction()
-                    .equals(UsbSerialService.ACTION_USB_PERMISSION_NOT_GRANTED)) {
+                    .equals(UsbSerialService.INTENT_ACTION_USB_PERMISSION_NOT_GRANTED)) {
                 statusTV.setText(getString(R.string.tv_usb_value_permission_not_granted));
-            } else if (intent.getAction().equals(UsbSerialService.ACTION_NO_USB)) {
+            } else if (intent.getAction().equals(UsbSerialService.INTENT_ACTION_NO_USB)) {
                 statusTV.setText(getString(R.string.tv_usb_value_not_connected));
-            } else if (intent.getAction().equals(UsbSerialService.ACTION_USB_NOT_SUPPORTED)) {
+            } else if (intent.getAction().equals(
+                    UsbSerialService.INTENT_ACTION_USB_NOT_SUPPORTED)) {
                 statusTV.setText(getString(R.string.tv_usb_value_not_supported));
-            } else if (intent.getAction().equals(UsbSerialService.ACTION_CDC_DRIVER_NOT_WORKING)) {
+            } else if (intent.getAction().equals(
+                    UsbSerialService.INTENT_ACTION_CDC_DRIVER_NOT_WORKING)) {
                 statusTV.setText(getString(R.string.tv_usb_value_no_cdc_driver));
-            } else if (intent.getAction().equals(UsbSerialService.ACTION_USB_DEVICE_NOT_WORKING)) {
+            } else if (intent.getAction().equals(
+                    UsbSerialService.INTENT_ACTION_USB_DEVICE_NOT_WORKING)) {
                 statusTV.setText(R.string.tv_usb_value_device_not_working);
             }
         }
@@ -325,6 +314,23 @@ public class ConfigureArduinoActivity extends AppCompatActivity {
             }
         }
     };
+
+    //Configure and start the communications service.
+    private void startCommunicationsService() {
+        List<String> localSubs = new ArrayList<>();
+        List<String> remoteSubs = new ArrayList<>();
+        localSubs.add(ServoPacket.INTENT_ACTION_INPUT);
+        remoteSubs.add(ServoPacket.INTENT_ACTION_OUTPUT);
+        remoteSubs.add(UsbSerialService.INTENT_ACTION_USB_READY);
+        remoteSubs.add(UsbSerialService.INTENT_ACTION_USB_PERMISSION_GRANTED);
+        remoteSubs.add(UsbSerialService.INTENT_ACTION_NO_USB);
+        remoteSubs.add(UsbSerialService.INTENT_ACTION_USB_DISCONNECTED);
+        remoteSubs.add(UsbSerialService.INTENT_ACTION_USB_NOT_SUPPORTED);
+        remoteSubs.add(UsbSerialService.INTENT_ACTION_USB_PERMISSION_NOT_GRANTED);
+        mCommService = CommunicationsService.getConfiguredIntent(this, localSubs, remoteSubs,
+                CommunicationsService.DeviceType.CONTROLLER);
+        startService(mCommService);
+    }
 
     //Sets the ReceiverCalibrationFragment to display the incoming receiver input calibration ranges
     private void showCalibrationRange(ServoPacket.ServoType servoType, ServoPacket servoPacket) {

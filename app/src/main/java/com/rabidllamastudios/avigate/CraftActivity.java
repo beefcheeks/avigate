@@ -53,12 +53,12 @@ public class CraftActivity extends AppCompatActivity {
 
         //Register broadcast receiver for usb-related intents
         IntentFilter usbIntentFilter = new IntentFilter();
-        usbIntentFilter.addAction(UsbSerialService.ACTION_USB_READY);
-        usbIntentFilter.addAction(UsbSerialService.ACTION_USB_PERMISSION_GRANTED);
-        usbIntentFilter.addAction(UsbSerialService.ACTION_NO_USB);
-        usbIntentFilter.addAction(UsbSerialService.ACTION_USB_DISCONNECTED);
-        usbIntentFilter.addAction(UsbSerialService.ACTION_USB_NOT_SUPPORTED);
-        usbIntentFilter.addAction(UsbSerialService.ACTION_USB_PERMISSION_NOT_GRANTED);
+        usbIntentFilter.addAction(UsbSerialService.INTENT_ACTION_USB_READY);
+        usbIntentFilter.addAction(UsbSerialService.INTENT_ACTION_USB_PERMISSION_GRANTED);
+        usbIntentFilter.addAction(UsbSerialService.INTENT_ACTION_NO_USB);
+        usbIntentFilter.addAction(UsbSerialService.INTENT_ACTION_USB_DISCONNECTED);
+        usbIntentFilter.addAction(UsbSerialService.INTENT_ACTION_USB_NOT_SUPPORTED);
+        usbIntentFilter.addAction(UsbSerialService.INTENT_ACTION_USB_PERMISSION_NOT_GRANTED);
         registerReceiver(mUsbReceiver, usbIntentFilter);
 
         //Initialize mServoOutputFilter IntentFilter
@@ -85,14 +85,16 @@ public class CraftActivity extends AppCompatActivity {
         localSubs.add(OrientationPacket.INTENT_ACTION);
         localSubs.add(PressurePacket.INTENT_ACTION);
         localSubs.add(ServoPacket.INTENT_ACTION_OUTPUT);
-        localSubs.add(UsbSerialService.ACTION_USB_READY);
-        localSubs.add(UsbSerialService.ACTION_USB_PERMISSION_GRANTED);
-        localSubs.add(UsbSerialService.ACTION_NO_USB);
-        localSubs.add(UsbSerialService.ACTION_USB_DISCONNECTED);
-        localSubs.add(UsbSerialService.ACTION_USB_NOT_SUPPORTED);
-        localSubs.add(UsbSerialService.ACTION_USB_PERMISSION_NOT_GRANTED);
+        localSubs.add(UsbSerialService.INTENT_ACTION_USB_READY);
+        localSubs.add(UsbSerialService.INTENT_ACTION_USB_PERMISSION_GRANTED);
+        localSubs.add(UsbSerialService.INTENT_ACTION_NO_USB);
+        localSubs.add(UsbSerialService.INTENT_ACTION_USB_DISCONNECTED);
+        localSubs.add(UsbSerialService.INTENT_ACTION_USB_NOT_SUPPORTED);
+        localSubs.add(UsbSerialService.INTENT_ACTION_USB_PERMISSION_NOT_GRANTED);
+        remoteSubs.add(FlightControlService.INTENT_ACTION_CONFIGURE_FLIGHT_CONTROL_SERVICE);
         remoteSubs.add(ServoPacket.INTENT_ACTION_INPUT);
-        mCommService = CommunicationsService.getConfiguredIntent(this, localSubs, remoteSubs, CommunicationsService.DeviceType.CRAFT);
+        mCommService = CommunicationsService.getConfiguredIntent(this, localSubs, remoteSubs,
+                CommunicationsService.DeviceType.CRAFT);
         startService(mCommService);
     }
 
@@ -217,23 +219,28 @@ public class CraftActivity extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             TextView usbStatusTV = (TextView) findViewById(R.id.tv_craft_value_arduino_status);
-            if (intent.getAction().equals(UsbSerialService.ACTION_USB_READY)) {
+            if (intent.getAction().equals(UsbSerialService.INTENT_ACTION_USB_READY)) {
                 usbStatusTV.setText(getString(R.string.tv_usb_value_ready));
-            } else if (intent.getAction().equals(UsbSerialService.ACTION_USB_DISCONNECTED)) {
+            } else if (intent.getAction().equals(UsbSerialService.INTENT_ACTION_USB_DISCONNECTED)) {
                 usbStatusTV.setText(getString(R.string.tv_usb_value_disconnected));
                 TextView outputTV = (TextView) findViewById(R.id.tv_craft_value_arduino_output);
                 outputTV.setText("");
-            } else if (intent.getAction().equals(UsbSerialService.ACTION_USB_PERMISSION_GRANTED)) {
+            } else if (intent.getAction().equals(
+                    UsbSerialService.INTENT_ACTION_USB_PERMISSION_GRANTED)) {
                 usbStatusTV.setText(getString(R.string.tv_usb_value_permission_granted));
-            } else if (intent.getAction().equals(UsbSerialService.ACTION_USB_PERMISSION_NOT_GRANTED)) {
+            } else if (intent.getAction().equals(
+                    UsbSerialService.INTENT_ACTION_USB_PERMISSION_NOT_GRANTED)) {
                 usbStatusTV.setText(getString(R.string.tv_usb_value_permission_not_granted));
-            } else if (intent.getAction().equals(UsbSerialService.ACTION_NO_USB)) {
+            } else if (intent.getAction().equals(UsbSerialService.INTENT_ACTION_NO_USB)) {
                 usbStatusTV.setText(getString(R.string.tv_usb_value_not_connected));
-            } else if (intent.getAction().equals(UsbSerialService.ACTION_USB_NOT_SUPPORTED)) {
+            } else if (intent.getAction().equals(
+                    UsbSerialService.INTENT_ACTION_USB_NOT_SUPPORTED)) {
                 usbStatusTV.setText(getString(R.string.tv_usb_value_not_supported));
-            } else if (intent.getAction().equals(UsbSerialService.ACTION_CDC_DRIVER_NOT_WORKING)) {
+            } else if (intent.getAction().equals(
+                    UsbSerialService.INTENT_ACTION_CDC_DRIVER_NOT_WORKING)) {
                 usbStatusTV.setText(getString(R.string.tv_usb_value_no_cdc_driver));
-            } else if (intent.getAction().equals(UsbSerialService.ACTION_USB_DEVICE_NOT_WORKING)) {
+            } else if (intent.getAction().equals(
+                    UsbSerialService.INTENT_ACTION_USB_DEVICE_NOT_WORKING)) {
                 usbStatusTV.setText(R.string.tv_usb_value_device_not_working);
             }
         }

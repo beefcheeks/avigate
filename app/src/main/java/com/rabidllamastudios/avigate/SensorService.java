@@ -12,6 +12,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.util.Log;
 
 import com.rabidllamastudios.avigate.model.AngularVelocityPacket;
 import com.rabidllamastudios.avigate.model.GPSPacket;
@@ -24,7 +25,9 @@ import org.rajawali3d.math.Quaternion;
 
 public class SensorService extends Service implements SensorEventListener {
 
+    private static final String CLASS_NAME = SensorService.class.getSimpleName();
     private static final String PACKAGE_NAME = AvigateApplication.class.getPackage().getName();
+
     public static final String SENSOR_RATE = PACKAGE_NAME + ".extra.SENSOR_RATE";
 
     private static final int DEFAULT_SENSOR_RATE = SensorManager.SENSOR_DELAY_UI;
@@ -123,6 +126,7 @@ public class SensorService extends Service implements SensorEventListener {
                     mLocationListener);
 
         }
+        Log.i(CLASS_NAME, "Service started");
         return START_STICKY;
     }
 
@@ -168,6 +172,7 @@ public class SensorService extends Service implements SensorEventListener {
     public void onDestroy() {
         mSensorManager.unregisterListener(this);
         mLocationManager.removeUpdates(mLocationListener);
+        Log.i(CLASS_NAME, "Service stopped");
         super.onDestroy();
     }
 }
