@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/Avigate.iml" filepath="$PROJECT_DIR$/Avigate.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/avigate.iml" filepath="$PROJECT_DIR$/avigate.iml" />
     </modules>
   </component>
 </project>
