@@ -1,4 +1,4 @@
-package com.rabidllamastudios.avigate;
+package com.rabidllamastudios.avigate.activities;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -20,6 +20,9 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.TextView;
+
+import com.rabidllamastudios.avigate.R;
+import com.rabidllamastudios.avigate.helpers.SharedPreferencesManager;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,9 +1,11 @@
-package com.rabidllamastudios.avigate;
+package com.rabidllamastudios.avigate.activities;
 
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
+
+import com.rabidllamastudios.avigate.R;
 
 public class MainActivity extends AppCompatActivity {
 

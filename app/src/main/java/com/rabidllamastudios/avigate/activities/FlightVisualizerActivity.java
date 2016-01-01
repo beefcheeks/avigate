@@ -1,4 +1,4 @@
-package com.rabidllamastudios.avigate;
+package com.rabidllamastudios.avigate.activities;
 
 import android.app.ActionBar;
 import android.content.Context;
@@ -10,6 +10,9 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.ViewGroup;
+
+import com.rabidllamastudios.avigate.R;
+import com.rabidllamastudios.avigate.helpers.FlightRenderer;
 
 import org.rajawali3d.math.Quaternion;
 import org.rajawali3d.surface.IRajawaliSurface;

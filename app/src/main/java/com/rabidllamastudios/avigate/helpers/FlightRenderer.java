@@ -1,7 +1,9 @@
-package com.rabidllamastudios.avigate;
+package com.rabidllamastudios.avigate.helpers;
 
 import android.content.Context;
 import android.view.MotionEvent;
+
+import com.rabidllamastudios.avigate.R;
 
 import org.rajawali3d.Object3D;
 import org.rajawali3d.lights.DirectionalLight;

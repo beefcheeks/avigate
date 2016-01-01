@@ -1,4 +1,4 @@
-package com.rabidllamastudios.avigate;
+package com.rabidllamastudios.avigate.helpers;
 
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;

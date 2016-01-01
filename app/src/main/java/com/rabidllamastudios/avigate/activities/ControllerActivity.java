@@ -1,4 +1,4 @@
-package com.rabidllamastudios.avigate;
+package com.rabidllamastudios.avigate.activities;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -9,11 +9,11 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 
 import com.rabidllamastudios.avigate.R;
-import com.rabidllamastudios.avigate.SharedPreferencesManager;
-import com.rabidllamastudios.avigate.model.ConnectionPacket;
-import com.rabidllamastudios.avigate.model.ServoPacket;
-import com.rabidllamastudios.avigate.CommunicationsService;
-import com.rabidllamastudios.avigate.FlightControlService;
+import com.rabidllamastudios.avigate.helpers.SharedPreferencesManager;
+import com.rabidllamastudios.avigate.models.ConnectionPacket;
+import com.rabidllamastudios.avigate.models.ServoPacket;
+import com.rabidllamastudios.avigate.services.CommunicationsService;
+import com.rabidllamastudios.avigate.services.FlightControlService;
 
 import java.util.ArrayList;
 import java.util.List;

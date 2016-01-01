@@ -18,7 +18,7 @@ import android.widget.NumberPicker;
 import android.widget.SeekBar;
 
 import com.rabidllamastudios.avigate.R;
-import com.rabidllamastudios.avigate.model.ServoPacket;
+import com.rabidllamastudios.avigate.models.ServoPacket;
 
 import org.florescu.android.rangeseekbar.RangeSeekBar;
 

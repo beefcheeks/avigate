@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    tools:context=".ConfigureArduinoActivity">
+    tools:context=".activities.ConfigureArduinoActivity">
 
     <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"
@@ -41,7 +41,7 @@
         android:orientation="vertical"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <com.rabidllamastudios.avigate.NonSwipeableViewPager
+        <com.rabidllamastudios.avigate.helpers.NonSwipeableViewPager
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"

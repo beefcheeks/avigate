@@ -1,4 +1,4 @@
-package com.rabidllamastudios.avigate;
+package com.rabidllamastudios.avigate.activities;
 
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
@@ -14,11 +14,17 @@ import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.widget.TextView;
 
+import com.rabidllamastudios.avigate.R;
 import com.rabidllamastudios.avigate.fragments.ReceiverCalibrationFragment;
 import com.rabidllamastudios.avigate.fragments.ServoInputFragment;
 import com.rabidllamastudios.avigate.fragments.ServoOutputFragment;
-import com.rabidllamastudios.avigate.model.ConnectionPacket;
-import com.rabidllamastudios.avigate.model.ServoPacket;
+import com.rabidllamastudios.avigate.helpers.NonSwipeableViewPager;
+import com.rabidllamastudios.avigate.helpers.SharedPreferencesManager;
+import com.rabidllamastudios.avigate.helpers.TabFragmentPagerAdapter;
+import com.rabidllamastudios.avigate.models.ConnectionPacket;
+import com.rabidllamastudios.avigate.models.ServoPacket;
+import com.rabidllamastudios.avigate.services.CommunicationsService;
+import com.rabidllamastudios.avigate.services.UsbSerialService;
 
 import java.util.ArrayList;
 import java.util.List;

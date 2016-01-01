@@ -1,4 +1,4 @@
-package com.rabidllamastudios.avigate.model;
+package com.rabidllamastudios.avigate.models;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -7,24 +7,24 @@ import com.rabidllamastudios.avigate.AvigateApplication;
 
 /**
  * Created by Ryan on 11/19/15.
- * A data model class to communicate linear acceleration sensor data
+ * A data model class to communicate magnetic field sensor data
  * For convenience, this class can convert to and between Bundle and Intent
  */
-public class LinearAccelerationPacket {
+public class MagneticFieldPacket {
     private static final String PACKAGE_NAME = AvigateApplication.class.getPackage().getName();
-    public static final String INTENT_ACTION = PACKAGE_NAME + ".action.LINEAR_ACCELERATION_DATA";
+    public static final String INTENT_ACTION = PACKAGE_NAME + ".action.MAGNETIC_FIELD_DATA";
 
     private float mX;
     private float mY;
     private float mZ;
 
-    public LinearAccelerationPacket(float x, float y, float z) {
+    public MagneticFieldPacket(float x, float y, float z) {
         mX = x;
         mY = y;
         mZ = z;
     }
 
-    public LinearAccelerationPacket(Bundle bundle) {
+    public MagneticFieldPacket(Bundle bundle) {
         mX = bundle.getFloat("x");
         mY = bundle.getFloat("y");
         mZ = bundle.getFloat("z");

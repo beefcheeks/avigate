@@ -1,4 +1,4 @@
-package com.rabidllamastudios.avigate;
+package com.rabidllamastudios.avigate.activities;
 
 import android.Manifest;
 import android.content.BroadcastReceiver;
@@ -11,11 +11,14 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.widget.TextView;
 
-import com.rabidllamastudios.avigate.model.AngularVelocityPacket;
-import com.rabidllamastudios.avigate.model.GPSPacket;
-import com.rabidllamastudios.avigate.model.LinearAccelerationPacket;
-import com.rabidllamastudios.avigate.model.MagneticFieldPacket;
-import com.rabidllamastudios.avigate.model.OrientationPacket;
+import com.rabidllamastudios.avigate.R;
+import com.rabidllamastudios.avigate.helpers.PermissionsChecker;
+import com.rabidllamastudios.avigate.models.AngularVelocityPacket;
+import com.rabidllamastudios.avigate.models.GPSPacket;
+import com.rabidllamastudios.avigate.models.LinearAccelerationPacket;
+import com.rabidllamastudios.avigate.models.MagneticFieldPacket;
+import com.rabidllamastudios.avigate.models.OrientationPacket;
+import com.rabidllamastudios.avigate.services.SensorService;
 
 public class DisplaySensorActivity extends AppCompatActivity {
 

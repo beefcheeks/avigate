@@ -1,4 +1,4 @@
-package com.rabidllamastudios.avigate.model;
+package com.rabidllamastudios.avigate.models;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -7,24 +7,24 @@ import com.rabidllamastudios.avigate.AvigateApplication;
 
 /**
  * Created by Ryan on 11/19/15.
- * A data model class to communicate magnetic field sensor data
+ * A data model class to communicate angular velocity sensor data
  * For convenience, this class can convert to and between Bundle and Intent
  */
-public class MagneticFieldPacket {
+public class AngularVelocityPacket {
     private static final String PACKAGE_NAME = AvigateApplication.class.getPackage().getName();
-    public static final String INTENT_ACTION = PACKAGE_NAME + ".action.MAGNETIC_FIELD_DATA";
+    public static final String INTENT_ACTION = PACKAGE_NAME + ".action.ANGULAR_VELOCITY_DATA";
 
     private float mX;
     private float mY;
     private float mZ;
 
-    public MagneticFieldPacket(float x, float y, float z) {
+    public AngularVelocityPacket(float x, float y, float z) {
         mX = x;
         mY = y;
         mZ = z;
     }
 
-    public MagneticFieldPacket(Bundle bundle) {
+    public AngularVelocityPacket(Bundle bundle) {
         mX = bundle.getFloat("x");
         mY = bundle.getFloat("y");
         mZ = bundle.getFloat("z");

@@ -8,7 +8,7 @@
     android:paddingBottom="@dimen/activity_vertical_margin"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:showIn="@layout/activity_connectivity_test"
-    tools:context="com.rabidllamastudios.avigate.ConnectivityTestActivity">
+    tools:context=".activities.ConnectivityTestActivity">
 
     <LinearLayout
         android:layout_width="match_parent"

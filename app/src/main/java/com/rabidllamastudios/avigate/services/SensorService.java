@@ -1,4 +1,4 @@
-package com.rabidllamastudios.avigate;
+package com.rabidllamastudios.avigate.services;
 
 import android.app.Service;
 import android.content.Context;
@@ -14,12 +14,13 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 
-import com.rabidllamastudios.avigate.model.AngularVelocityPacket;
-import com.rabidllamastudios.avigate.model.GPSPacket;
-import com.rabidllamastudios.avigate.model.LinearAccelerationPacket;
-import com.rabidllamastudios.avigate.model.MagneticFieldPacket;
-import com.rabidllamastudios.avigate.model.OrientationPacket;
-import com.rabidllamastudios.avigate.model.PressurePacket;
+import com.rabidllamastudios.avigate.AvigateApplication;
+import com.rabidllamastudios.avigate.models.AngularVelocityPacket;
+import com.rabidllamastudios.avigate.models.GPSPacket;
+import com.rabidllamastudios.avigate.models.LinearAccelerationPacket;
+import com.rabidllamastudios.avigate.models.MagneticFieldPacket;
+import com.rabidllamastudios.avigate.models.OrientationPacket;
+import com.rabidllamastudios.avigate.models.PressurePacket;
 
 import org.rajawali3d.math.Quaternion;
 

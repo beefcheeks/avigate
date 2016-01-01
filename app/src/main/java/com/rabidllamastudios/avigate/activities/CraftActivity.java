@@ -1,4 +1,4 @@
-package com.rabidllamastudios.avigate;
+package com.rabidllamastudios.avigate.activities;
 
 import android.Manifest;
 import android.app.ActivityManager;
@@ -13,11 +13,17 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.widget.TextView;
 
-import com.rabidllamastudios.avigate.model.ConnectionPacket;
-import com.rabidllamastudios.avigate.model.GPSPacket;
-import com.rabidllamastudios.avigate.model.OrientationPacket;
-import com.rabidllamastudios.avigate.model.PressurePacket;
-import com.rabidllamastudios.avigate.model.ServoPacket;
+import com.rabidllamastudios.avigate.R;
+import com.rabidllamastudios.avigate.helpers.PermissionsChecker;
+import com.rabidllamastudios.avigate.models.ConnectionPacket;
+import com.rabidllamastudios.avigate.models.GPSPacket;
+import com.rabidllamastudios.avigate.models.OrientationPacket;
+import com.rabidllamastudios.avigate.models.PressurePacket;
+import com.rabidllamastudios.avigate.models.ServoPacket;
+import com.rabidllamastudios.avigate.services.CommunicationsService;
+import com.rabidllamastudios.avigate.services.FlightControlService;
+import com.rabidllamastudios.avigate.services.SensorService;
+import com.rabidllamastudios.avigate.services.UsbSerialService;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -23,7 +23,7 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".MainActivity">
+        <activity android:name=".activities.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -31,44 +31,44 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ConfigureArduinoActivity"
+            android:name=".activities.ConfigureArduinoActivity"
             android:label="@string/title_activity_configure_arduino"
-            android:parentActivityName=".SelectCraftActivity"
+            android:parentActivityName=".activities.SelectCraftActivity"
             android:theme="@style/AppTheme.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".SelectCraftActivity" />
+                android:value=".activities.SelectCraftActivity" />
 
             <intent-filter>
                 <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
             </intent-filter>
         </activity>
         <activity
-            android:name=".ConnectivityTestActivity"
+            android:name=".activities.ConnectivityTestActivity"
             android:label="@string/title_activity_connectivity_test"
-            android:parentActivityName=".MainActivity"
+            android:parentActivityName=".activities.MainActivity"
             android:theme="@style/AppTheme.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".MainActivity" />
+                android:value=".activities.MainActivity" />
         </activity>
         <activity
-            android:name=".ControllerActivity"
+            android:name=".activities.ControllerActivity"
             android:label="@string/title_activity_controller"
-            android:parentActivityName=".SelectCraftActivity"
+            android:parentActivityName=".activities.SelectCraftActivity"
             android:theme="@style/AppTheme.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".SelectCraftActivity" />
+                android:value=".activities.SelectCraftActivity" />
         </activity>
         <activity
-            android:name=".CraftActivity"
+            android:name=".activities.CraftActivity"
             android:label="@string/title_activity_craft"
-            android:parentActivityName=".MainActivity"
+            android:parentActivityName=".activities.MainActivity"
             android:theme="@style/AppTheme.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".MainActivity" />
+                android:value=".activities.MainActivity" />
 
             <intent-filter>
                 <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
@@ -79,31 +79,31 @@
                 android:resource="@xml/device_filter" />
         </activity>
         <activity
-            android:name=".DisplaySensorActivity"
+            android:name=".activities.DisplaySensorActivity"
             android:label="@string/title_activity_display_sensor"
-            android:parentActivityName=".MainActivity"
+            android:parentActivityName=".activities.MainActivity"
             android:theme="@style/AppTheme.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".MainActivity" />
+                android:value=".activities.MainActivity" />
         </activity>
         <activity
-            android:name=".FlightVisualizerActivity"
+            android:name=".activities.FlightVisualizerActivity"
             android:label="@string/title_activity_flight_visualizer"
-            android:parentActivityName=".MainActivity"
+            android:parentActivityName=".activities.MainActivity"
             android:theme="@style/AppTheme.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".MainActivity" />
+                android:value=".activities.MainActivity" />
         </activity>
         <activity
-            android:name=".SelectCraftActivity"
+            android:name=".activities.SelectCraftActivity"
             android:label="@string/title_activity_select_craft"
-            android:parentActivityName=".MainActivity"
+            android:parentActivityName=".activities.MainActivity"
             android:theme="@style/AppTheme.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".MainActivity" />
+                android:value=".activities.MainActivity" />
         </activity>
 
         <!-- MqttService -->
@@ -111,19 +111,19 @@
         <service android:name="org.eclipse.paho.android.service.MqttService" />
         <!-- CommunicationsService -->
         <service
-            android:name=".CommunicationsService"
+            android:name=".services.CommunicationsService"
             android:exported="false" />
         <!-- FlightControlService -->
         <service
-            android:name=".FlightControlService"
+            android:name=".services.FlightControlService"
             android:exported="false" />
         <!-- Sensor Service -->
         <service
-            android:name=".SensorService"
+            android:name=".services.SensorService"
             android:exported="false" />
         <!-- USB Serial Service -->
         <service
-            android:name=".UsbSerialService"
+            android:name=".services.UsbSerialService"
             android:exported="false" />
 
     </application>

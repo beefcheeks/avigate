@@ -1,4 +1,4 @@
-package com.rabidllamastudios.avigate;
+package com.rabidllamastudios.avigate.services;
 
 import android.app.Service;
 import android.content.BroadcastReceiver;
@@ -8,7 +8,8 @@ import android.content.IntentFilter;
 import android.os.IBinder;
 import android.util.Log;
 
-import com.rabidllamastudios.avigate.model.ServoPacket;
+import com.rabidllamastudios.avigate.AvigateApplication;
+import com.rabidllamastudios.avigate.models.ServoPacket;
 
 /**
  * Service responsible for maintaining craft stability

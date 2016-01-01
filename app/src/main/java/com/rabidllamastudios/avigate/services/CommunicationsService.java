@@ -1,4 +1,4 @@
-package com.rabidllamastudios.avigate;
+package com.rabidllamastudios.avigate.services;
 
 import android.app.IntentService;
 import android.app.Service;
@@ -11,8 +11,10 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import com.rabidllamastudios.avigate.model.BundleableJsonObject;
-import com.rabidllamastudios.avigate.model.ConnectionPacket;
+import com.rabidllamastudios.avigate.AvigateApplication;
+import com.rabidllamastudios.avigate.helpers.MqttConnectionManager;
+import com.rabidllamastudios.avigate.models.BundleableJsonObject;
+import com.rabidllamastudios.avigate.models.ConnectionPacket;
 
 import org.json.JSONException;
 

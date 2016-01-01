@@ -1,4 +1,4 @@
-package com.rabidllamastudios.avigate;
+package com.rabidllamastudios.avigate.services;
 
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
@@ -7,7 +7,8 @@ import java.util.Map;
 import com.felhr.usbserial.CDCSerialDevice;
 import com.felhr.usbserial.UsbSerialDevice;
 import com.felhr.usbserial.UsbSerialInterface;
-import com.rabidllamastudios.avigate.model.ServoPacket;
+import com.rabidllamastudios.avigate.AvigateApplication;
+import com.rabidllamastudios.avigate.models.ServoPacket;
 
 import android.app.PendingIntent;
 import android.app.Service;

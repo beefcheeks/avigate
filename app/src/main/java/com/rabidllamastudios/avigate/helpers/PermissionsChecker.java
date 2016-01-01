@@ -1,4 +1,4 @@
-package com.rabidllamastudios.avigate;
+package com.rabidllamastudios.avigate.helpers;
 
 import android.content.pm.PackageManager;
 import android.os.Build;

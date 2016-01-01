@@ -15,7 +15,7 @@ import android.widget.FrameLayout;
 import android.widget.NumberPicker;
 
 import com.rabidllamastudios.avigate.R;
-import com.rabidllamastudios.avigate.model.ServoPacket;
+import com.rabidllamastudios.avigate.models.ServoPacket;
 
 /**
  * Created by Ryan on 12/19/15.

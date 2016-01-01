@@ -1,4 +1,4 @@
-package com.rabidllamastudios.avigate;
+package com.rabidllamastudios.avigate.activities;
 
 import android.Manifest;
 import android.os.Bundle;
@@ -11,6 +11,10 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+
+import com.rabidllamastudios.avigate.R;
+import com.rabidllamastudios.avigate.helpers.MqttConnectionManager;
+import com.rabidllamastudios.avigate.helpers.PermissionsChecker;
 
 import java.util.ArrayList;
 

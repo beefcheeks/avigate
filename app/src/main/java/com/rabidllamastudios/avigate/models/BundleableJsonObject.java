@@ -1,4 +1,4 @@
-package com.rabidllamastudios.avigate.model;
+package com.rabidllamastudios.avigate.models;
 
 import android.os.Build;
 import android.os.Bundle;
