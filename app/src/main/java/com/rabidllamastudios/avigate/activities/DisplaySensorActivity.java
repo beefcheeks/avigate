@@ -83,9 +83,9 @@ public class DisplaySensorActivity extends AppCompatActivity {
                         (TextView) findViewById(R.id.tv_sensor_value_orientation_z);
                 //y and z switched due to necessary coordinate system transformation
                 OrientationPacket orientationPacket = new OrientationPacket(intent.getExtras());
-                orientationXTV.setText(String.valueOf(orientationPacket.getOrientation().x));
-                orientationYTV.setText(String.valueOf(orientationPacket.getOrientation().z));
-                orientationZTV.setText(String.valueOf(orientationPacket.getOrientation().y));
+                orientationXTV.setText(String.valueOf(orientationPacket.getRawOrientation().x));
+                orientationYTV.setText(String.valueOf(orientationPacket.getRawOrientation().z));
+                orientationZTV.setText(String.valueOf(orientationPacket.getRawOrientation().y));
             //If the intent is type linear acceleration packet, update TextView values
             } else if (intent.getAction().equals(LinearAccelerationPacket.INTENT_ACTION)) {
                 TextView linearXTV =

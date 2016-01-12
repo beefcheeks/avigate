@@ -31,6 +31,7 @@ import java.util.List;
 public class CraftActivity extends AppCompatActivity {
 
     private static final String CLASS_NAME = CraftActivity.class.getSimpleName();
+    private static final String DEGREES = " °";
     //TODO adjust sensor rate with latency?
     //Sensor update rate in microseconds
     private static final int SENSOR_UPDATE_RATE = SensorManager.SENSOR_DELAY_UI;
@@ -205,17 +206,21 @@ public class CraftActivity extends AppCompatActivity {
     private BroadcastReceiver mSensorReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            //If the intent is type orientation packet, update corresponding textview values
+            //If the intent is type OrientationPacket, update corresponding TextView values
             if (intent.getAction().equals(OrientationPacket.INTENT_ACTION)) {
+                TextView rollTV = (TextView) findViewById(R.id.tv_craft_value_roll);
                 TextView pitchTV = (TextView) findViewById(R.id.tv_craft_value_pitch);
                 TextView yawTV = (TextView) findViewById(R.id.tv_craft_value_yaw);
-                TextView rollTV = (TextView) findViewById(R.id.tv_craft_value_roll);
                 OrientationPacket orientationPacket = new OrientationPacket(intent.getExtras());
+                String roll = String.valueOf(orientationPacket.getCraftRoll(false)) + DEGREES;
+                String pitch = String.valueOf(orientationPacket.getCraftPitch(false)) + DEGREES;
+                String yaw = String.valueOf(orientationPacket.getCraftYaw(false)) + DEGREES;
+                rollTV.setText(roll);
+                pitchTV.setText(pitch);
+                yawTV.setText(yaw);
+
                 //yaw and roll switched due to necessary coordinate system transformation
-                pitchTV.setText(String.valueOf(orientationPacket.getOrientation().getPitch()));
-                yawTV.setText(String.valueOf(orientationPacket.getOrientation().getRoll()));
-                rollTV.setText(String.valueOf(orientationPacket.getOrientation().getYaw()));
-            //If the intent is type gps packet, update corresponding textview values
+            //If the intent is type GPSPacket, update corresponding TextView values
             } else if (intent.getAction().equals(GPSPacket.INTENT_ACTION)) {
                 TextView gpsCoordinatesTV =
                         (TextView) findViewById(R.id.tv_craft_value_gps_coordinates);
@@ -230,10 +235,10 @@ public class CraftActivity extends AppCompatActivity {
                 if (gpsPacket.getBearing() == Double.NaN) {
                     gpsBearingTV.setText(getResources().getString(R.string.tv_placeholder_sensor));
                 } else {
-                    String bearing = String.valueOf(gpsPacket.getBearing()) + " °";
+                    String bearing = String.valueOf(gpsPacket.getBearing()) + DEGREES;
                     gpsBearingTV.setText(bearing);
                 }
-            //If the intent type is pressure packet, update corresponding textview value
+            //If the intent type is PressurePacket, update corresponding TextView value
             } else if (intent.getAction().equals(PressurePacket.INTENT_ACTION)) {
                 TextView pressureTV = (TextView) findViewById(R.id.tv_craft_value_barometer);
                 PressurePacket pressurePacket = new PressurePacket(intent.getExtras());
