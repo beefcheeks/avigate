@@ -4,6 +4,7 @@ import android.content.Context;
 import android.view.MotionEvent;
 
 import com.rabidllamastudios.avigate.R;
+import com.rabidllamastudios.avigate.models.OrientationPacket;
 
 import org.rajawali3d.Object3D;
 import org.rajawali3d.lights.DirectionalLight;
@@ -23,7 +24,6 @@ public class FlightRenderer extends RajawaliRenderer {
 
     private Matrix4 mCameraOffsetMatrix;
     private Object3D mAircraftObject;
-    private Quaternion mNewQuaternion;
     private Quaternion mAircraftOrientation;
 
     private static final double RADIUS = 40;
@@ -34,7 +34,6 @@ public class FlightRenderer extends RajawaliRenderer {
         setFrameRate(60);
 
         mAircraftOrientation = new Quaternion();
-        mNewQuaternion = new Quaternion();
     }
 
     public void initScene() {
@@ -87,28 +86,27 @@ public class FlightRenderer extends RajawaliRenderer {
     }
 
     public void setAircraftOrientationQuaternion(Quaternion inputQuaternion) {
-        synchronized (mAircraftOrientation) {
-            mAircraftOrientation.setAll(inputQuaternion);
-        }
+        mAircraftOrientation.setAll(inputQuaternion);
     }
 
     //TODO separate method for calibrating coordinate system transformation
     private void setAircraftOrientation() {
-        mAircraftObject.setOrientation(mNewQuaternion);
+        mAircraftObject.setOrientation(new Quaternion());
         //transform model coordinates to phone coordinates
         mAircraftObject.rotate(Vector3.Y, 180);
         mAircraftObject.rotate(Vector3.X, -90);
-        // transform phone coordinates to real world coordinates
-        synchronized (mAircraftOrientation) {
-            mAircraftObject.rotate(mAircraftOrientation.invertAndCreate());
-        }
+        //transform phone coordinates to real world coordinates
+        mAircraftObject.rotate(mAircraftOrientation.invertAndCreate());
         //transform real world coordinates to view world coordinates
         mAircraftObject.rotate(Vector3.X, 90);
     }
 
+
+
     // Camera follows aircraft orientation on yaw and pitch axes
     private void followAircraftWithCamera() {
-        getCurrentCamera().setPosition(mAircraftObject.getOrientation().toRotationMatrix().multiply(mCameraOffsetMatrix).getTranslation());
+        getCurrentCamera().setPosition(mAircraftObject.getOrientation().toRotationMatrix().multiply(
+                mCameraOffsetMatrix).getTranslation());
         getCurrentCamera().setLookAt(mAircraftObject.getPosition());
     }
 

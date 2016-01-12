@@ -140,6 +140,9 @@ public class ServoOutputFragment extends Fragment implements NumberPicker.OnValu
             int max = arduinoPacket.getOutputMax(servoType);
             if (max != -1) setOutputMax(servoType, max);
         }
+
+        //In case the output range has not been set yet
+        mCallback.setServoOutputRange(servoType, getServoMin(servoType), getServoMax(servoType));
     }
 
     //Configures all SeekBars in the layout
@@ -243,7 +246,7 @@ public class ServoOutputFragment extends Fragment implements NumberPicker.OnValu
             editText.setOnLongClickListener(new View.OnLongClickListener() {
                 @Override
                 public boolean onLongClick(View v) {
-                    configureRangeAlertDialog(servoType);
+                    showRangeAlertDialog(servoType);
                     return true;
                 }
             });
@@ -313,7 +316,7 @@ public class ServoOutputFragment extends Fragment implements NumberPicker.OnValu
     }
 
     //Prompts the user to set the value range for a given servo type
-    private void configureRangeAlertDialog (final ArduinoPacket.ServoType servoType) {
+    private void showRangeAlertDialog (final ArduinoPacket.ServoType servoType) {
         final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getActivity());
         alertDialogBuilder.setTitle("Set " + servoType.getStringValue() + " output range");
         mRangeSeekBar.setRangeValues(SERVO_MIN, SERVO_MAX);

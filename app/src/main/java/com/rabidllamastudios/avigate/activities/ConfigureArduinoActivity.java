@@ -286,7 +286,6 @@ public class ConfigureArduinoActivity extends AppCompatActivity {
                 if (mUsbSerialIsReady) {
                     //If the transmitter is to be enabled, send the appropriate ArduinoPacket
                     if (enableTransmitter) {
-                        //Use getInputRangesJson method to get the minimum necessary ArduinoPacket
                         //The maximum Arduino input stream size is 255 characters
                         sendReceiverInputRange(ArduinoPacket.ServoType.AILERON);
                         sendReceiverInputRange(ArduinoPacket.ServoType.ELEVATOR);
@@ -404,10 +403,10 @@ public class ConfigureArduinoActivity extends AppCompatActivity {
                 if (arduinoPacket.hasInputRanges()) {
                     statusTV.setText(getString(R.string.tv_arduino_value_calibration_success));
                     showCalibrationRange(ArduinoPacket.ServoType.AILERON, arduinoPacket);
-                    showCalibrationRange(ArduinoPacket.ServoType.CUTOVER, arduinoPacket);
                     showCalibrationRange(ArduinoPacket.ServoType.ELEVATOR, arduinoPacket);
                     showCalibrationRange(ArduinoPacket.ServoType.RUDDER, arduinoPacket);
                     showCalibrationRange(ArduinoPacket.ServoType.THROTTLE, arduinoPacket);
+                    showCalibrationRange(ArduinoPacket.ServoType.CUTOVER, arduinoPacket);
                     mReceiverCalibrationFragment.calibrationStopped(true);
                 }
 

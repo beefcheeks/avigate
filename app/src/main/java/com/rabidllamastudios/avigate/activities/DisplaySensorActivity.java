@@ -134,7 +134,7 @@ public class DisplaySensorActivity extends AppCompatActivity {
                 TextView gpsBearingTV = (TextView) findViewById(R.id.tv_sensor_value_bearing);
                 TextView gpsAltitudeTV = (TextView) findViewById(R.id.tv_sensor_value_altitude);
                 GPSPacket gpsPacket = new GPSPacket(intent.getExtras());
-                String coordinates = String.valueOf(gpsPacket.getLatitude()) + " ,"
+                String coordinates = String.valueOf(gpsPacket.getLatitude()) + ", "
                         + String.valueOf(gpsPacket.getLongitude());
                 gpsCoordinatesTV.setText(coordinates);
                 if (gpsPacket.getBearing() == Double.NaN) {

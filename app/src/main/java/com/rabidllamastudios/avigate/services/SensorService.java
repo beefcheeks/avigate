@@ -39,7 +39,7 @@ public class SensorService extends Service implements SensorEventListener {
 
     private Sensor mAccelerometer;
     private Sensor mGyroscope;
-    private Sensor mOrientation;
+    private Sensor mRotationVector;
     private Sensor mCompass;
     private Sensor mBarometer;
 
@@ -63,7 +63,7 @@ public class SensorService extends Service implements SensorEventListener {
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
         mGyroscope = mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
-        mOrientation = mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
+        mRotationVector = mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
         mCompass = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
         mBarometer = mSensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
 
@@ -117,7 +117,7 @@ public class SensorService extends Service implements SensorEventListener {
             //Set sensor refresh rate and start sensors
             mSensorManager.registerListener(this, mAccelerometer, sensorRate);
             mSensorManager.registerListener(this, mGyroscope, sensorRate);
-            mSensorManager.registerListener(this, mOrientation, sensorRate);
+            mSensorManager.registerListener(this, mRotationVector, sensorRate);
             mSensorManager.registerListener(this, mCompass, sensorRate);
             mSensorManager.registerListener(this, mBarometer, sensorRate);
 
