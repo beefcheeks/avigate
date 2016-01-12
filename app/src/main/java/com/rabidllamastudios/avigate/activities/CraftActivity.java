@@ -20,7 +20,7 @@ import com.rabidllamastudios.avigate.models.GPSPacket;
 import com.rabidllamastudios.avigate.models.OrientationPacket;
 import com.rabidllamastudios.avigate.models.PressurePacket;
 import com.rabidllamastudios.avigate.models.ArduinoPacket;
-import com.rabidllamastudios.avigate.services.CommunicationsService;
+import com.rabidllamastudios.avigate.services.NetworkService;
 import com.rabidllamastudios.avigate.services.FlightControlService;
 import com.rabidllamastudios.avigate.services.SensorService;
 import com.rabidllamastudios.avigate.services.UsbSerialService;
@@ -37,7 +37,7 @@ public class CraftActivity extends AppCompatActivity {
     //Sensor update rate in microseconds
     private static final int SENSOR_UPDATE_RATE = SensorManager.SENSOR_DELAY_UI;
 
-    private Intent mCommService = null;
+    private Intent mNetworkService = null;
     private Intent mFlightControlService = null;
     private Intent mSensorService = null;
     private Intent mUsbSerialService = null;
@@ -99,7 +99,7 @@ public class CraftActivity extends AppCompatActivity {
             startService(mSensorService);
         }
 
-        //Configure and start the communications service.
+        //Configure and start the network service.
         List<String> localSubs = new ArrayList<>();
         List<String> remoteSubs = new ArrayList<>();
         localSubs.add(GPSPacket.INTENT_ACTION);
@@ -114,9 +114,9 @@ public class CraftActivity extends AppCompatActivity {
         localSubs.add(UsbSerialService.INTENT_ACTION_USB_PERMISSION_NOT_GRANTED);
         remoteSubs.add(FlightControlService.INTENT_ACTION_CONFIGURE_FLIGHT_CONTROL_SERVICE);
         remoteSubs.add(ArduinoPacket.INTENT_ACTION_INPUT);
-        mCommService = CommunicationsService.getConfiguredIntent(this, localSubs, remoteSubs,
-                CommunicationsService.DeviceType.CRAFT);
-        startService(mCommService);
+        mNetworkService = NetworkService.getConfiguredIntent(this, localSubs, remoteSubs,
+                NetworkService.DeviceType.CRAFT);
+        startService(mNetworkService);
     }
 
     // If the user allows location permissions, start the sensor service
@@ -138,7 +138,7 @@ public class CraftActivity extends AppCompatActivity {
         unregisterReceiver(mStartServiceReceiver);
         unregisterReceiver(mUsbReceiver);
         //Stop all services (if running)
-        if (mCommService != null) stopService(mCommService);
+        if (mNetworkService != null) stopService(mNetworkService);
         if (mFlightControlService != null) stopService(mFlightControlService);
         if (mSensorService != null) stopService(mSensorService);
         if (mUsbSerialService != null) stopService(mUsbSerialService);

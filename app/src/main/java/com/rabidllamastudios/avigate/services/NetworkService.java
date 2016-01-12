@@ -28,13 +28,13 @@ import java.util.List;
  * TODO: write javadoc for all methods
  * helper methods.
  */
-public class CommunicationsService extends Service {
+public class NetworkService extends Service {
 
-    private static final String CLASS_NAME = CommunicationsService.class.getSimpleName();
+    private static final String CLASS_NAME = NetworkService.class.getSimpleName();
     private static final String PACKAGE_NAME = AvigateApplication.class.getPackage().getName();
 
-    public static final String INTENT_ACTION_CONFIGURE_COMM_SERVICE =
-            PACKAGE_NAME + ".action.CONFIGURE_COMM_SERVICE";
+    public static final String INTENT_ACTION_CONFIGURE_NETWORK_SERVICE =
+            PACKAGE_NAME + ".action.CONFIGURE_NETWORK_SERVICE";
 
     public static final String EXTRA_SUBSCRIPTIONS_LOCAL = PACKAGE_NAME + ".extra.LOCAL";
     public static final String EXTRA_SUBSCRIPTIONS_REMOTE = PACKAGE_NAME + ".extra.REMOTE";
@@ -56,8 +56,8 @@ public class CommunicationsService extends Service {
 
     public static Intent getConfiguredIntent(Context context, List<String> localSubs,
                                              List<String> remoteSubs, DeviceType localDeviceType) {
-        Intent intent = new Intent(context, CommunicationsService.class);
-        intent.setAction(INTENT_ACTION_CONFIGURE_COMM_SERVICE);
+        Intent intent = new Intent(context, NetworkService.class);
+        intent.setAction(INTENT_ACTION_CONFIGURE_NETWORK_SERVICE);
         intent.putStringArrayListExtra(EXTRA_SUBSCRIPTIONS_LOCAL, (ArrayList<String>) localSubs);
         intent.putStringArrayListExtra(EXTRA_SUBSCRIPTIONS_REMOTE, (ArrayList<String>) remoteSubs);
         intent.putExtra(EXTRA_LOCAL_DEVICE_TYPE, localDeviceType.name());
@@ -70,11 +70,11 @@ public class CommunicationsService extends Service {
     private List<String> mRemoteSubs;
     private DeviceType mLocalDeviceType;
 
-    public CommunicationsService() {}
+    public NetworkService() {}
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent != null && intent.getAction().equals(INTENT_ACTION_CONFIGURE_COMM_SERVICE)) {
+        if (intent != null && intent.getAction().equals(INTENT_ACTION_CONFIGURE_NETWORK_SERVICE)) {
             List<String> localSubs = new ArrayList<>();
             List<String> remoteSubs = new ArrayList<>();
             if (intent.hasExtra(EXTRA_SUBSCRIPTIONS_LOCAL))

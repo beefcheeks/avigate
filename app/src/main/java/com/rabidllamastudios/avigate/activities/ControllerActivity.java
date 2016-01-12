@@ -12,7 +12,7 @@ import com.rabidllamastudios.avigate.R;
 import com.rabidllamastudios.avigate.helpers.SharedPreferencesManager;
 import com.rabidllamastudios.avigate.models.ConnectionPacket;
 import com.rabidllamastudios.avigate.models.ArduinoPacket;
-import com.rabidllamastudios.avigate.services.CommunicationsService;
+import com.rabidllamastudios.avigate.services.NetworkService;
 import com.rabidllamastudios.avigate.services.FlightControlService;
 
 import java.util.ArrayList;
@@ -20,7 +20,7 @@ import java.util.List;
 
 public class ControllerActivity extends AppCompatActivity {
 
-    private Intent mCommService;
+    private Intent mNetworkService;
     private ArduinoPacket mConfigArduinoPacket;
 
     @Override
@@ -44,23 +44,23 @@ public class ControllerActivity extends AppCompatActivity {
         IntentFilter servoPacketIntentFilter = new IntentFilter(ArduinoPacket.INTENT_ACTION_OUTPUT);
         registerReceiver(mArduinoOutputReceiver, servoPacketIntentFilter);
 
-        //Configure and start CommunicationsService
+        //Configure and start NetworkService
         List<String> localSubs = new ArrayList<>();
         List<String> remoteSubs = new ArrayList<>();
         localSubs.add(FlightControlService.INTENT_ACTION_CONFIGURE_FLIGHT_CONTROL_SERVICE);
         localSubs.add(ArduinoPacket.INTENT_ACTION_INPUT);
         remoteSubs.add(ArduinoPacket.INTENT_ACTION_OUTPUT);
-        mCommService = CommunicationsService.getConfiguredIntent(this, localSubs, remoteSubs,
-                CommunicationsService.DeviceType.CONTROLLER);
-        startService(mCommService);
+        mNetworkService = NetworkService.getConfiguredIntent(this, localSubs, remoteSubs,
+                NetworkService.DeviceType.CONTROLLER);
+        startService(mNetworkService);
     }
 
     @Override
     protected void onDestroy() {
-        //Unregister receivers and stop CommunicationsService
+        //Unregister receivers and stop NetworkService
         unregisterReceiver(mArduinoOutputReceiver);
         unregisterReceiver(mConnectionReceiver);
-        if (mCommService != null) stopService(mCommService);
+        if (mNetworkService != null) stopService(mNetworkService);
         super.onDestroy();
     }
 

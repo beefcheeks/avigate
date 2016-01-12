@@ -109,9 +109,9 @@
         <!-- MqttService -->
         <!-- Third-party service included as part of third party library, Paho MQTT-->
         <service android:name="org.eclipse.paho.android.service.MqttService" />
-        <!-- CommunicationsService -->
+        <!-- NetworkService -->
         <service
-            android:name=".services.CommunicationsService"
+            android:name=".services.NetworkService"
             android:exported="false" />
         <!-- FlightControlService -->
         <service

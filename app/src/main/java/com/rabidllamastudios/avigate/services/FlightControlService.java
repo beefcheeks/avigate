@@ -68,7 +68,7 @@ public class FlightControlService extends Service {
 
     public static Intent getConfiguredIntent(ArduinoPacket configArduinoPacket){
         if (configArduinoPacket != null) {
-            //Don't set class/component so that CommunicationsService can handle the intent
+            //Don't set class/component so that NetworkService can handle the intent
             Intent intent = new Intent(INTENT_ACTION_CONFIGURE_FLIGHT_CONTROL_SERVICE);
             intent.putExtra(EXTRA_CONFIG, configArduinoPacket.toJsonString());
             return intent;

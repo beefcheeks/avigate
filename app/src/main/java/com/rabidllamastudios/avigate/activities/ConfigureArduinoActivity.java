@@ -23,7 +23,7 @@ import com.rabidllamastudios.avigate.helpers.SharedPreferencesManager;
 import com.rabidllamastudios.avigate.helpers.TabFragmentPagerAdapter;
 import com.rabidllamastudios.avigate.models.ArduinoPacket;
 import com.rabidllamastudios.avigate.models.ConnectionPacket;
-import com.rabidllamastudios.avigate.services.CommunicationsService;
+import com.rabidllamastudios.avigate.services.NetworkService;
 import com.rabidllamastudios.avigate.services.UsbSerialService;
 
 import java.util.ArrayList;
@@ -45,7 +45,7 @@ public class ConfigureArduinoActivity extends AppCompatActivity {
     private ArduinoPacket mImportedArduinoPacket = null;
     private ArduinoPacket mMasterArduinoPacket;
 
-    private Intent mCommService;
+    private Intent mNetworkService;
     private Intent mUsbSerialService;
     private IntentFilter mDeviceOutputIntentFilter;
     private IntentFilter mConnectionIntentFilter;
@@ -110,7 +110,7 @@ public class ConfigureArduinoActivity extends AppCompatActivity {
 
     @Override
     public void onPause() {
-        //Unregister receivers and stop CommunicationsService and UsbSerialService
+        //Unregister receivers and stop NetworkService and UsbSerialService
         mUsbSerialIsReady = false;
         try {
             unregisterReceiver(mConnectionReceiver);
@@ -127,22 +127,22 @@ public class ConfigureArduinoActivity extends AppCompatActivity {
         } catch (IllegalArgumentException e) {
             e.printStackTrace();
         }
-        stopService(mCommService);
+        stopService(mNetworkService);
         stopService(mUsbSerialService);
         super.onPause();
     }
 
     @Override
     public void onResume() {
-        //Register receivers and start CommunicationsService and UsbSerialService
+        //Register receivers and start NetworkService and UsbSerialService
         registerReceiver(mConnectionReceiver, mConnectionIntentFilter);
         registerReceiver(mUsbReceiver, mUsbIntentFilter);
         registerReceiver(mArduinoOutputReceiver, mDeviceOutputIntentFilter);
         //Get the configured intent to start the UsbSerialService
         mUsbSerialService = UsbSerialService.getConfiguredIntent(this, BAUD_RATE);
         startService(mUsbSerialService);
-        //Start the CommunicationsService
-        startCommunicationsService();
+        //Start the NetworkService
+        startNetworkService();
         super.onResume();
     }
 
@@ -437,8 +437,8 @@ public class ConfigureArduinoActivity extends AppCompatActivity {
         }
     }
 
-    //Configure and start the communications service.
-    private void startCommunicationsService() {
+    //Configure and start the network service.
+    private void startNetworkService() {
         List<String> localSubs = new ArrayList<>();
         List<String> remoteSubs = new ArrayList<>();
         localSubs.add(ArduinoPacket.INTENT_ACTION_INPUT);
@@ -449,9 +449,9 @@ public class ConfigureArduinoActivity extends AppCompatActivity {
         remoteSubs.add(UsbSerialService.INTENT_ACTION_USB_DISCONNECTED);
         remoteSubs.add(UsbSerialService.INTENT_ACTION_USB_NOT_SUPPORTED);
         remoteSubs.add(UsbSerialService.INTENT_ACTION_USB_PERMISSION_NOT_GRANTED);
-        mCommService = CommunicationsService.getConfiguredIntent(this, localSubs, remoteSubs,
-                CommunicationsService.DeviceType.CONTROLLER);
-        startService(mCommService);
+        mNetworkService = NetworkService.getConfiguredIntent(this, localSubs, remoteSubs,
+                NetworkService.DeviceType.CONTROLLER);
+        startService(mNetworkService);
     }
 
     //Prompts the user to save any changes made to the Arduino configuration for this craft profile
