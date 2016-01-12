@@ -61,6 +61,11 @@
     <string name="tv_craft_label_yaw">Yaw:</string>
     <string name="tv_craft_label_roll">Roll:</string>
 
+    <string name="tv_craft_title_rotation">Rotation</string>
+    <string name="tv_craft_label_rate_pitch">Pitch rate:</string>
+    <string name="tv_craft_label_rate_yaw">Yaw rate:</string>
+    <string name="tv_craft_label_rate_roll">Roll rate:</string>
+
     <string name="tv_craft_title_position">Position</string>
     <string name="tv_craft_label_gps_coordinates">GPS coordinates:</string>
     <string name="tv_craft_label_gps_accuracy">GPS accuracy:</string>

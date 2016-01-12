@@ -90,6 +90,29 @@
             android:layout_below="@+id/tv_craft_title_orientation"
             android:paddingLeft="8dp"
             android:paddingTop="4dp"
+            android:id="@+id/layout_linear_craft_roll">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/tv_craft_label_roll"
+                android:id="@+id/tv_craft_label_roll"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingLeft="8dp"
+                android:text="@string/tv_placeholder_sensor"
+                android:id="@+id/tv_craft_value_roll"/>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/layout_linear_craft_roll"
+            android:paddingLeft="8dp"
+            android:paddingTop="4dp"
             android:id="@+id/layout_linear_craft_pitch">
 
             <TextView
@@ -130,26 +153,88 @@
 
         </LinearLayout>
 
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/layout_relative_craft_orientation"
+        android:paddingTop="8dp"
+        android:id="@+id/layout_relative_craft_rotation">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:text="@string/tv_craft_title_rotation"
+            android:id="@+id/tv_craft_title_rotation"/>
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/layout_linear_craft_yaw"
+            android:layout_below="@+id/tv_craft_title_rotation"
             android:paddingLeft="8dp"
             android:paddingTop="4dp"
-            android:id="@+id/layout_linear_craft_roll">
+            android:id="@+id/layout_linear_craft_rate_roll">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/tv_craft_label_roll"
-                android:id="@+id/tv_craft_label_roll"/>
+                android:text="@string/tv_craft_label_rate_roll"
+                android:id="@+id/tv_craft_label_rate_roll"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:paddingLeft="8dp"
                 android:text="@string/tv_placeholder_sensor"
-                android:id="@+id/tv_craft_value_roll"/>
+                android:id="@+id/tv_craft_value_rate_roll"/>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/layout_linear_craft_rate_roll"
+            android:paddingLeft="8dp"
+            android:paddingTop="4dp"
+            android:id="@+id/layout_linear_craft_rate_pitch">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/tv_craft_label_rate_pitch"
+                android:id="@+id/tv_craft_label_rate_pitch"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingLeft="8dp"
+                android:text="@string/tv_placeholder_sensor"
+                android:id="@+id/tv_craft_value_rate_pitch"/>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/layout_linear_craft_rate_pitch"
+            android:paddingLeft="8dp"
+            android:paddingTop="4dp"
+            android:id="@+id/layout_linear_craft_rate_yaw">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/tv_craft_label_rate_yaw"
+                android:id="@+id/tv_craft_label_rate_yaw"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingLeft="8dp"
+                android:text="@string/tv_placeholder_sensor"
+                android:id="@+id/tv_craft_value_rate_yaw"/>
 
         </LinearLayout>
 
@@ -158,7 +243,7 @@
     <RelativeLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/layout_relative_craft_orientation"
+        android:layout_below="@+id/layout_relative_craft_rotation"
         android:paddingTop="8dp"
         android:id="@+id/layout_relative_craft_position">
 

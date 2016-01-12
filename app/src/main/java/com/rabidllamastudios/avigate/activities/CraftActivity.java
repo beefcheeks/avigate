@@ -1,7 +1,6 @@
 package com.rabidllamastudios.avigate.activities;
 
 import android.Manifest;
-import android.app.ActivityManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -15,6 +14,7 @@ import android.widget.TextView;
 
 import com.rabidllamastudios.avigate.R;
 import com.rabidllamastudios.avigate.helpers.PermissionsChecker;
+import com.rabidllamastudios.avigate.models.AngularVelocityPacket;
 import com.rabidllamastudios.avigate.models.ConnectionPacket;
 import com.rabidllamastudios.avigate.models.GPSPacket;
 import com.rabidllamastudios.avigate.models.OrientationPacket;
@@ -32,6 +32,7 @@ public class CraftActivity extends AppCompatActivity {
 
     private static final String CLASS_NAME = CraftActivity.class.getSimpleName();
     private static final String DEGREES = " °";
+    private static final String DEGREES_PER_SECOND = " °/s";
     //TODO adjust sensor rate with latency?
     //Sensor update rate in microseconds
     private static final int SENSOR_UPDATE_RATE = SensorManager.SENSOR_DELAY_UI;
@@ -58,6 +59,7 @@ public class CraftActivity extends AppCompatActivity {
         //Register broadcast receiver for sensor-related intents
         IntentFilter sensorIntentFilter = new IntentFilter();
         sensorIntentFilter.addAction(OrientationPacket.INTENT_ACTION);
+        sensorIntentFilter.addAction(AngularVelocityPacket.INTENT_ACTION);
         sensorIntentFilter.addAction(GPSPacket.INTENT_ACTION);
         sensorIntentFilter.addAction(PressurePacket.INTENT_ACTION);
         registerReceiver(mSensorReceiver, sensorIntentFilter);
@@ -219,7 +221,24 @@ public class CraftActivity extends AppCompatActivity {
                 pitchTV.setText(pitch);
                 yawTV.setText(yaw);
 
+            //If the intent is type AngularVelocityPacket, update corresponding TextView values
+            } else if (intent.getAction().equals(AngularVelocityPacket.INTENT_ACTION)) {
+                TextView rollRateTV = (TextView) findViewById(R.id.tv_craft_value_rate_roll);
+                TextView pitchRateTV = (TextView) findViewById(R.id.tv_craft_value_rate_pitch);
+                TextView yawRateTV = (TextView) findViewById(R.id.tv_craft_value_rate_yaw);
+                AngularVelocityPacket angularVelocityPacket =
+                        new AngularVelocityPacket(intent.getExtras());
                 //yaw and roll switched due to necessary coordinate system transformation
+                String rollRate = String.valueOf(angularVelocityPacket.getCraftRollRate())
+                        + DEGREES_PER_SECOND;
+                String pitchRate = String.valueOf(angularVelocityPacket.getCraftPitchRate())
+                        + DEGREES_PER_SECOND;
+                String yawRate = String.valueOf(angularVelocityPacket.getCraftYawRate())
+                        + DEGREES_PER_SECOND;
+                rollRateTV.setText(rollRate);
+                pitchRateTV.setText(pitchRate);
+                yawRateTV.setText(yawRate);
+
             //If the intent is type GPSPacket, update corresponding TextView values
             } else if (intent.getAction().equals(GPSPacket.INTENT_ACTION)) {
                 TextView gpsCoordinatesTV =
@@ -255,11 +274,9 @@ public class CraftActivity extends AppCompatActivity {
             if (intent.getAction().equals(
                     FlightControlService.INTENT_ACTION_CONFIGURE_FLIGHT_CONTROL_SERVICE)) {
                 Log.i(CLASS_NAME, "FlightControlService start command received");
-                if (!isServiceRunning(FlightControlService.class)) {
-                    intent.setClass(getApplicationContext(), FlightControlService.class);
-                    mFlightControlService = intent;
-                    startService(mFlightControlService);
-                }
+                intent.setClass(getApplicationContext(), FlightControlService.class);
+                mFlightControlService = intent;
+                startService(mFlightControlService);
             }
         }
     };
@@ -295,18 +312,5 @@ public class CraftActivity extends AppCompatActivity {
             }
         }
     };
-
-    //Checks if a given service class is running
-    //Taken from: http://stackoverflow.com/a/5921190
-    private boolean isServiceRunning(Class<?> serviceClass) {
-        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
-        for (ActivityManager.RunningServiceInfo service :
-                manager.getRunningServices(Integer.MAX_VALUE)) {
-            if (serviceClass.getName().equals(service.service.getClassName())) {
-                return true;
-            }
-        }
-        return false;
-    }
 
 }

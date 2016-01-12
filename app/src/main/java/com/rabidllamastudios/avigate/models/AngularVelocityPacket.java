@@ -9,6 +9,7 @@ import com.rabidllamastudios.avigate.AvigateApplication;
  * Created by Ryan on 11/19/15.
  * A data model class to communicate angular velocity sensor data
  * For convenience, this class can convert to and between Bundle and Intent
+ * For reference see: http://developer.android.com/reference/android/hardware/SensorEvent.html
  */
 public class AngularVelocityPacket {
     private static final String PACKAGE_NAME = AvigateApplication.class.getPackage().getName();
@@ -48,5 +49,20 @@ public class AngularVelocityPacket {
 
     public float getZ() {
         return mZ;
+    }
+
+    //Returns pitch rate in degrees per second
+    public double getCraftPitchRate() {
+        return Math.toDegrees(mX);
+    }
+
+    //Returns roll rate in degrees per second
+    public double getCraftRollRate() {
+        return Math.toDegrees(mY);
+    }
+
+    //Returns yaw rate in degrees per second
+    public double getCraftYawRate() {
+        return Math.toDegrees(mZ);
     }
 }
