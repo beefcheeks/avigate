@@ -117,15 +117,15 @@ public class ArduinoPacket {
 
     //Takes a ArduinoPacket and compares configurations with the rootJson object
     @Override
-    public boolean equals(Object servoPacketObject) {
-        if (servoPacketObject == null) return false;
-        if (!(servoPacketObject instanceof ArduinoPacket)) return false;
-        ArduinoPacket arduinoPacket = (ArduinoPacket) servoPacketObject;
-        String servoPacketJsonString = arduinoPacket.toJsonString();
-        if (servoPacketJsonString == null) return false;
+    public boolean equals(Object arduinoPacketObject) {
+        if (arduinoPacketObject == null) return false;
+        if (!(arduinoPacketObject instanceof ArduinoPacket)) return false;
+        ArduinoPacket arduinoPacket = (ArduinoPacket) arduinoPacketObject;
+        String arduinoPacketJsonString = arduinoPacket.toJsonString();
+        if (arduinoPacketJsonString == null) return false;
         JSONObject otherRootJson = new JSONObject();
         try {
-            otherRootJson = (JSONObject) new JSONParser().parse(servoPacketJsonString);
+            otherRootJson = (JSONObject) new JSONParser().parse(arduinoPacketJsonString);
         } catch (ParseException e) {
             e.printStackTrace();
         }
@@ -142,15 +142,38 @@ public class ArduinoPacket {
     public String getConfigJson(ServoType servoType) {
         if (rootJson.containsKey(servoType.getStringValue())) {
             JSONObject servoJson = (JSONObject) rootJson.get(servoType.getStringValue());
+            //Remove input range values from the input config
+            JSONObject newInputConfigJson = new JSONObject();
             if (servoJson.containsKey(KEY_INPUT_CONFIG)) {
                 JSONObject inputConfigJson = (JSONObject) servoJson.get(KEY_INPUT_CONFIG);
-                if (inputConfigJson.containsKey(KEY_MAX)) inputConfigJson.remove(KEY_MAX);
-                if (inputConfigJson.containsKey(KEY_MIN)) inputConfigJson.remove(KEY_MIN);
-                servoJson.put(KEY_INPUT_CONFIG, inputConfigJson);
-                JSONObject newRootJson = new JSONObject();
-                newRootJson.put(servoType.getStringValue(), servoJson);
-                return newRootJson.toJSONString();
+                if (inputConfigJson.containsKey(KEY_PIN)) {
+                    newInputConfigJson.put(KEY_PIN, inputConfigJson.get(KEY_PIN));
+                }
+                if (inputConfigJson.containsKey(KEY_RECEIVER_ONLY)) {
+                    newInputConfigJson.put(KEY_RECEIVER_ONLY,
+                            inputConfigJson.get(KEY_RECEIVER_ONLY));
+                }
             }
+            //Keep all output config values
+            JSONObject newOutputConfigJson = new JSONObject();
+            if (servoJson.containsKey(KEY_OUTPUT_CONFIG)) {
+                JSONObject outputConfigJson = (JSONObject) servoJson.get(KEY_OUTPUT_CONFIG);
+                if (outputConfigJson.containsKey(KEY_MAX)) {
+                    newOutputConfigJson.put(KEY_MAX, outputConfigJson.get(KEY_MAX));
+                }
+                if (outputConfigJson.containsKey(KEY_MIN)) {
+                    newOutputConfigJson.put(KEY_MIN, outputConfigJson.get(KEY_MIN));
+                }
+                if (outputConfigJson.containsKey(KEY_PIN)) {
+                    newOutputConfigJson.put(KEY_PIN, outputConfigJson.get(KEY_PIN));
+                }
+            }
+            JSONObject newServoJson = new JSONObject();
+            newServoJson.put(KEY_INPUT_CONFIG, newInputConfigJson);
+            newServoJson.put(KEY_OUTPUT_CONFIG, newOutputConfigJson);
+            JSONObject newRootJson = new JSONObject();
+            newRootJson.put(servoType.getStringValue(), newServoJson);
+            return newRootJson.toJSONString();
         }
         return null;
     }
@@ -387,7 +410,7 @@ public class ArduinoPacket {
                 inputConfigJson = (JSONObject) servoJson.get(KEY_INPUT_CONFIG);
             }
         }
-        inputConfigJson.put(KEY_PIN, pinNumber);
+        inputConfigJson.put(KEY_PIN, (long) pinNumber);
         servoJson.put(KEY_INPUT_CONFIG, inputConfigJson);
         rootJson.put(servoType.getStringValue(), servoJson);
     }
@@ -403,8 +426,8 @@ public class ArduinoPacket {
                 inputConfigJson = (JSONObject) servoJson.get(KEY_INPUT_CONFIG);
             }
         }
-        inputConfigJson.put(KEY_MAX, inputMax);
-        inputConfigJson.put(KEY_MIN, intputMin);
+        inputConfigJson.put(KEY_MAX, (long) inputMax);
+        inputConfigJson.put(KEY_MIN, (long) intputMin);
         servoJson.put(KEY_INPUT_CONFIG, inputConfigJson);
         rootJson.put(servoType.getStringValue(), servoJson);
     }
@@ -420,8 +443,8 @@ public class ArduinoPacket {
                 outputConfigJson = (JSONObject) servoJson.get(KEY_OUTPUT_CONFIG);
             }
         }
-        outputConfigJson.put(KEY_MAX, outputMax);
-        outputConfigJson.put(KEY_MIN, outputMin);
+        outputConfigJson.put(KEY_MAX, (long) outputMax);
+        outputConfigJson.put(KEY_MIN, (long) outputMin);
         servoJson.put(KEY_OUTPUT_CONFIG, outputConfigJson);
         rootJson.put(servoType.getStringValue(), servoJson);
     }
@@ -437,7 +460,7 @@ public class ArduinoPacket {
                 outputConfigJson = (JSONObject) servoJson.get(KEY_OUTPUT_CONFIG);
             }
         }
-        outputConfigJson.put(KEY_PIN, pinNumber);
+        outputConfigJson.put(KEY_PIN, (long) pinNumber);
         servoJson.put(KEY_OUTPUT_CONFIG, outputConfigJson);
         rootJson.put(servoType.getStringValue(), servoJson);
     }
@@ -449,7 +472,7 @@ public class ArduinoPacket {
         if (rootJson.containsKey(servoType.getStringValue())) {
             servoJson = (JSONObject) rootJson.get(servoType.getStringValue());
         }
-        servoJson.put(KEY_VALUE, value);
+        servoJson.put(KEY_VALUE, (long) value);
         rootJson.put(servoType.getStringValue(), servoJson);
     }
 
@@ -495,7 +518,7 @@ public class ArduinoPacket {
 
     //Checks whether rootJson contains receiver input min and max values for a given ServoType
     private boolean hasInputRange(ServoType servoType) {
-        return (hasInputConfigValue(servoType, KEY_MIN) && hasInputConfigValue(servoType, KEY_MAX));
+        return hasInputConfigValue(servoType, KEY_MIN) && hasInputConfigValue(servoType, KEY_MAX);
     }
 
     //Checks whether rootJson contains an outputConfig that contains a jsonKey for a given ServoType
@@ -599,7 +622,6 @@ public class ArduinoPacket {
         } else if (rootJson.containsKey(servoType.getStringValue())) {
             return false;
         }
-
         return true;
     }
 
