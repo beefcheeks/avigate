@@ -47,6 +47,10 @@ const int RECEIVER_INPUT_MIN = RECEIVER_INPUT_DEFAULT - RECEIVER_INPUT_DISTANCE;
 //Sets the baud rate of the Arduino
 const long BAUD_RATE = 115200;
 
+//All valid input/output must start/end with the corresponding chars below
+const char startMarker = '@';
+const char endMarker = '#';
+
 //Used to store the byte flag values above
 //Note this byte MUST be volatile since it is used in the main code and in the Interrupt Service Routine (ISR) methods
 volatile byte receiverInputFlags;
@@ -71,21 +75,11 @@ boolean newData = false;
 //Determines if the plane is controlled only by the receiver
 boolean receiverControl = false;
 
-//Determines if the plane control is shared between the phone and the receiver
-boolean sharedControl = false;
-
-//All valid input/output must start/end with the corresponding chars below
-char endMarker = '#';
-char startMarker = '@';
-
 //This array stores Json characters read from serial input
 char receivedJson[CHAR_ARRAY_SIZE];
 
 //The running average for cutover receiver input
 uint16_t cutoverInputAverage = RECEIVER_INPUT_DEFAULT;
-
-//The start time for determining the cutover double switch flip for emergency input shutoff
-uint32_t receiverControlStartTime = millis();
 
 struct ServoData {
   byte outputMax = SERVO_MAX;
@@ -144,11 +138,11 @@ void readSerialJsonInput() {
 
 //Example JSON input below
 //Complete configuration
-//@{"aileron":{"inputConfig":{"max":1688,"min":1084,"pin":6,"receiverOnly":false},"outputConfig":{"max":180,"min":0,"pin":7},"value":90}}#
-//@{"elevator":{"inputConfig":{"max":1752,"min":964,"pin":4,"receiverOnly":true},"outputConfig":{"max":180,"min":0,"pin":9},"value":90}}#
-//@{"rudder":{"inputConfig":{"max":1800,"min":1044,"pin":3,"receiverOnly":true},"outputConfig":{"max":180,"min":0,"pin":8},"value":90}}#
-//@{"throttle":{"inputConfig":{"max":1688,"min":1084,"pin":5,"receiverOnly":true},"outputConfig":{"max":180,"min":0,"pin":10},"value":90}}#
-//@{"cutover":{"inputConfig":{"max":1844,"min":776,"pin":2}}}#
+//@{"aileron":{"inputConfig":{"max":1692,"min":924,"pin":6,"receiverOnly":false},"outputConfig":{"max":140,"min":40,"pin":7},"value":90}}#
+//@{"elevator":{"inputConfig":{"max":1712,"min":92,"pin":4,"receiverOnly":true},"outputConfig":{"max":180,"min":0,"pin":9},"value":90}}#
+//@{"rudder":{"inputConfig":{"max":1680,"min":920,"pin":3,"receiverOnly":true},"outputConfig":{"max":180,"min":0,"pin":8},"value":90}}#
+//@{"throttle":{"inputConfig":{"max":1704,"min":1128,"pin":5,"receiverOnly":true},"outputConfig":{"max":165,"min":32,"pin":10},"value":32}}#
+//@{"cutover":{"inputConfig":{"max":1832,"min":760,"pin":2}}}#
 
 //Configuration without calibration or receiverOnly configuration
 //@{"aileron":{"inputConfig":{"pin":6},"outputConfig":{"max":135,"min":45,"pin":7},"value":90}}#
@@ -253,12 +247,10 @@ void processReceiverInput() {
     //While interrupts are paused, copy new servo input values to the corresponding local static variables
     receiverInputFlagsLocal = receiverInputFlags;
     if (receiverInputFlagsLocal & FLAG_CUTOVER) cutoverInValueLocal = cutoverInValue;
-      if (receiverControl || calibrationMode) {
-        if (receiverInputFlagsLocal & FLAG_AILERON) aileronInValueLocal = aileronInValue;
-        if (receiverInputFlagsLocal & FLAG_ELEVATOR) elevatorInValueLocal = elevatorInValue;
-        if (receiverInputFlagsLocal & FLAG_RUDDER) rudderInValueLocal = rudderInValue;
-        if (receiverInputFlagsLocal & FLAG_THROTTLE) throttleInValueLocal = throttleInValue;
-      }
+    if (receiverInputFlagsLocal & FLAG_AILERON) aileronInValueLocal = aileronInValue;
+    if (receiverInputFlagsLocal & FLAG_ELEVATOR) elevatorInValueLocal = elevatorInValue;
+    if (receiverInputFlagsLocal & FLAG_RUDDER) rudderInValueLocal = rudderInValue;
+    if (receiverInputFlagsLocal & FLAG_THROTTLE) throttleInValueLocal = throttleInValue;
     receiverInputFlags = 0;
     interrupts();
   }
@@ -274,40 +266,28 @@ void processReceiverInput() {
       if (isValidReceiverInput(cutoverInputAverage)) {
         if (receiverControl && cutoverInputAverage > (cutover.inputMax - CUTOVER_MARGIN)) {
           receiverControl = false;
-          //Checks if the cutover switched back and forth slower than the threshold (e.g. not emergency input stop)
-          if ((millis() - receiverControlStartTime) > CUTOVER_THRESHOLD) {
-            sharedControl = true;
-            sendJsonBoolean("sharedControl", true);
-          }
           sendJsonBoolean("receiverControl", receiverControl);
         } else if (!receiverControl && cutoverInputAverage < (cutover.inputMin + CUTOVER_MARGIN)) {
-          sharedControl = false;
           receiverControl = true;
           sendJsonBoolean("receiverControl", receiverControl);
-          sendJsonBoolean("sharedControl", false);
-          receiverControlStartTime = millis();
         }
       } else if (receiverControl) {
         sendJsonString("error", "Cutover input out of range");
       }
     }
   }
-
-  //Only process servo input if receiverControl or calibrationMode are enabled
-  if (receiverControl || calibrationMode) {
-    //Process input for each servo that received new input from the receiver
-    if (receiverInputFlagsLocal & FLAG_AILERON) {
-      processServoInput(aileron, aileronInValueLocal, "aileron", "Unassigned aileron pin", "Aileron input out of range");
-    }
-    if (receiverInputFlagsLocal & FLAG_ELEVATOR) {
-      processServoInput(elevator, elevatorInValueLocal, "elevator", "Unassigned elevator pin", "Elevator input out of range");
-    }
-    if (receiverInputFlagsLocal & FLAG_RUDDER) {
-      processServoInput(rudder, rudderInValueLocal, "rudder", "Unassigned rudder pin", "Rudder input out of range");
-    }
-    if (receiverInputFlagsLocal & FLAG_THROTTLE) {
-      processServoInput(throttle, throttleInValueLocal, "throttle", "Unassigned throttle pin", "Throttle input out of range");
-    }
+  //Process input for each servo that received new input from the receiver
+  if (receiverInputFlagsLocal & FLAG_AILERON) {
+    processServoInput(aileron, aileronInValueLocal, "aileron", "Unassigned aileron pin", "Aileron input out of range");
+  }
+  if (receiverInputFlagsLocal & FLAG_ELEVATOR) {
+    processServoInput(elevator, elevatorInValueLocal, "elevator", "Unassigned elevator pin", "Elevator input out of range");
+  }
+  if (receiverInputFlagsLocal & FLAG_RUDDER) {
+    processServoInput(rudder, rudderInValueLocal, "rudder", "Unassigned rudder pin", "Rudder input out of range");
+  }
+  if (receiverInputFlagsLocal & FLAG_THROTTLE) {
+    processServoInput(throttle, throttleInValueLocal, "throttle", "Unassigned throttle pin", "Throttle input out of range");
   }
 }
 
@@ -536,13 +516,19 @@ boolean isValidReceiverInput(uint16_t receiverInput) {
 
 //Processes receiver input for a given servo and writes the converted output to the servo
 void processServoInput(ServoData& servoData, uint16_t servoInputValue, const char servoType[], const char servoError[], const char servoInputError[]) {
-  //Only use receiver values within the set range for receiver input
-  if (isValidReceiverInput(servoInputValue)) {
-    if (calibrationMode) {
+  //If in calibrationMode, calibrate min and max receiver input accordingly
+  if (calibrationMode) {
+    //Only use valid receiver input values for receiver input calibration
+    if (isValidReceiverInput(servoInputValue)) {
       if (servoInputValue > servoData.inputMax) servoData.inputMax = servoInputValue;
       if (servoInputValue < servoData.inputMin) servoData.inputMin = servoInputValue;
-    //Only write to servo if the receiver input for this servo has permission to do so
-    } else if (receiverControl || (sharedControl && servoData.receiverInputOnly)) {
+    } else {
+      sendJsonString("error", servoInputError);
+    }
+  //Only write to servo if the receiver input for this servo has permission to do so
+  } else if (isCalibrated && (receiverControl || servoData.receiverInputOnly)) {
+    //Only use valid receiver input values for setting the servo output
+    if (isValidReceiverInput(servoInputValue)) {
       if (servoData.servo.attached()) {
         //Constrain the servo input value to be within the calibration range (since mapping won't constrain it)
         servoInputValue = constrain(servoInputValue, servoData.inputMin, servoData.inputMax);
@@ -553,8 +539,8 @@ void processServoInput(ServoData& servoData, uint16_t servoInputValue, const cha
       } else {
         sendJsonString("error", servoError);
       }
+    } else {
+      sendJsonString("error", servoInputError);
     }
-  } else {
-    sendJsonString("error", servoInputError);
   }
 }
