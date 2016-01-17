@@ -79,8 +79,8 @@
                 android:resource="@xml/device_filter" />
         </activity>
         <activity
-            android:name=".activities.DisplaySensorActivity"
-            android:label="@string/title_activity_display_sensor"
+            android:name=".activities.SensorReadingsActivity"
+            android:label="@string/title_activity_sensor_readings"
             android:parentActivityName=".activities.MainActivity"
             android:theme="@style/AppTheme.NoActionBar">
             <meta-data

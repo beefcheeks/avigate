@@ -29,7 +29,7 @@ public class MainActivity extends AppCompatActivity {
 
     /** Called when the user clicks the Sensor Reading button */
     public void startSensorReadings(View view) {
-        Intent intent = new Intent(this, DisplaySensorActivity.class);
+        Intent intent = new Intent(this, SensorReadingsActivity.class);
         startActivity(intent);
     }
 

@@ -16,7 +16,7 @@ import com.rabidllamastudios.avigate.helpers.PermissionsChecker;
 import com.rabidllamastudios.avigate.models.CraftStatePacket;
 import com.rabidllamastudios.avigate.services.SensorService;
 
-public class DisplaySensorActivity extends AppCompatActivity {
+public class SensorReadingsActivity extends AppCompatActivity {
 
     private Intent mSensorService = null;
     //Sensor broadcast rate in milliseconds (ms)
@@ -25,10 +25,10 @@ public class DisplaySensorActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_display_sensor);
+        setContentView(R.layout.activity_sensor_readings);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        setTitle(R.string.title_activity_display_sensor);
+        setTitle(R.string.title_activity_sensor_readings);
 
         assert getSupportActionBar() != null;
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);

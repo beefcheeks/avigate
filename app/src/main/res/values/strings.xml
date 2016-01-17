@@ -34,9 +34,9 @@
     <string name="title_activity_connectivity_test">Connectivity Test</string>
     <string name="title_activity_controller">Controller Module</string>
     <string name="title_activity_craft">Craft Module</string>
-    <string name="title_activity_display_sensor">Sensor Readings</string>
     <string name="title_activity_flight_visualizer">Orientation Visualizer</string>
     <string name="title_activity_select_craft">Select Craft</string>
+    <string name="title_activity_sensor_readings">Sensor Readings</string>
 
     <string name="tv_arduino_label_aileron">Aileron</string>
     <string name="tv_arduino_label_cutover">Cutover</string>
