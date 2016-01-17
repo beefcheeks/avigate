@@ -5,7 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.hardware.SensorManager;
+import android.location.Location;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -14,11 +14,8 @@ import android.widget.TextView;
 
 import com.rabidllamastudios.avigate.R;
 import com.rabidllamastudios.avigate.helpers.PermissionsChecker;
-import com.rabidllamastudios.avigate.models.AngularVelocityPacket;
 import com.rabidllamastudios.avigate.models.ConnectionPacket;
-import com.rabidllamastudios.avigate.models.GPSPacket;
-import com.rabidllamastudios.avigate.models.OrientationPacket;
-import com.rabidllamastudios.avigate.models.PressurePacket;
+import com.rabidllamastudios.avigate.models.CraftStatePacket;
 import com.rabidllamastudios.avigate.models.ArduinoPacket;
 import com.rabidllamastudios.avigate.services.NetworkService;
 import com.rabidllamastudios.avigate.services.FlightControlService;
@@ -33,9 +30,8 @@ public class CraftActivity extends AppCompatActivity {
     private static final String CLASS_NAME = CraftActivity.class.getSimpleName();
     private static final String DEGREES = " °";
     private static final String DEGREES_PER_SECOND = " °/s";
-    //TODO adjust sensor rate with latency?
-    //Sensor update rate in microseconds
-    private static final int SENSOR_UPDATE_RATE = SensorManager.SENSOR_DELAY_UI;
+    //Sensor broadcast rate in milliseconds (ms)
+    private static final int SENSOR_BROADCAST_RATE = 100;
 
     private Intent mNetworkService = null;
     private Intent mFlightControlService = null;
@@ -52,19 +48,14 @@ public class CraftActivity extends AppCompatActivity {
         assert getSupportActionBar() != null;
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        //Register broadcast receiver for connection-related intents
+        //Register broadcast receiver for any ConnectionPacket Intents
         IntentFilter connectionIntentFilter = new IntentFilter(ConnectionPacket.INTENT_ACTION);
         registerReceiver(mConnectionReceiver, connectionIntentFilter);
 
-        //Register broadcast receiver for sensor-related intents
-        IntentFilter sensorIntentFilter = new IntentFilter();
-        sensorIntentFilter.addAction(OrientationPacket.INTENT_ACTION);
-        sensorIntentFilter.addAction(AngularVelocityPacket.INTENT_ACTION);
-        sensorIntentFilter.addAction(GPSPacket.INTENT_ACTION);
-        sensorIntentFilter.addAction(PressurePacket.INTENT_ACTION);
-        registerReceiver(mSensorReceiver, sensorIntentFilter);
+        //Register broadcast receiver for any CraftStatePacket (sensor-related) Intents
+        registerReceiver(mCraftStateReceiver, new IntentFilter(CraftStatePacket.INTENT_ACTION));
 
-        //Register broadcast receiver for usb-related intents
+        //Register broadcast receiver for USB-related Intents
         IntentFilter usbIntentFilter = new IntentFilter();
         usbIntentFilter.addAction(UsbSerialService.INTENT_ACTION_USB_READY);
         usbIntentFilter.addAction(UsbSerialService.INTENT_ACTION_USB_PERMISSION_GRANTED);
@@ -83,10 +74,10 @@ public class CraftActivity extends AppCompatActivity {
         mUsbSerialService = UsbSerialService.getConfiguredIntent(this);
         startService(mUsbSerialService);
 
-        //Configure sensor service intent
-        mSensorService = SensorService.getConfiguredIntent(this, SENSOR_UPDATE_RATE);
+        //Configure the SensorService Intent
+        mSensorService = SensorService.getConfiguredIntent(this, SENSOR_BROADCAST_RATE);
 
-        //Configure the start service intent
+        //Configure the start service Intent
         IntentFilter startServiceIntentFilter = new IntentFilter(
                 FlightControlService.INTENT_ACTION_CONFIGURE_FLIGHT_CONTROL_SERVICE);
         registerReceiver(mStartServiceReceiver, startServiceIntentFilter);
@@ -99,12 +90,10 @@ public class CraftActivity extends AppCompatActivity {
             startService(mSensorService);
         }
 
-        //Configure and start the network service.
+        //Configure and start NetworkService.
         List<String> localSubs = new ArrayList<>();
         List<String> remoteSubs = new ArrayList<>();
-        localSubs.add(GPSPacket.INTENT_ACTION);
-        localSubs.add(OrientationPacket.INTENT_ACTION);
-        localSubs.add(PressurePacket.INTENT_ACTION);
+        localSubs.add(CraftStatePacket.INTENT_ACTION);
         localSubs.add(ArduinoPacket.INTENT_ACTION_OUTPUT);
         localSubs.add(UsbSerialService.INTENT_ACTION_USB_READY);
         localSubs.add(UsbSerialService.INTENT_ACTION_USB_PERMISSION_GRANTED);
@@ -119,7 +108,7 @@ public class CraftActivity extends AppCompatActivity {
         startService(mNetworkService);
     }
 
-    // If the user allows location permissions, start the sensor service
+    // If the user allows location permissions, start SensorService
     private PermissionsChecker.Callback mPermissionsCheckerCallback = new PermissionsChecker.Callback() {
         @Override
         public void permissionGranted(int permissionsConstant) {
@@ -134,7 +123,7 @@ public class CraftActivity extends AppCompatActivity {
         //Unregister all receivers
         unregisterReceiver(mArduinoOutputReceiver);
         unregisterReceiver(mConnectionReceiver);
-        unregisterReceiver(mSensorReceiver);
+        unregisterReceiver(mCraftStateReceiver);
         unregisterReceiver(mStartServiceReceiver);
         unregisterReceiver(mUsbReceiver);
         //Stop all services (if running)
@@ -142,30 +131,9 @@ public class CraftActivity extends AppCompatActivity {
         if (mFlightControlService != null) stopService(mFlightControlService);
         if (mSensorService != null) stopService(mSensorService);
         if (mUsbSerialService != null) stopService(mUsbSerialService);
-
         //Call super method
         super.onDestroy();
     }
-
-    private BroadcastReceiver mConnectionReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            //If the intent is type connection packet, update corresponding textview value
-            if (intent.getAction().equals(ConnectionPacket.INTENT_ACTION)) {
-                TextView connectionStatusTV = (TextView) findViewById(R.id.tv_craft_value_connect);
-                ConnectionPacket connectionPacket = new ConnectionPacket(intent.getExtras());
-                if (connectionPacket.isConnected()) {
-                    connectionStatusTV.setText(getResources().getString(R.string.tv_placeholder_connected));
-                    //Request the status of the Arduino after a connection is established
-                    ArduinoPacket arduinoPacket = new ArduinoPacket();
-                    arduinoPacket.addStatusRequest();
-                    sendBroadcast(arduinoPacket.toIntent(ArduinoPacket.INTENT_ACTION_INPUT));
-                } else {
-                    connectionStatusTV.setText(getResources().getString(R.string.tv_placeholder_disconnected));
-                }
-            }
-        }
-    };
 
     //Listens for responses from the connected USB serial device and updates the output TextView
     private final BroadcastReceiver mArduinoOutputReceiver = new BroadcastReceiver() {
@@ -174,7 +142,6 @@ public class CraftActivity extends AppCompatActivity {
             if (intent.getAction().equals(ArduinoPacket.INTENT_ACTION_OUTPUT)) {
                 ArduinoPacket arduinoPacket = new ArduinoPacket(intent.getExtras());
                 TextView outputTV = (TextView) findViewById(R.id.tv_craft_value_arduino_output);
-
                 //Updates outputTV if the incoming JSON contains a ready status
                 if (arduinoPacket.isStatusReady()) {
                     outputTV.setText(getString(R.string.tv_arduino_value_ready));
@@ -204,70 +171,93 @@ public class CraftActivity extends AppCompatActivity {
         }
     };
 
-    //Listens for sensor data and updates various TextViews accordingly
-    private BroadcastReceiver mSensorReceiver = new BroadcastReceiver() {
+    private BroadcastReceiver mConnectionReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            //If the intent is type OrientationPacket, update corresponding TextView values
-            if (intent.getAction().equals(OrientationPacket.INTENT_ACTION)) {
+            //If the Intent is type ConnectionPacket, update corresponding TextView value
+            if (intent.getAction().equals(ConnectionPacket.INTENT_ACTION)) {
+                TextView connectionStatusTV = (TextView) findViewById(R.id.tv_craft_value_connect);
+                ConnectionPacket connectionPacket = new ConnectionPacket(intent.getExtras());
+                if (connectionPacket.isConnected()) {
+                    connectionStatusTV.setText(getResources().getString(R.string.tv_placeholder_connected));
+                    //Request the status of the Arduino after a connection is established
+                    ArduinoPacket arduinoPacket = new ArduinoPacket();
+                    arduinoPacket.addStatusRequest();
+                    sendBroadcast(arduinoPacket.toIntent(ArduinoPacket.INTENT_ACTION_INPUT));
+                } else {
+                    connectionStatusTV.setText(getResources().getString(R.string.tv_placeholder_disconnected));
+                }
+            }
+        }
+    };
+
+    //Listens for CraftStatePacket Intents and updates various TextViews accordingly
+    private BroadcastReceiver mCraftStateReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            //If the Intent is type CraftStatePacket, update corresponding TextView values
+            if (intent.getAction().equals(CraftStatePacket.INTENT_ACTION)) {
+                CraftStatePacket craftStatePacket = new CraftStatePacket(intent.getExtras());
+
+                //Process orientation data and update corresponding TextViews
+                CraftStatePacket.Orientation orientation = craftStatePacket.getOrientation();
+                String roll = String.valueOf(orientation.getCraftRoll(false)) + DEGREES;
+                String pitch = String.valueOf(orientation.getCraftPitch(false)) + DEGREES;
+                String yaw = String.valueOf(orientation.getCraftYaw(false)) + DEGREES;
+
                 TextView rollTV = (TextView) findViewById(R.id.tv_craft_value_roll);
                 TextView pitchTV = (TextView) findViewById(R.id.tv_craft_value_pitch);
                 TextView yawTV = (TextView) findViewById(R.id.tv_craft_value_yaw);
-                OrientationPacket orientationPacket = new OrientationPacket(intent.getExtras());
-                String roll = String.valueOf(orientationPacket.getCraftRoll(false)) + DEGREES;
-                String pitch = String.valueOf(orientationPacket.getCraftPitch(false)) + DEGREES;
-                String yaw = String.valueOf(orientationPacket.getCraftYaw(false)) + DEGREES;
+
                 rollTV.setText(roll);
                 pitchTV.setText(pitch);
                 yawTV.setText(yaw);
 
-            //If the intent is type AngularVelocityPacket, update corresponding TextView values
-            } else if (intent.getAction().equals(AngularVelocityPacket.INTENT_ACTION)) {
+                //Process angular velocity data and update corresponding TextViews
+                CraftStatePacket.AngularVelocity angularVelocity =
+                        craftStatePacket.getAngularVelocity();
+                String rollRate = String.valueOf(angularVelocity.getCraftRollRate(false))
+                        + DEGREES_PER_SECOND;
+                String pitchRate = String.valueOf(angularVelocity.getCraftPitchRate(false))
+                        + DEGREES_PER_SECOND;
+                String yawRate = String.valueOf(angularVelocity.getCraftYawRate(false))
+                        + DEGREES_PER_SECOND;
+
                 TextView rollRateTV = (TextView) findViewById(R.id.tv_craft_value_rate_roll);
                 TextView pitchRateTV = (TextView) findViewById(R.id.tv_craft_value_rate_pitch);
                 TextView yawRateTV = (TextView) findViewById(R.id.tv_craft_value_rate_yaw);
-                AngularVelocityPacket angularVelocityPacket =
-                        new AngularVelocityPacket(intent.getExtras());
-                //yaw and roll switched due to necessary coordinate system transformation
-                String rollRate = String.valueOf(angularVelocityPacket.getCraftRollRate())
-                        + DEGREES_PER_SECOND;
-                String pitchRate = String.valueOf(angularVelocityPacket.getCraftPitchRate())
-                        + DEGREES_PER_SECOND;
-                String yawRate = String.valueOf(angularVelocityPacket.getCraftYawRate())
-                        + DEGREES_PER_SECOND;
+
                 rollRateTV.setText(rollRate);
                 pitchRateTV.setText(pitchRate);
                 yawRateTV.setText(yawRate);
 
-            //If the intent is type GPSPacket, update corresponding TextView values
-            } else if (intent.getAction().equals(GPSPacket.INTENT_ACTION)) {
+                //Process location data and update corresponding TextViews
+                Location location = craftStatePacket.getLocation();
+                String coordinates = String.valueOf(location.getLatitude()) + " ,"
+                        + String.valueOf(location.getLongitude());
+                String accuracy = String.valueOf(location.getAccuracy()) + " m";
+                String bearing = String.valueOf(location.getBearing()) + DEGREES;
+
                 TextView gpsCoordinatesTV =
                         (TextView) findViewById(R.id.tv_craft_value_gps_coordinates);
                 TextView gpsAccuracyTV = (TextView) findViewById(R.id.tv_craft_value_gps_accuracy);
                 TextView gpsBearingTV = (TextView) findViewById(R.id.tv_craft_value_bearing);
-                GPSPacket gpsPacket = new GPSPacket(intent.getExtras());
-                String coordinates = String.valueOf(gpsPacket.getLatitude()) + " ,"
-                        + String.valueOf(gpsPacket.getLongitude());
-                String accuracy = String.valueOf(gpsPacket.getAccuracy()) + " m";
+
                 gpsCoordinatesTV.setText(coordinates);
                 gpsAccuracyTV.setText(accuracy);
-                if (gpsPacket.getBearing() == Double.NaN) {
-                    gpsBearingTV.setText(getResources().getString(R.string.tv_placeholder_sensor));
-                } else {
-                    String bearing = String.valueOf(gpsPacket.getBearing()) + DEGREES;
-                    gpsBearingTV.setText(bearing);
-                }
-            //If the intent type is PressurePacket, update corresponding TextView value
-            } else if (intent.getAction().equals(PressurePacket.INTENT_ACTION)) {
+                gpsBearingTV.setText(bearing);
+
+                //Process barometric pressure data and update corresponding TextViews
+                CraftStatePacket.BarometricPressure barometricPressure =
+                        craftStatePacket.getBarometricPressure();
+                String altitude = String.valueOf(barometricPressure.getPressure()) + " hPa";
                 TextView pressureTV = (TextView) findViewById(R.id.tv_craft_value_barometer);
-                PressurePacket pressurePacket = new PressurePacket(intent.getExtras());
-                String altitude = String.valueOf(pressurePacket.getPressure()) + " hPa";
                 pressureTV.setText(altitude);
             }
         }
     };
 
-    //Listens for any intents that are used to start other services
+    //Listens for any Intents that are used to start other services
     private BroadcastReceiver mStartServiceReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -312,5 +302,4 @@ public class CraftActivity extends AppCompatActivity {
             }
         }
     };
-
 }

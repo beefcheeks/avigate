@@ -5,7 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.hardware.SensorManager;
+import android.location.Location;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -13,18 +13,14 @@ import android.widget.TextView;
 
 import com.rabidllamastudios.avigate.R;
 import com.rabidllamastudios.avigate.helpers.PermissionsChecker;
-import com.rabidllamastudios.avigate.models.AngularVelocityPacket;
-import com.rabidllamastudios.avigate.models.GPSPacket;
-import com.rabidllamastudios.avigate.models.LinearAccelerationPacket;
-import com.rabidllamastudios.avigate.models.MagneticFieldPacket;
-import com.rabidllamastudios.avigate.models.OrientationPacket;
+import com.rabidllamastudios.avigate.models.CraftStatePacket;
 import com.rabidllamastudios.avigate.services.SensorService;
 
 public class DisplaySensorActivity extends AppCompatActivity {
 
-    private Intent mSensorService;
-    //Sensor update rate in microseconds
-    private static final int SENSOR_UPDATE_RATE = SensorManager.SENSOR_DELAY_UI;
+    private Intent mSensorService = null;
+    //Sensor broadcast rate in milliseconds (ms)
+    private static final int SENSOR_BROADCAST_RATE = 100;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,17 +33,11 @@ public class DisplaySensorActivity extends AppCompatActivity {
         assert getSupportActionBar() != null;
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        //Create broadcast receiver and listen for specific intents
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(OrientationPacket.INTENT_ACTION);
-        intentFilter.addAction(LinearAccelerationPacket.INTENT_ACTION);
-        intentFilter.addAction(AngularVelocityPacket.INTENT_ACTION);
-        intentFilter.addAction(MagneticFieldPacket.INTENT_ACTION);
-        intentFilter.addAction(GPSPacket.INTENT_ACTION);
-        registerReceiver(mSensorDataReceiver, intentFilter);
+        //Register broadcast receiver for any CraftStatePacket (sensor-related) Intents
+        registerReceiver(mCraftStateReceiver, new IntentFilter(CraftStatePacket.INTENT_ACTION));
 
-        //Configure the sensor service intent
-        mSensorService = SensorService.getConfiguredIntent(this, SENSOR_UPDATE_RATE);
+        //Configure the SensorService Intent
+        mSensorService = SensorService.getConfiguredIntent(this, SENSOR_BROADCAST_RATE);
 
         //Check permissions before starting the sensor service
         PermissionsChecker permissionsChecker =
@@ -70,93 +60,88 @@ public class DisplaySensorActivity extends AppCompatActivity {
         }
     };
 
-    private BroadcastReceiver mSensorDataReceiver = new BroadcastReceiver() {
+    //Listens for CraftStatePacket Intents and updates various TextViews accordingly
+    private BroadcastReceiver mCraftStateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            //If the intent is type orientation packet, update TextView values
-            if (intent.getAction().equals(OrientationPacket.INTENT_ACTION)) {
+            //If the Intent is type CraftStatePacket, update correspondingTextView values
+            if (intent.getAction().equals(CraftStatePacket.INTENT_ACTION)) {
+                CraftStatePacket craftStatePacket = new CraftStatePacket(intent.getExtras());
+                //Process orientation data and update corresponding TextViews
+                CraftStatePacket.Orientation orientation = craftStatePacket.getOrientation();
                 TextView orientationXTV =
                         (TextView) findViewById(R.id.tv_sensor_value_orientation_x);
                 TextView orientationYTV =
                         (TextView) findViewById(R.id.tv_sensor_value_orientation_y);
                 TextView orientationZTV =
                         (TextView) findViewById(R.id.tv_sensor_value_orientation_z);
-                //y and z switched due to necessary coordinate system transformation
-                OrientationPacket orientationPacket = new OrientationPacket(intent.getExtras());
-                orientationXTV.setText(String.valueOf(orientationPacket.getRawOrientation().x));
-                orientationYTV.setText(String.valueOf(orientationPacket.getRawOrientation().z));
-                orientationZTV.setText(String.valueOf(orientationPacket.getRawOrientation().y));
-            //If the intent is type linear acceleration packet, update TextView values
-            } else if (intent.getAction().equals(LinearAccelerationPacket.INTENT_ACTION)) {
+                orientationXTV.setText(String.valueOf(orientation.getRawOrientation().x));
+                orientationYTV.setText(String.valueOf(orientation.getRawOrientation().y));
+                orientationZTV.setText(String.valueOf(orientation.getRawOrientation().z));
+
+                //Process linear acceleration data and update corresponding TextViews
+                CraftStatePacket.LinearAcceleration linearAcceleration =
+                        craftStatePacket.getLinearAcceleration();
                 TextView linearXTV =
                         (TextView) findViewById(R.id.tv_sensor_value_linear_acceleration_x);
                 TextView linearYTV =
                         (TextView) findViewById(R.id.tv_sensor_value_linear_acceleration_y);
                 TextView linearZTV =
                         (TextView) findViewById(R.id.tv_sensor_value_linear_acceleration_z);
-                //yaw and roll switched due to necessary coordinate system transformation
-                LinearAccelerationPacket linearAccelerationPacket =
-                        new LinearAccelerationPacket(intent.getExtras());
-                linearXTV.setText(String.valueOf(linearAccelerationPacket.getX()));
-                linearYTV.setText(String.valueOf(linearAccelerationPacket.getZ()));
-                linearZTV.setText(String.valueOf(linearAccelerationPacket.getY()));
-            //If the intent is type angular velocity packet, update TextView values
-            } else if (intent.getAction().equals(AngularVelocityPacket.INTENT_ACTION)) {
+                linearXTV.setText(String.valueOf(linearAcceleration.getX()));
+                linearYTV.setText(String.valueOf(linearAcceleration.getY()));
+                linearZTV.setText(String.valueOf(linearAcceleration.getZ()));
+
+                //Process angular velocity data and update corresponding TextViews
+                CraftStatePacket.AngularVelocity angularVelocity =
+                        craftStatePacket.getAngularVelocity();
                 TextView angularXTV =
                         (TextView) findViewById(R.id.tv_sensor_value_angular_velocity_x);
                 TextView angularYTV =
                         (TextView) findViewById(R.id.tv_sensor_value_angular_velocity_y);
                 TextView angularZTV =
                         (TextView) findViewById(R.id.tv_sensor_value_angular_velocity_z);
-                //yaw and roll switched due to necessary coordinate system transformation
-                AngularVelocityPacket angularAccelerationPacket =
-                        new AngularVelocityPacket(intent.getExtras());
-                angularXTV.setText(String.valueOf(angularAccelerationPacket.getX()));
-                angularYTV.setText(String.valueOf(angularAccelerationPacket.getZ()));
-                angularZTV.setText(String.valueOf(angularAccelerationPacket.getY()));
-            //If the intent is type magnetic field packet, update TextView values
-            } else if (intent.getAction().equals(MagneticFieldPacket.INTENT_ACTION)) {
+                angularXTV.setText(String.valueOf(angularVelocity.getX()));
+                angularYTV.setText(String.valueOf(angularVelocity.getY()));
+                angularZTV.setText(String.valueOf(angularVelocity.getZ()));
+
+                //Process magnetic field values and update corresponding TextViews
+                CraftStatePacket.MagneticField magneticField = craftStatePacket.getMagneticField();
                 TextView magneticXTV =
                         (TextView) findViewById(R.id.tv_sensor_value_magnetic_field_x);
                 TextView magneticYTV =
                         (TextView) findViewById(R.id.tv_sensor_value_magnetic_field_y);
                 TextView magneticZTV =
                         (TextView) findViewById(R.id.tv_sensor_value_magnetic_field_z);
-                //TODO determine if magnetic field data needs a coordinate transformation
-                MagneticFieldPacket magneticFieldPacket =
-                        new MagneticFieldPacket(intent.getExtras());
-                magneticXTV.setText(String.valueOf(magneticFieldPacket.getX()));
-                magneticYTV.setText(String.valueOf(magneticFieldPacket.getY()));
-                magneticZTV.setText(String.valueOf(magneticFieldPacket.getZ()));
-            //If the intent is type gps packet, update corresponding textview values
-            } else if (intent.getAction().equals(GPSPacket.INTENT_ACTION)) {
+                magneticXTV.setText(String.valueOf(magneticField.getX()));
+                magneticYTV.setText(String.valueOf(magneticField.getY()));
+                magneticZTV.setText(String.valueOf(magneticField.getZ()));
+
+                //Process location data and update corresponding TextViews
+                Location location = craftStatePacket.getLocation();
+                String coordinates = String.valueOf(location.getLatitude()) + ", "
+                        + String.valueOf(location.getLongitude());
+                String bearing = String.valueOf(location.getBearing()) + " °";
+                String altitude = String.valueOf(location.getAltitude()) + " m";
+
                 TextView gpsCoordinatesTV = (TextView) findViewById(R.id.tv_sensor_value_gps);
                 TextView gpsBearingTV = (TextView) findViewById(R.id.tv_sensor_value_bearing);
                 TextView gpsAltitudeTV = (TextView) findViewById(R.id.tv_sensor_value_altitude);
-                GPSPacket gpsPacket = new GPSPacket(intent.getExtras());
-                String coordinates = String.valueOf(gpsPacket.getLatitude()) + ", "
-                        + String.valueOf(gpsPacket.getLongitude());
+
                 gpsCoordinatesTV.setText(coordinates);
-                if (gpsPacket.getBearing() == Double.NaN) {
-                    gpsBearingTV.setText(getResources().getString(R.string.tv_placeholder_sensor));
-                } else {
-                    String bearing = String.valueOf(gpsPacket.getBearing()) + " °";
-                    gpsBearingTV.setText(bearing);
-                }
-                if (gpsPacket.getAltitude() == Double.NaN) {
-                    gpsAltitudeTV.setText(getResources().getString(R.string.tv_placeholder_sensor));
-                } else {
-                    String altitude = String.valueOf(gpsPacket.getAltitude()) + " m";
-                    gpsAltitudeTV.setText(altitude);
-                }
+                gpsBearingTV.setText(bearing);
+                gpsAltitudeTV.setText(altitude);
             }
         }
     };
 
     @Override
     public void onDestroy() {
-        stopService(mSensorService);
-        unregisterReceiver(mSensorDataReceiver);
+        //Unregister all receivers
+        unregisterReceiver(mCraftStateReceiver);
+        //Stop all services (if running)
+        if (mSensorService != null) stopService(mSensorService);
+        //Call super method
         super.onDestroy();
     }
 }
