@@ -519,7 +519,7 @@ public class ConfigureArduinoActivity extends AppCompatActivity {
 
     //Sends the configuration (minus the receiver input min and max) for a given ServoType
     private void sendServoConfig(ArduinoPacket.ServoType servoType) {
-        String servoConfigJson = mMasterArduinoPacket.getConfigJson(servoType);
+        String servoConfigJson = mMasterArduinoPacket.getConfigJson(servoType, false);
         if (servoConfigJson != null) {
             ArduinoPacket arduinoPacket = new ArduinoPacket(servoConfigJson);
             sendBroadcast(arduinoPacket.toIntent(ArduinoPacket.INTENT_ACTION_INPUT));

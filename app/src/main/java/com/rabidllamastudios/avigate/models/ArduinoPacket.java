@@ -135,16 +135,25 @@ public class ArduinoPacket {
                 && servoEquals(otherRootJson, ServoType.CUTOVER);
     }
 
-    //Returns a JSON String containing all config values for a given servo except input min and max
+    //Returns a JSON String containing all config values
+    //Takes a boolean that determines whether to include the input min and max for that servo
     //Returns null if no configuration for that servo exists
     @SuppressWarnings("unchecked")
-    public String getConfigJson(ServoType servoType) {
+    public String getConfigJson(ServoType servoType, boolean includeInputRanges) {
         if (rootJson.containsKey(servoType.getStringValue())) {
             JSONObject servoJson = (JSONObject) rootJson.get(servoType.getStringValue());
-            //Remove input range values from the input config
+            //Don't include input range values from the input config
             JSONObject newInputConfigJson = new JSONObject();
             if (servoJson.containsKey(KEY_INPUT_CONFIG)) {
                 JSONObject inputConfigJson = (JSONObject) servoJson.get(KEY_INPUT_CONFIG);
+                if (includeInputRanges) {
+                    if (inputConfigJson.containsKey(KEY_MAX)) {
+                        newInputConfigJson.put(KEY_MAX, inputConfigJson.get(KEY_MAX));
+                    }
+                    if (inputConfigJson.containsKey(KEY_MIN)) {
+                        newInputConfigJson.put(KEY_MIN, inputConfigJson.get(KEY_MIN));
+                    }
+                }
                 if (inputConfigJson.containsKey(KEY_PIN)) {
                     newInputConfigJson.put(KEY_PIN, inputConfigJson.get(KEY_PIN));
                 }
