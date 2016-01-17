@@ -13,7 +13,7 @@ import android.util.Log;
 
 import com.rabidllamastudios.avigate.AvigateApplication;
 import com.rabidllamastudios.avigate.helpers.MqttConnectionManager;
-import com.rabidllamastudios.avigate.models.BundleableJsonObject;
+import com.rabidllamastudios.avigate.helpers.BundleableJsonObject;
 import com.rabidllamastudios.avigate.models.ConnectionPacket;
 
 import org.json.JSONException;
