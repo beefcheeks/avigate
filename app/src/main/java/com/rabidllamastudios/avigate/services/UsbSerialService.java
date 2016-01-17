@@ -3,6 +3,10 @@ package com.rabidllamastudios.avigate.services;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import com.felhr.usbserial.CDCSerialDevice;
 import com.felhr.usbserial.UsbSerialDevice;
@@ -25,10 +29,10 @@ import android.util.Log;
 
 /**
  * UsbSerialService communicates with the CDC-ACM USB Serial Controller (e.g. Arduino) using USB-OTG
- * In this case, servo and motor commands are sent to this service from other parts of the app
+ * In this case, configuration & servo commands are sent to this service from other parts of the app
  *
  * File created by Ryan on 11/12/15.
- * Much of this code is taken from: https://github.com/felHR85/SerialPortExample
+ * Much of this code was originally taken from: https://github.com/felHR85/SerialPortExample
  */
 
 public class UsbSerialService extends Service {
@@ -60,32 +64,46 @@ public class UsbSerialService extends Service {
 
     //Baud rate extra name
     private static final String EXTRA_BAUD_RATE = PACKAGE_NAME + ".extra.BAUD_RATE";
+    private static final int DEFAULT_BAUD_RATE = 115200;  //Default value for baud rate in bytes/sec
+    private static final int DEFAULT_THROTTLE_RATE = 100; //Default value for throttle rate in ms
 
     //Start and end markers required for CDC device to recognize serial input as valid input
     private static final String SERIAL_START_MARKER = "@";
     private static final String SERIAL_END_MARKER = "#";
 
-    private static int BAUD_RATE = 115200; //Default value for baud rate
+    //Synchronization lock for making changes to mThrottleServoValues ArduinoPacket instance variabl
+    private static final Object mThrottleLock = new Object();
 
-    private Context mContext;
+    //Use volatile boolean since 1 thread only writes to it, and the main thread only reads it
+    //See status flag volatile pattern #1: http://www.ibm.com/developerworks/library/j-jtp06197/
+    private volatile boolean mSerialPortConnected = false;
+
+    //See cheap read-write lock pattern #5: http://www.ibm.com/developerworks/library/j-jtp06197/
+    private volatile ArduinoPacket mThrottledServoValues;
+
+    private boolean mReceiveInProgress = false;
+    private int mBaudRate = DEFAULT_BAUD_RATE;
+
+    private Executor mIncomingSerialDataExecutor;
+    private Executor mSerialPortExecutor;
     private IntentFilter mUsbIntentFilter;
-    private UsbManager mUsbManager;
+    private ScheduledExecutorService mScheduleBroadcastExecutor;
+    private String mReceivedJsonData = "";
     private UsbDevice mUsbDevice;
     private UsbDeviceConnection mUsbConnection;
+    private UsbManager mUsbManager;
     private UsbSerialDevice mSerialPort;
 
-    private boolean mSerialPortConnected = false;
-    private boolean mReceiveInProgress = false;
-    private String mReceivedJsonData = "";
-
-    /*
-     * onCreate is executed when service is started. It configures an IntentFilter to listen for
-     * incoming Intents (USB ATTACHED, USB DETACHED...) and attempts to open a serial port.
-     */
+    //Configures an IntentFilter that listens for USB intents when the service is first started
     @Override
     public void onCreate() {
-        //Initialize non-primitive variables
-        mContext = this;
+        //Initialize executors (using sequential executors to prevent concurrency issues)
+        mIncomingSerialDataExecutor = Executors.newSingleThreadExecutor();
+        mScheduleBroadcastExecutor = Executors.newSingleThreadScheduledExecutor();
+        mSerialPortExecutor = Executors.newSingleThreadExecutor();
+
+        //Initialize other variables
+        mThrottledServoValues = new ArduinoPacket();
         mUsbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
 
         //Initialize mUsbIntentFilter
@@ -104,10 +122,10 @@ public class UsbSerialService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent != null
-                && INTENT_ACTION_CONFIGURE_USB_SERIAL_SERVICE.equals(intent.getAction())) {
-            BAUD_RATE = intent.getIntExtra(EXTRA_BAUD_RATE, BAUD_RATE);
+                && intent.getAction().equals(INTENT_ACTION_CONFIGURE_USB_SERIAL_SERVICE)) {
+            mBaudRate = intent.getIntExtra(EXTRA_BAUD_RATE, DEFAULT_BAUD_RATE);
         }
-        //Set up USB intent filter for Android system USB intents
+        //Register BroadcastReceiver to listen for Android system USB intents
         registerReceiver(mUsbReceiver, mUsbIntentFilter);
         findSerialPortDevice();
         Log.i(CLASS_NAME, "Service started");
@@ -122,15 +140,15 @@ public class UsbSerialService extends Service {
         super.onDestroy();
     }
 
-    //Get a pre-configured intent for starting this service class (UsbSerialService)
+    //Returns a pre-configured intent for starting UsbSerialService
     public static Intent getConfiguredIntent(Context context) {
         Intent configuredIntent = new Intent(context, UsbSerialService.class);
         configuredIntent.setAction(INTENT_ACTION_CONFIGURE_USB_SERIAL_SERVICE);
-        configuredIntent.putExtra(EXTRA_BAUD_RATE, BAUD_RATE);
+        configuredIntent.putExtra(EXTRA_BAUD_RATE, DEFAULT_BAUD_RATE);
         return configuredIntent;
     }
 
-    //Get a pre-configured intent for starting this service class (UsbSerialService)
+    //Returns a pre-configured intent for starting UsbSerialService and also set the baud rate
     public static Intent getConfiguredIntent(Context context, int baudRate) {
         Intent configuredIntent = new Intent(context, UsbSerialService.class);
         configuredIntent.setAction(INTENT_ACTION_CONFIGURE_USB_SERIAL_SERVICE);
@@ -140,20 +158,27 @@ public class UsbSerialService extends Service {
 
     //Closes the USB serial connection
     private void closeSerialPort() {
-        unregisterReceiver(mServoInputReceiver);
-        mSerialPort.close();
-        mSerialPortConnected = false;
+        unregisterReceiver(mArduinoInputReceiver);
+        //Run all serial port commands (including the one below) on the serial port executor
+        mSerialPortExecutor.execute(new Runnable() {
+            @Override
+            public void run() {
+                //These variables are only modified on the same thread
+                mSerialPort.close();
+                mSerialPortConnected = false;
+            }
+        });
     }
 
+    //Attempts to open the first encountered usb device connected, excluding usb root hubs
     private void findSerialPortDevice() {
-        // This will try to open the first encountered usb device connected, excluding usb root hubs
         HashMap<String, UsbDevice> usbDevices = mUsbManager.getDeviceList();
         if (!usbDevices.isEmpty()) {
             boolean deviceChosen = false;
             for(Map.Entry<String, UsbDevice> entry : usbDevices.entrySet()) {
                 mUsbDevice = entry.getValue();
+                //If there is a USB device connected, try to open it as a Serial port.
                 if (mUsbDevice.getVendorId() != 0x1d6b) {
-                    //If there is a USB device connected, try to open it as a Serial Port.
                     requestUserPermission();
                     deviceChosen = true;
                     break;
@@ -162,16 +187,11 @@ public class UsbSerialService extends Service {
                     mUsbDevice = null;
                 }
             }
-
-            if (!deviceChosen) {
-                //Send out an intent to notify that there are no USB devices connected
-                Intent intent = new Intent(INTENT_ACTION_NO_USB);
-                sendBroadcast(intent);
-            }
+            //If there are no USB devices chosen, send out an intent to notify other app components
+            if (!deviceChosen) sendBroadcast(new Intent(INTENT_ACTION_NO_USB));
+        //If there are no USB devices connected, send out an intent to notify other app components
         } else {
-            //Send out an intent to notify that there are no USB devices connected.
-            Intent intent = new Intent(INTENT_ACTION_NO_USB);
-            sendBroadcast(intent);
+            sendBroadcast(new Intent(INTENT_ACTION_NO_USB));
         }
     }
 
@@ -182,81 +202,18 @@ public class UsbSerialService extends Service {
         mUsbManager.requestPermission(mUsbDevice, mPendingIntent);
     }
 
-    //Data received from serial port is received and processed
-    private UsbSerialInterface.UsbReadCallback mCallback = new UsbSerialInterface.UsbReadCallback() {
-        @Override
-        public void onReceivedData(byte[] receivedData) {
-            try {
-                //Attempt to create a String from the incoming data stream and then process it
-                String incomingSerialData = new String(receivedData, "UTF-8");
-                processSerialInput(incomingSerialData);
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            }
-        }
-    };
-
-    //This method processes the serial input and broadcasts it as a JSON string
-    private void processSerialInput(String incomingSerialData) {
-        //If there is a receive in progress, find the end marker or append the serial data
-        if (mReceiveInProgress) {
-            if (incomingSerialData.contains(SERIAL_END_MARKER)) {
-                //Since just we hit the end marker, set receive in progress to false
-                mReceiveInProgress = false;
-                int endMarkerIndex = incomingSerialData.indexOf(SERIAL_END_MARKER);
-                //Create the full JSON string based on the end marker position
-                String jsonDataFull = mReceivedJsonData.concat(incomingSerialData.substring(0,
-                        endMarkerIndex));
-                Log.i(CLASS_NAME, jsonDataFull);
-                ArduinoPacket arduinoPacket = new ArduinoPacket(jsonDataFull);
-                //TODO implement throttling and recording of servo values
-                //Ignore incoming data with servo output values until throttling is implemented
-                if (!arduinoPacket.hasServoValues()) {
-                    //Broadcast the JSON string as a ArduinoPacket output Intent
-                    Intent servoOutputIntent = new ArduinoPacket(jsonDataFull).toIntent(
-                            ArduinoPacket.INTENT_ACTION_OUTPUT);
-                    sendBroadcast(servoOutputIntent);
-                }
-                //If there is still more data beyond the end marker, process the data
-                if (endMarkerIndex < (incomingSerialData.length() - 1)) {
-                    //Treat this data as if it is 'new' incoming serial data
-                    incomingSerialData = incomingSerialData.substring(endMarkerIndex + 1);
-                }
-            } else {
-                //If there is a receive in progress, but no end marker, concatenate the Strings
-                mReceivedJsonData = mReceivedJsonData.concat(incomingSerialData);
-            }
-        }
-        //If the incoming data contains a start marker, process the data
-        if (incomingSerialData.contains(SERIAL_START_MARKER)) {
-            int startMarkerIndex = incomingSerialData.indexOf(SERIAL_START_MARKER);
-            //Create the JSON String start via the substring of everything after the start marker
-            String jsonDataStart = incomingSerialData.substring(startMarkerIndex + 1);
-            mReceivedJsonData = "";  //Reset mReceivedJsonData
-            mReceiveInProgress = true;  //Since this is the start, there is a receive in progress
-            //Process the rest of the string beyond the start marker as if it were incoming data
-            processSerialInput(jsonDataStart);
-        }
-    }
-
-    //Send received servo input json data to the connected USB serial device
-    private BroadcastReceiver mServoInputReceiver = new BroadcastReceiver() {
+    //Send received Arduino input json data to the Arduino
+    private BroadcastReceiver mArduinoInputReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (mSerialPortConnected) {
-                Bundle bundle = intent.getExtras();
-                if (bundle == null) return;
-                String servoInputJson = new ArduinoPacket(bundle).toJsonString();
-                servoInputJson = SERIAL_START_MARKER + servoInputJson + SERIAL_END_MARKER;
-                Log.i(CLASS_NAME, servoInputJson);
-                mSerialPort.write(servoInputJson.getBytes());
+                //Process data on separate thread to prevent potential UI lock
+                mSerialPortExecutor.execute(new OutgoingSerialDataProcessor(intent));
             }
         }
     };
 
-    /*
-     * Different USB notifications are received here (USB attached, detached, permission responses)
-     */
+    //Different USB notifications are received here (USB attached, detached, permission responses)
     private final BroadcastReceiver mUsbReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -265,58 +222,173 @@ public class UsbSerialService extends Service {
                         UsbManager.EXTRA_PERMISSION_GRANTED);
                 if (permissionGranted) {
                     // User accepted our USB connection. Try to open the device as a serial port
-                    Intent permissionGrantedIntent =
-                            new Intent(INTENT_ACTION_USB_PERMISSION_GRANTED);
-                    context.sendBroadcast(permissionGrantedIntent);
+                    sendBroadcast(new Intent(INTENT_ACTION_USB_PERMISSION_GRANTED));
                     mUsbConnection = mUsbManager.openDevice(mUsbDevice);
-                    mSerialPortConnected = true;
-                    new ConnectionThread().run();
+                    //Run serial port opening operation on separate thread
+                    mSerialPortExecutor.execute(new SerialPortOpener());
                 } else {
                     //Send out an intent to notify that the user denies access to the USB connection
-                    Intent permissionDeniedIntent =
-                            new Intent(INTENT_ACTION_USB_PERMISSION_NOT_GRANTED);
-                    context.sendBroadcast(permissionDeniedIntent);
+                    sendBroadcast(new Intent(INTENT_ACTION_USB_PERMISSION_NOT_GRANTED));
                 }
-
             } else if (intent.getAction().equals(UsbManager.ACTION_USB_DEVICE_ATTACHED)) {
                 // A USB device has been attached. Try to open it as a Serial port
                 if(!mSerialPortConnected) findSerialPortDevice();
-
+            // Usb device disconnected. Stop listening for Arduino input & close serial port
             } else if (intent.getAction().equals(UsbManager.ACTION_USB_DEVICE_DETACHED)) {
-                // Usb device was disconnected. Stop listening for servo commands.
-                Intent usbDisconnectedIntent = new Intent(INTENT_ACTION_USB_DISCONNECTED);
-                context.sendBroadcast(usbDisconnectedIntent);
+                sendBroadcast(new Intent(INTENT_ACTION_USB_DISCONNECTED));
                 if (mSerialPortConnected) closeSerialPort();
             }
         }
     };
 
-    /*
-     * A simple thread to open a serial port.
-     * Although it is a fast operation, moving usb operations off of the UI thread is a good thing
-     */
-    private class ConnectionThread extends Thread {
+    //Data received from serial port is received and processed
+    private UsbSerialInterface.UsbReadCallback mCallback =
+            new UsbSerialInterface.UsbReadCallback() {
+        @Override
+        public void onReceivedData(byte[] receivedData) {
+            try {
+                //Attempt to create a String from the incoming data stream and then process it
+                String incomingData = new String(receivedData, "UTF-8");
+                //Process received data on separate thread to prevent potential UI lock
+                mIncomingSerialDataExecutor.execute(new IncomingSerialDataProcessor(incomingData));
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+        }
+    };
+
+    //Processes and packages serial input, and broadcasts an intent containing a JSON String
+    private class IncomingSerialDataProcessor implements Runnable {
+        private String mSerialData;
+
+        //Takes incoming data in the form of a String
+        public IncomingSerialDataProcessor(String incomingSerialData){
+            mSerialData = incomingSerialData;
+        }
+
+        @Override
+        public void run() {
+            //Separate method used due to use of recursion
+            processIncomingSerialData(mSerialData);
+        }
+
+        //Processes serial input and broadcasts it as a JSON string
+        private void processIncomingSerialData(String incomingSerialData) {
+            //If there is a receive in progress, find the end marker or append the serial data
+            if (mReceiveInProgress) {
+                if (incomingSerialData.contains(SERIAL_END_MARKER)) {
+                    //Since just we hit the end marker, set receive in progress to false
+                    mReceiveInProgress = false;
+                    int endMarkerIndex = incomingSerialData.indexOf(SERIAL_END_MARKER);
+                    //Create the full JSON string based on the end marker position
+                    String jsonDataFull= mReceivedJsonData.concat(
+                                incomingSerialData.substring(0, endMarkerIndex));
+                    Log.i("Incoming Arduino data", jsonDataFull);
+                    ArduinoPacket arduinoPacket = new ArduinoPacket(jsonDataFull);
+                    if (arduinoPacket.hasServoValue()) {
+                        storeServoValues(arduinoPacket);
+                    } else {
+                        //Broadcast the JSON string as a ArduinoPacket output Intent
+                        sendBroadcast(new ArduinoPacket(jsonDataFull).toIntent(
+                                ArduinoPacket.INTENT_ACTION_OUTPUT));
+                    }
+                    //If there is still more data beyond the end marker, process the data
+                    if (endMarkerIndex < (incomingSerialData.length() - 1)) {
+                        //Treat this data as if it is 'new' incoming serial data
+                        incomingSerialData = incomingSerialData.substring(endMarkerIndex + 1);
+                    }
+                } else {
+                    //If there is a receive in progress, but no end marker, concatenate the Strings
+                    mReceivedJsonData = mReceivedJsonData.concat(incomingSerialData);
+                }
+            }
+            //If the incoming data contains a start marker, process the data
+            if (incomingSerialData.contains(SERIAL_START_MARKER)) {
+                int startMarkerIndex = incomingSerialData.indexOf(SERIAL_START_MARKER);
+                //The start of the JSON String is the substring of everything after the start marker
+                String jsonDataStart = incomingSerialData.substring(startMarkerIndex + 1);
+                mReceivedJsonData = "";  //Reset mReceivedJsonData
+                mReceiveInProgress = true; //Since this is the start, there is a receive in progress
+                //Process the rest of the string beyond the start marker as if it were incoming data
+                processIncomingSerialData(jsonDataStart);
+            }
+        }
+
+        //Stores any servo values contained within the input ArduinoPacket
+        private void storeServoValues(ArduinoPacket arduinoPacket) {
+            ArduinoPacket.ServoType aileron = ArduinoPacket.ServoType.AILERON;
+            ArduinoPacket.ServoType elevator = ArduinoPacket.ServoType.ELEVATOR;
+            ArduinoPacket.ServoType rudder = ArduinoPacket.ServoType.RUDDER;
+            ArduinoPacket.ServoType throttle = ArduinoPacket.ServoType.THROTTLE;
+
+            if (arduinoPacket.hasServoValue(aileron)) {
+                storeServoValue(aileron, arduinoPacket.getServoValue(aileron));
+            }
+            if (arduinoPacket.hasServoValue(elevator)) {
+                storeServoValue(elevator, arduinoPacket.getServoValue(elevator));
+            }
+            if (arduinoPacket.hasServoValue(rudder)) {
+                storeServoValue(rudder, arduinoPacket.getServoValue(rudder));
+            }
+            if (arduinoPacket.hasServoValue(throttle)) {
+                storeServoValue(throttle, arduinoPacket.getServoValue(throttle));
+            }
+        }
+
+        //Stores a servo value for a given ServoType in mThrottledServoValues (an ArduinoPacket)
+        private void storeServoValue(ArduinoPacket.ServoType servoType, int servoValue) {
+            //Needs synchronized method since mThrottleServoValues is modified on a different thread
+            synchronized (mThrottleLock) {
+                //This will overwrite old servo values if still present (intended behavior)
+                mThrottledServoValues.setServoValue(servoType, servoValue);
+            }
+        }
+    }
+
+    //Processes the incoming intent and writes serial data out to the USB device (e.g. Arduino)
+    private class OutgoingSerialDataProcessor implements Runnable {
+        private Intent mReceivedIntent;
+
+        public OutgoingSerialDataProcessor(Intent incomingIntent) {
+            mReceivedIntent = incomingIntent;
+        }
+
+        @Override
+        public void run() {
+            Bundle bundle = mReceivedIntent.getExtras();
+            if (bundle == null) return;
+            String arduinoInputJson = new ArduinoPacket(bundle).toJsonString();
+            //Prepend start marker character and append end marker character
+            arduinoInputJson = SERIAL_START_MARKER + arduinoInputJson + SERIAL_END_MARKER;
+            Log.i("Sending data to Arduino", arduinoInputJson);
+            mSerialPort.write(arduinoInputJson.getBytes());
+        }
+    }
+
+    //A runnable that attempts to open a serial connection to the USB device (e.g. Arduino)
+    private class SerialPortOpener implements Runnable {
         @Override
         public void run() {
             mSerialPort = UsbSerialDevice.createUsbSerialDevice(mUsbDevice, mUsbConnection);
             if (mSerialPort != null) {
                 if (mSerialPort.open()) {
                     //Set the appropriate properties for the serial port connection
-                    mSerialPort.setBaudRate(BAUD_RATE);
+                    mSerialPort.setBaudRate(mBaudRate);
                     mSerialPort.setDataBits(UsbSerialInterface.DATA_BITS_8);
                     mSerialPort.setStopBits(UsbSerialInterface.STOP_BITS_1);
                     mSerialPort.setParity(UsbSerialInterface.PARITY_NONE);
                     mSerialPort.setFlowControl(UsbSerialInterface.FLOW_CONTROL_OFF);
                     mSerialPort.read(mCallback);
 
-                    //Set up servo input intent filter
-                    IntentFilter servoInputFilter =
-                            new IntentFilter(ArduinoPacket.INTENT_ACTION_INPUT);
-                    registerReceiver(mServoInputReceiver, servoInputFilter);
+                    //Serial port is now connected!
+                    mSerialPortConnected = true;
+
+                    //Register a Broadcast Receiver to listen for Arduino input
+                    registerReceiver(mArduinoInputReceiver,
+                            new IntentFilter(ArduinoPacket.INTENT_ACTION_INPUT));
 
                     //Send out an intent that the USB serial interface is ready
-                    Intent intent = new Intent(INTENT_ACTION_USB_READY);
-                    mContext.sendBroadcast(intent);
+                    sendBroadcast(new Intent(INTENT_ACTION_USB_READY));
 
                     //Request status from device in case the device is already running
                     ArduinoPacket statusArduinoPacket = new ArduinoPacket();
@@ -324,21 +396,33 @@ public class UsbSerialService extends Service {
                     sendBroadcast(statusArduinoPacket.toIntent(ArduinoPacket.INTENT_ACTION_INPUT));
                     Log.i(CLASS_NAME, "Sending status request to Arduino");
 
+                    mScheduleBroadcastExecutor.scheduleAtFixedRate(new ServoValueBroadcaster(),
+                            DEFAULT_THROTTLE_RATE, DEFAULT_THROTTLE_RATE, TimeUnit.MILLISECONDS);
                 } else {
-                    //Send out an intent to notify that the serial port could not be opened
-                    //(e.g. I/O error or no driver)
+                    //Send intent if the serial port could not be opened (e.g. no driver, i/o error)
                     if (mSerialPort instanceof CDCSerialDevice) {
-                        Intent intent = new Intent(INTENT_ACTION_CDC_DRIVER_NOT_WORKING);
-                        mContext.sendBroadcast(intent);
+                        sendBroadcast(new Intent(INTENT_ACTION_CDC_DRIVER_NOT_WORKING));
                     } else {
-                        Intent intent = new Intent(INTENT_ACTION_USB_DEVICE_NOT_WORKING);
-                        mContext.sendBroadcast(intent);
+                        sendBroadcast(new Intent(INTENT_ACTION_USB_DEVICE_NOT_WORKING));
                     }
                 }
             } else {
                 // No driver for given device, even generic CDC driver could not be loaded
-                Intent intent = new Intent(INTENT_ACTION_USB_NOT_SUPPORTED);
-                mContext.sendBroadcast(intent);
+                sendBroadcast(new Intent(INTENT_ACTION_USB_NOT_SUPPORTED));
+            }
+        }
+    }
+
+    //Broadcasts servo values contained in mThrottledServoValues (an ArduinoPacket)
+    private class ServoValueBroadcaster implements Runnable {
+        @Override
+        public void run() {
+            if (mThrottledServoValues.hasServoValue()) {
+                Log.i("Incoming servo values", mThrottledServoValues.toJsonString());
+                sendBroadcast(mThrottledServoValues.toIntent(ArduinoPacket.INTENT_ACTION_OUTPUT));
+                synchronized (mThrottleLock) {
+                    mThrottledServoValues = new ArduinoPacket();
+                }
             }
         }
     }

@@ -345,8 +345,17 @@ public class ArduinoPacket {
         return hasInputConfigValue(servoType, KEY_RECEIVER_ONLY);
     }
 
+    //Checks whether rootJson contains a value for a given ServoType
+    public boolean hasServoValue(ServoType servoType) {
+        if (rootJson.containsKey(servoType.getStringValue())) {
+            JSONObject servoJson = (JSONObject) rootJson.get(servoType.getStringValue());
+            return servoJson.containsKey(KEY_VALUE);
+        }
+        return false;
+    }
+
     //Checks whether rootJson contains any servo output values
-    public boolean hasServoValues() {
+    public boolean hasServoValue() {
         return (hasServoValue(ServoType.AILERON) || hasServoValue(ServoType.ELEVATOR)
                 || hasServoValue(ServoType.RUDDER) || hasServoValue(ServoType.THROTTLE));
     }
@@ -529,15 +538,6 @@ public class ArduinoPacket {
                 JSONObject outputConfigJson = (JSONObject) servoJson.get(KEY_OUTPUT_CONFIG);
                 return outputConfigJson.containsKey(jsonKey);
             }
-        }
-        return false;
-    }
-
-    //Checks whether rootJson contains a value for a given ServoType
-    private boolean hasServoValue(ServoType servoType) {
-        if (rootJson.containsKey(servoType.getStringValue())) {
-            JSONObject servoJson = (JSONObject) rootJson.get(servoType.getStringValue());
-            return servoJson.containsKey(KEY_VALUE);
         }
         return false;
     }
