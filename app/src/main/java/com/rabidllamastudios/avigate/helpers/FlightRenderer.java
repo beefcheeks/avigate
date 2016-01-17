@@ -4,7 +4,6 @@ import android.content.Context;
 import android.view.MotionEvent;
 
 import com.rabidllamastudios.avigate.R;
-import com.rabidllamastudios.avigate.models.OrientationPacket;
 
 import org.rajawali3d.Object3D;
 import org.rajawali3d.lights.DirectionalLight;

@@ -47,7 +47,7 @@ public class ConfigureArduinoActivity extends AppCompatActivity {
 
     private Intent mNetworkService;
     private Intent mUsbSerialService;
-    private IntentFilter mDeviceOutputIntentFilter;
+    private IntentFilter mArduinoOutputIntentFilter;
     private IntentFilter mConnectionIntentFilter;
     private IntentFilter mUsbIntentFilter;
 
@@ -105,7 +105,7 @@ public class ConfigureArduinoActivity extends AppCompatActivity {
         mUsbIntentFilter.addAction(UsbSerialService.INTENT_ACTION_USB_PERMISSION_NOT_GRANTED);
 
         //Initialize mServoOutputFilter IntentFilter
-        mDeviceOutputIntentFilter = new IntentFilter(ArduinoPacket.INTENT_ACTION_OUTPUT);
+        mArduinoOutputIntentFilter = new IntentFilter(ArduinoPacket.INTENT_ACTION_OUTPUT);
     }
 
     @Override
@@ -137,7 +137,7 @@ public class ConfigureArduinoActivity extends AppCompatActivity {
         //Register receivers and start NetworkService and UsbSerialService
         registerReceiver(mConnectionReceiver, mConnectionIntentFilter);
         registerReceiver(mUsbReceiver, mUsbIntentFilter);
-        registerReceiver(mArduinoOutputReceiver, mDeviceOutputIntentFilter);
+        registerReceiver(mArduinoOutputReceiver, mArduinoOutputIntentFilter);
         //Get the configured intent to start the UsbSerialService
         mUsbSerialService = UsbSerialService.getConfiguredIntent(this, BAUD_RATE);
         startService(mUsbSerialService);

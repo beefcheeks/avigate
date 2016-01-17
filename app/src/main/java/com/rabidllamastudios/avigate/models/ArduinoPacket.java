@@ -16,9 +16,9 @@ import java.util.Set;
 
 /**
  * Created by Ryan on 11/30/15.
- * A data model class to communicate servo data to and from the USB serial device
- * For convenience, this class can convert to and between Bundle and Intent
- * This class stores servo data as a JSON object and can return a JSON string
+ * A data model class to communicate data to and from the Arduino
+ * Can be constructed from a Bundle and converted into an Intent
+ * This class stores Arduino configuration and commands as a JSON object & can return a JSON string
  **/
 public class ArduinoPacket {
     private static final String PACKAGE_NAME = AvigateApplication.class.getPackage().getName();
@@ -46,7 +46,6 @@ public class ArduinoPacket {
 
     //JSON value(s) for key value pairs
     private static final String VALUE_STATUS_READY = "ready";
-
 
     //Denotes the type of servo
     public enum ServoType {
