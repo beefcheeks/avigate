@@ -35,7 +35,7 @@ public class SensorService extends Service implements SensorEventListener {
     //Sensor broadcast rate in milliseconds (ms)
     private int mBroadcastRate = DEFAULT_BROADCAST_RATE;
 
-    private CraftStatePacket craftStatePacket = null;
+    private CraftStatePacket mCraftStatePacket = null;
     private CraftStatePacket.AngularVelocity mAngularVelocity = null;
     private CraftStatePacket.BarometricPressure mBarometricPressure = null;
     private CraftStatePacket.LinearAcceleration mLinearAcceleration = null;
@@ -148,32 +148,43 @@ public class SensorService extends Service implements SensorEventListener {
 
     @Override
     public void onDestroy() {
+        //Unregister listeners / remove updates
         mSensorManager.unregisterListener(this);
         mLocationManager.removeUpdates(mLocationListener);
+        //Set all related CraftStatePacket instance variables to null (to prevent saving old data)
+        mCraftStatePacket = null;
+        mAngularVelocity = null;
+        mBarometricPressure = null;
+        mLinearAcceleration = null;
+        mMagneticField = null;
+        mOrientation = null;
+        mLocation = null;
+        //Call super method
         Log.i(CLASS_NAME, "Service stopped");
         super.onDestroy();
     }
 
-    //Packages and broadcasts CraftSTatePacket contained in mThrottledServoValues (an ArduinoPacket)
+    //Packages and broadcasts CraftStatePacket contained in mThrottledServoValues (an ArduinoPacket)
     private class SensorDataBroadcaster implements Runnable {
         @Override
         public void run() {
             //Only broadcast sensor data if all sensor data is ready
             if (initialSensorDataReady()) {
-                //If craftStatePacket has not yet been created, create a new CraftStatePacket
-                if (craftStatePacket == null) {
-                    craftStatePacket = new CraftStatePacket(mAngularVelocity, mBarometricPressure,
+                //If mCraftStatePacket has not yet been created, create a new CraftStatePacket
+                if (mCraftStatePacket == null) {
+                    mCraftStatePacket = new CraftStatePacket(mAngularVelocity, mBarometricPressure,
                             mLinearAcceleration, mMagneticField, mOrientation, mLocation);
-                //If craftStatePacket is already created, update all sensor-related objects
+                //If mCraftStatePacket is already created, update all sensor-related objects
                 } else {
-                    craftStatePacket.setAngularVelocity(mAngularVelocity);
-                    craftStatePacket.setBarometricPressure(mBarometricPressure);
-                    craftStatePacket.setLinearAcceleration(mLinearAcceleration);
-                    craftStatePacket.setMagneticField(mMagneticField);
-                    craftStatePacket.setOrientation(mOrientation);
-                    craftStatePacket.setLocation(mLocation);
+                    mCraftStatePacket.setAngularVelocity(mAngularVelocity);
+                    mCraftStatePacket.setBarometricPressure(mBarometricPressure);
+                    mCraftStatePacket.setLinearAcceleration(mLinearAcceleration);
+                    mCraftStatePacket.setMagneticField(mMagneticField);
+                    mCraftStatePacket.setOrientation(mOrientation);
+                    mCraftStatePacket.setLocation(mLocation);
                 }
-                sendBroadcast(craftStatePacket.toIntent());
+                //Broadcast mCraftStatePacket and its contents
+                sendBroadcast(mCraftStatePacket.toIntent());
             }
         }
 
