@@ -107,8 +107,12 @@
         </activity>
 
         <!-- MqttService -->
-        <!-- Third-party service included as part of third party library, Paho MQTT-->
+        <!-- Third-party service included as part of third party library, Paho MQTT -->
         <service android:name="org.eclipse.paho.android.service.MqttService" />
+        <!-- MasterFlightService -->
+        <service
+            android:name=".services.MasterFlightService"
+            android:exported="false"/>
         <!-- NetworkService -->
         <service
             android:name=".services.NetworkService"
