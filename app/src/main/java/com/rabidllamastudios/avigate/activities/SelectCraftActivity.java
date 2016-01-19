@@ -75,7 +75,7 @@ public class SelectCraftActivity extends AppCompatActivity {
                 } else {
                     mSharedPreferencesManager.addCraft(craftName);
                     mCraftProfiles.add(new CraftProfile(craftName, "Not configured",
-                            R.drawable.ic_airplanemode_active_black_48dp));
+                            R.drawable.ic_flight_black_48dp));
                 }
             }
         });
@@ -117,7 +117,7 @@ public class SelectCraftActivity extends AppCompatActivity {
         for (String craftName : craftNames) {
             //TODO implement calibration timestamps
             mCraftProfiles.add(new CraftProfile(craftName, "Not calibrated",
-                    R.drawable.ic_airplanemode_active_black_48dp));
+                    R.drawable.ic_flight_black_48dp));
         }
     }
 
