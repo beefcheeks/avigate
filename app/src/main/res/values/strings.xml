@@ -69,8 +69,9 @@
     <string name="tv_craft_title_position">Position</string>
     <string name="tv_craft_label_gps_coordinates">GPS coordinates:</string>
     <string name="tv_craft_label_gps_accuracy">GPS accuracy:</string>
-    <string name="tv_craft_label_bearing">Bearing:</string>
-    <string name="tv_craft_label_barometer">Barometer:</string>
+    <string name="tv_craft_label_gps_bearing">GPS bearing:</string>
+    <string name="tv_craft_label_gps_altitude">GPS altitude:</string>
+    <string name="tv_craft_label_barometer_altitude">Barometric altitude:</string>
 
     <string name="tv_craft_title_arduino">Arduino</string>
     <string name="tv_craft_label_arduino_status">USB status:</string>

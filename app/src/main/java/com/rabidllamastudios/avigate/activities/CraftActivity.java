@@ -229,22 +229,27 @@ public class CraftActivity extends AppCompatActivity {
                         + String.valueOf(location.getLongitude());
                 String accuracy = String.valueOf(location.getAccuracy()) + " m";
                 String bearing = String.valueOf(location.getBearing()) + DEGREES;
+                String altitude = String.valueOf(location.getAltitude() + " m");
 
                 TextView gpsCoordinatesTV =
                         (TextView) findViewById(R.id.tv_craft_value_gps_coordinates);
                 TextView gpsAccuracyTV = (TextView) findViewById(R.id.tv_craft_value_gps_accuracy);
-                TextView gpsBearingTV = (TextView) findViewById(R.id.tv_craft_value_bearing);
+                TextView gpsBearingTV = (TextView) findViewById(R.id.tv_craft_value_gps_bearing);
+                TextView gpsAltitudeTV = (TextView) findViewById(R.id.tv_craft_value_gps_altitude);
 
                 gpsCoordinatesTV.setText(coordinates);
                 gpsAccuracyTV.setText(accuracy);
                 gpsBearingTV.setText(bearing);
+                gpsAltitudeTV.setText(altitude);
 
                 //Process barometric pressure data and update corresponding TextViews
                 CraftStatePacket.BarometricPressure barometricPressure =
                         craftStatePacket.getBarometricPressure();
-                String pressure = String.valueOf(barometricPressure.getPressure()) + " hPa";
-                TextView pressureTV = (TextView) findViewById(R.id.tv_craft_value_barometer);
-                pressureTV.setText(pressure);
+                String barometric_altitude =
+                        String.valueOf(barometricPressure.getAltitude() + " m");
+                TextView barometerAltitudeTV =
+                        (TextView) findViewById(R.id.tv_craft_value_barometer_altitude);
+                barometerAltitudeTV.setText(barometric_altitude);
             }
         }
     };

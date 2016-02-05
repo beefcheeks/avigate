@@ -1,6 +1,7 @@
 package com.rabidllamastudios.avigate.models;
 
 import android.content.Intent;
+import android.hardware.SensorManager;
 import android.location.Location;
 import android.os.Bundle;
 
@@ -215,6 +216,11 @@ public class CraftStatePacket {
         public Intent addIntentExtras(Intent intent) {
             intent.putExtra("hpa", mhPa);
             return intent;
+        }
+
+        //Returns the approximate altitude in meters based on the barometric pressure
+        public float getAltitude() {
+            return SensorManager.getAltitude(SensorManager.PRESSURE_STANDARD_ATMOSPHERE, mhPa);
         }
 
         //Returns the barometric pressure in hectopascals (hPa)

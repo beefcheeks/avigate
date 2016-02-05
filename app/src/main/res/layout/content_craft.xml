@@ -45,29 +45,6 @@
 
         </LinearLayout>
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@+id/layout_linear_craft_connection"
-            android:paddingLeft="8dp"
-            android:paddingTop="4dp"
-            android:id="@+id/layout_linear_craft_latency">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/tv_craft_label_latency"
-                android:id="@+id/tv_craft_label_latency"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingLeft="8dp"
-                android:text="@string/tv_placeholder_latency"
-                android:id="@+id/tv_craft_value_latency"/>
-
-        </LinearLayout>
-
     </RelativeLayout>
 
     <RelativeLayout
@@ -306,43 +283,66 @@
             android:layout_below="@+id/layout_linear_craft_gps_accuracy"
             android:paddingLeft="8dp"
             android:paddingTop="4dp"
-            android:id="@+id/layout_linear_craft_bearing">
+            android:id="@+id/layout_linear_craft_gps_bearing">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/tv_craft_label_bearing"
-                android:id="@+id/tv_craft_label_bearing"/>
+                android:text="@string/tv_craft_label_gps_bearing"
+                android:id="@+id/tv_craft_label_gps_bearing"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:paddingLeft="8dp"
                 android:text="@string/tv_placeholder_sensor"
-                android:id="@+id/tv_craft_value_bearing"/>
+                android:id="@+id/tv_craft_value_gps_bearing"/>
 
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/layout_linear_craft_bearing"
+            android:layout_below="@+id/layout_linear_craft_gps_bearing"
             android:paddingLeft="8dp"
             android:paddingTop="4dp"
-            android:id="@+id/layout_linear_craft_barometer">
+            android:id="@+id/layout_linear_craft_gps_altitude">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/tv_craft_label_barometer"
-                android:id="@+id/tv_craft_label_barometer"/>
+                android:text="@string/tv_craft_label_gps_altitude"
+                android:id="@+id/tv_craft_label_gps_altitude"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:paddingLeft="8dp"
                 android:text="@string/tv_placeholder_sensor"
-                android:id="@+id/tv_craft_value_barometer"/>
+                android:id="@+id/tv_craft_value_gps_altitude"/>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/layout_linear_craft_gps_altitude"
+            android:paddingLeft="8dp"
+            android:paddingTop="4dp"
+            android:id="@+id/layout_linear_barometer_altitude">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/tv_craft_label_barometer_altitude"
+                android:id="@+id/tv_craft_label_barometer_altitude"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingLeft="8dp"
+                android:text="@string/tv_placeholder_sensor"
+                android:id="@+id/tv_craft_value_barometer_altitude"/>
 
         </LinearLayout>
 
