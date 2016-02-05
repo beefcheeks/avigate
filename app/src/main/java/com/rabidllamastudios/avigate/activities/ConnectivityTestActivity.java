@@ -20,10 +20,13 @@ import java.util.ArrayList;
 
 public class ConnectivityTestActivity extends AppCompatActivity {
 
-    private MqttConnectionManager mMqttConnectionManager;
-    private TextView mMessageOutput;
-    private ArrayList<String> mSubscribedTopics;
     private static final String DEFAULT_SERVER = "test.mosquitto.org";
+
+    private boolean mHasWritePermissions = false;
+    private ArrayList<String> mSubscribedTopics;
+    private MqttConnectionManager mMqttConnectionManager;
+    private PermissionsChecker permissionsChecker;
+    private TextView mMessageOutput;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,7 +38,9 @@ public class ConnectivityTestActivity extends AppCompatActivity {
         assert getSupportActionBar() != null;
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        setLayoutBasedOnConnectionStatus(false);
+        //Initialize the PermissionsChecker
+        permissionsChecker = new PermissionsChecker(mPermissionsCheckerCallback);
+        //Initialize the List of subscribed topics
         mSubscribedTopics = new ArrayList<>();
 
         EditText serverField = (EditText) findViewById(R.id.et_connect_hint_server);
@@ -67,7 +72,41 @@ public class ConnectivityTestActivity extends AppCompatActivity {
         });
     }
 
-    public MqttConnectionManager.Callback mMqttConnectionManagerCallback = new MqttConnectionManager.Callback() {
+    @Override
+    public void onResume() {
+        super.onResume();
+        mHasWritePermissions = permissionsChecker.hasPermission(this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                PermissionsChecker.PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
+        setLayout(false);
+        mMessageOutput.append("\n" + "Client disconnected");
+    }
+
+    @Override
+    public void onPause() {
+        if (mMqttConnectionManager != null) {
+            mMqttConnectionManager.stop();
+            mMqttConnectionManager = null;
+        }
+        super.onPause();
+    }
+
+    // If the user allows write permissions,
+    private PermissionsChecker.Callback mPermissionsCheckerCallback =
+            new PermissionsChecker.Callback() {
+                @Override
+                public void permissionGranted(int permissionsConstant) {
+                    if (permissionsConstant ==
+                            PermissionsChecker.PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE) {
+                        mHasWritePermissions = true;
+                        mMessageOutput.append("Storage permissions granted");
+                    }
+                }
+            };
+
+
+    public MqttConnectionManager.Callback mMqttConnectionManagerCallback =
+            new MqttConnectionManager.Callback() {
         @Override
         public void connectionLost() {
             mMessageOutput.append("\n" + "Connection lost");
@@ -87,13 +126,8 @@ public class ConnectivityTestActivity extends AppCompatActivity {
         }
     };
 
-    public boolean hasWritePermissions() {
-        PermissionsChecker permChecker = new PermissionsChecker(this, null);
-        return permChecker.hasPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, permChecker.PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
-    }
-
     public void connectButtonPressed(View view) {
-        if (hasWritePermissions()) {
+        if (mHasWritePermissions) {
             Button connectionButton = (Button) findViewById(R.id.button_connect);
             if (connectionButton.getText().equals(getString(R.string.button_connect))) {
                 if (mMqttConnectionManager == null) {
@@ -206,41 +240,5 @@ public class ConnectivityTestActivity extends AppCompatActivity {
             publishButton.setEnabled(false);
             subscribeButton.setEnabled(false);
         }
-    }
-
-    //TODO correctly implement below methods or remove class entirely
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        setLayoutBasedOnConnectionStatus(false);
-        mMessageOutput.append("\n" + "Client disconnected");
-    }
-
-    @Override
-    public void onPause() {
-        if (mMqttConnectionManager !=null) {
-            mMqttConnectionManager.stop();
-            mMqttConnectionManager = null;
-        }
-        super.onPause();
-    }
-
-    @Override
-    public void onStop() {
-        if (mMqttConnectionManager !=null) {
-            mMqttConnectionManager.stop();
-            mMqttConnectionManager = null;
-        }
-        super.onStop();
-    }
-
-    @Override
-    public void onDestroy() {
-        if (mMqttConnectionManager !=null) {
-        mMqttConnectionManager.stop();
-            mMqttConnectionManager = null;
-        }
-        super.onDestroy();
     }
 }

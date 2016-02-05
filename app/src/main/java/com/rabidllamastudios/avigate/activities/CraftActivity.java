@@ -58,7 +58,7 @@ public class CraftActivity extends AppCompatActivity {
         mUsbIntentFilter.addAction(UsbSerialService.INTENT_ACTION_USB_PERMISSION_NOT_GRANTED);
 
         //Initialize mPermissionsChecker
-        mPermissionsChecker = new PermissionsChecker(this, mPermissionsCheckerCallback);
+        mPermissionsChecker = new PermissionsChecker(mPermissionsCheckerCallback);
     }
 
     @Override
@@ -80,7 +80,7 @@ public class CraftActivity extends AppCompatActivity {
         registerReceiver(mCraftStateReceiver, mCraftStateIntentFilter);
         registerReceiver(mUsbReceiver, mUsbIntentFilter);
         //Check for location permissions before attempting to start the MasterFlightService
-        if (mPermissionsChecker.hasPermission(Manifest.permission.ACCESS_FINE_LOCATION,
+        if (mPermissionsChecker.hasPermission(this, Manifest.permission.ACCESS_FINE_LOCATION,
                 PermissionsChecker.PERMISSIONS_REQUEST_READ_LOCATION_FINE)) {
             startMasterFlightService();
         }

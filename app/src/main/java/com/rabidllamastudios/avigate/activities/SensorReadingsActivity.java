@@ -21,6 +21,7 @@ public class SensorReadingsActivity extends AppCompatActivity {
     private Intent mSensorService = null;
     //Sensor broadcast rate in milliseconds (ms)
     private static final int SENSOR_BROADCAST_RATE = 100;
+    private PermissionsChecker mPermissionsChecker;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,21 +34,34 @@ public class SensorReadingsActivity extends AppCompatActivity {
         assert getSupportActionBar() != null;
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        //Register broadcast receiver for any CraftStatePacket (sensor-related) Intents
-        registerReceiver(mCraftStateReceiver, new IntentFilter(CraftStatePacket.INTENT_ACTION));
-
         //Configure the SensorService Intent
         mSensorService = SensorService.getConfiguredIntent(this, SENSOR_BROADCAST_RATE);
-
         //Check permissions before starting the sensor service
-        PermissionsChecker permissionsChecker =
-                new PermissionsChecker(this, mPermissionsCheckerCallback);
-        if (permissionsChecker.hasPermission(Manifest.permission.ACCESS_FINE_LOCATION,
+        mPermissionsChecker = new PermissionsChecker(mPermissionsCheckerCallback);
+    }
+
+    @Override
+    public void onPause() {
+        //Unregister all receivers
+        unregisterReceiver(mCraftStateReceiver);
+        //Stop all services (if running)
+        if (mSensorService != null) stopService(mSensorService);
+        //Call super method
+        super.onPause();
+    }
+
+    @Override
+    public void onResume() {
+        //Register broadcast receiver for any CraftStatePacket (sensor-related) Intents
+        registerReceiver(mCraftStateReceiver, new IntentFilter(CraftStatePacket.INTENT_ACTION));
+        //If location permissions have been granted, start the sensor service
+        if (mPermissionsChecker.hasPermission(this, Manifest.permission.ACCESS_FINE_LOCATION,
                 PermissionsChecker.PERMISSIONS_REQUEST_READ_LOCATION_FINE)) {
             startService(mSensorService);
         } else {
             //TODO warn the user about permissions needed
         }
+        super.onResume();
     }
 
     // If the user allows location permissions, start the sensor service
@@ -134,14 +148,4 @@ public class SensorReadingsActivity extends AppCompatActivity {
             }
         }
     };
-
-    @Override
-    public void onDestroy() {
-        //Unregister all receivers
-        unregisterReceiver(mCraftStateReceiver);
-        //Stop all services (if running)
-        if (mSensorService != null) stopService(mSensorService);
-        //Call super method
-        super.onDestroy();
-    }
 }

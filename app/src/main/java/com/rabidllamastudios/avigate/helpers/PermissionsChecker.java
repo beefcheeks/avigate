@@ -15,24 +15,29 @@ public class PermissionsChecker extends AppCompatActivity {
     public static final int PERMISSIONS_REQUEST_READ_LOCATION_FINE = 0;
     public static final int PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1;
 
-    private final AppCompatActivity mContext;
     private final Callback mCallback;
 
-    public PermissionsChecker(AppCompatActivity context, Callback callback) {
-        mContext = context;
+    public PermissionsChecker(Callback callback) {
         mCallback = callback;
     }
 
-    public boolean hasPermission(String permission, int permissionsConstant) {
+    public interface Callback {
+        void permissionGranted(int permissionsConstant);
+    }
+
+    public boolean hasPermission(AppCompatActivity context, String permission,
+                                 int permissionsConstant) {
         //Pre-marshmallow users use different permissions system, return true
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return true;
         //Check if marshmallow permissions have already been granted, if so, return true
         if (ContextCompat.checkSelfPermission(mContext, permission) == PackageManager.PERMISSION_GRANTED) return true;
         //Check if marshmallow permissions have been rejected, if so, return false
-        if (ActivityCompat.shouldShowRequestPermissionRationale(mContext, permission)) return false;
+        if (ActivityCompat.shouldShowRequestPermissionRationale(context, permission)) return false;
         //If permissions haven't been requested yet, request permissions
-        if (ContextCompat.checkSelfPermission(mContext, permission) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(mContext, new String[]{permission}, permissionsConstant);
+        if (ContextCompat.checkSelfPermission(context, permission) !=
+                PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(context, new String[]{permission},
+                    permissionsConstant);
         }
         //Return false for any other result
         return false;
@@ -59,12 +64,5 @@ public class PermissionsChecker extends AppCompatActivity {
                 }
             }
         }
-    }
-
-    /**
-     * This is the callback class for PermissionsChecker
-     */
-    public interface Callback {
-        void permissionGranted(int permissionsConstant);
     }
 }
