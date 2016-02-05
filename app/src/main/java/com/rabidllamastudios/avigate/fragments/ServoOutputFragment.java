@@ -23,8 +23,8 @@ import com.rabidllamastudios.avigate.models.ArduinoPacket;
 import org.florescu.android.rangeseekbar.RangeSeekBar;
 
 /**
- * Created by Ryan on 12/19/15.
  * This Fragment class sets the layout and UI logic for configuring the servo inputs
+ * Created by Ryan Staatz on 12/19/15.
  */
 public class ServoOutputFragment extends Fragment implements NumberPicker.OnValueChangeListener {
 
@@ -90,7 +90,27 @@ public class ServoOutputFragment extends Fragment implements NumberPicker.OnValu
         }
     }
 
-    //Loads the servo output configuration into the UI from the masterArduinoPacket parameter
+    @Override
+    public void onValueChange(NumberPicker picker, int oldVal, int newVal) {
+        //Required method for implementing the NumberPicker class
+    }
+
+    /** Callback class used to communicate from this Fragment to the parent activity */
+    public interface Callback {
+        /** Triggers the loading of the servo output configuration */
+        void loadOutputConfiguration();
+
+        /** Sets the pin number for a given ServoType */
+        void setServoOutputPin(ArduinoPacket.ServoType servoType, int pinValue);
+
+        /** Configures the servo output range for a given ServoType */
+        void setServoOutputRange(ArduinoPacket.ServoType servoType, int outputMin, int outputMax);
+
+        /** Sets the servo value for a given ServoType */
+        void setServoValue(ArduinoPacket.ServoType servoType, int servoValue);
+    }
+
+    /** Loads the servo output configuration into the UI from the masterArduinoPacket parameter */
     public void loadOutputConfiguration(ArduinoPacket masterArduinoPacket) {
         loadServoOutputConfig(masterArduinoPacket, ArduinoPacket.ServoType.AILERON);
         loadServoOutputConfig(masterArduinoPacket, ArduinoPacket.ServoType.ELEVATOR);
@@ -98,8 +118,7 @@ public class ServoOutputFragment extends Fragment implements NumberPicker.OnValu
         loadServoOutputConfig(masterArduinoPacket, ArduinoPacket.ServoType.THROTTLE);
     }
 
-    //Set the callback for ServoInputFragment
-    //Enables the Fragment to communicate with the activity
+    /** Sets the callback for this Fragment. Enables communication with the parent activity */
     public void setCallback(Callback callback) {
         mCallback = callback;
     }
@@ -148,9 +167,9 @@ public class ServoOutputFragment extends Fragment implements NumberPicker.OnValu
     //Configures all SeekBars in the layout
     private void configureSeekBars() {
         //Set control surfaces to neutral position
-        configureSeekbar(ArduinoPacket.ServoType.AILERON, (mAileronMax - mAileronMin)/2);
-        configureSeekbar(ArduinoPacket.ServoType.ELEVATOR, (mElevatorMax - mElevatorMin)/2);
-        configureSeekbar(ArduinoPacket.ServoType.RUDDER, (mRudderMax - mRudderMin)/2);
+        configureSeekbar(ArduinoPacket.ServoType.AILERON, (mAileronMax - mAileronMin) / 2);
+        configureSeekbar(ArduinoPacket.ServoType.ELEVATOR, (mElevatorMax - mElevatorMin) / 2);
+        configureSeekbar(ArduinoPacket.ServoType.RUDDER, (mRudderMax - mRudderMin) / 2);
         //Set throttle to minimum
         configureSeekbar(ArduinoPacket.ServoType.THROTTLE, SERVO_MIN);
     }
@@ -291,9 +310,10 @@ public class ServoOutputFragment extends Fragment implements NumberPicker.OnValu
         alertDialogBuilder.setView(numPickFrameLayout);
         alertDialogBuilder.setNegativeButton(android.R.string.cancel,
                 new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {}
-        });
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                    }
+                });
         alertDialogBuilder.setPositiveButton("Set", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
@@ -482,27 +502,4 @@ public class ServoOutputFragment extends Fragment implements NumberPicker.OnValu
                 mThrottleMin = outputMin;
         }
     }
-    /**
-     * This is the callback class for ServoOutputFragment
-     */
-    public interface Callback {
-        //Triggers the loading of the servo output configuration
-        void loadOutputConfiguration();
-
-        //Sets the pin number for a given ServoType
-        void setServoOutputPin(ArduinoPacket.ServoType servoType, int pinValue);
-
-        //Configures the servo output range for a given ServoType
-        void setServoOutputRange(ArduinoPacket.ServoType servoType, int outputMin, int outputMax);
-
-        //Sets the servo value for a given ServoType
-        void setServoValue(ArduinoPacket.ServoType servoType, int servoValue);
-
-    }
-
-    @Override
-    public void onValueChange(NumberPicker picker, int oldVal, int newVal) {
-        //Required method for implementing the NumberPicker class
-    }
-
 }

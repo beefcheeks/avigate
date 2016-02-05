@@ -18,6 +18,10 @@ import org.rajawali3d.math.Quaternion;
 import org.rajawali3d.surface.IRajawaliSurface;
 import org.rajawali3d.surface.RajawaliSurfaceView;
 
+/**
+ * Displays a virtual 3D image of a craft that changes orientation based on the device's orientation
+ * Created by Ryan Staatz on 11/6/2015
+ */
 public class FlightVisualizerActivity extends AppCompatActivity implements SensorEventListener {
 
     FlightRenderer mFlightRenderer;
@@ -78,5 +82,4 @@ public class FlightVisualizerActivity extends AppCompatActivity implements Senso
         super.onResume();
         mSensorManager.registerListener(this, mOrientation, SensorManager.SENSOR_DELAY_GAME);
     }
-
 }

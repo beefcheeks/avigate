@@ -30,6 +30,7 @@ import java.util.Set;
 
 /**
  * Activity that allows the user to manage their saved craft profiles (and configurations)
+ * Created by Ryan on 1/1/2016
  */
 public class SelectCraftActivity extends AppCompatActivity {
 
@@ -321,5 +322,4 @@ public class SelectCraftActivity extends AppCompatActivity {
             return mCraftProfilePic;
         }
     }
-
 }

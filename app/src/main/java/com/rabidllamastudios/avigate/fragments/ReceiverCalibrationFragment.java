@@ -17,8 +17,8 @@ import com.rabidllamastudios.avigate.R;
 import com.rabidllamastudios.avigate.models.ArduinoPacket;
 
 /**
- * Created by Ryan on 12/19/15.
  * This Fragment class sets the layout and UI logic for calibrating the receiver inputs
+ * Created by Ryan on 12/19/15.
  */
 public class ReceiverCalibrationFragment extends Fragment {
 
@@ -80,13 +80,26 @@ public class ReceiverCalibrationFragment extends Fragment {
         }
     }
 
-    //Set the callback for ReceiverCalibrationFragment
-    //Enables the Fragment to communicate with the activity
+    /** Callback class used to communicate from this Fragment to the parent activity */
+    public interface Callback {
+        /** Called when the calibration button is pressed */
+        void calibrationButtonPressed(boolean calibrationMode);
+
+        /** Called when transmitter action bar icon is pressed */
+        void transmitterIconPressed(boolean enableTransmitter);
+
+        /** Triggers the loading of the calibrated receiver input values */
+        void loadCalibrationValues();
+    }
+
+    /** Sets the callback for this Fragment. Enables communication with the parent activity */
     public void setCallback(Callback callback) {
         mCallback = callback;
     }
 
-    //Loads the receiver input ranges for each servo (if they already exist)
+    /** Loads the receiver input (calibration) ranges for each servo (if they exist)
+     * @param masterArduinoPacket the ArduinoPacket containing all configuration data
+     */
     public void loadCalibrationConfig(ArduinoPacket masterArduinoPacket) {
         if (masterArduinoPacket.hasInputRanges()) {
             loadServoInputRange(masterArduinoPacket, ArduinoPacket.ServoType.AILERON);
@@ -99,7 +112,7 @@ public class ReceiverCalibrationFragment extends Fragment {
         }
     }
 
-    //When calibration is started, change the calibration button text and reset min/max values
+    /** When calibration is started, change the calibration button text and reset min/max values */
     public void calibrationStarted() {
         mCalibrationButton.setText(getString(R.string.button_stop_calibrating));
         resetServoCalibrationTextViews(ArduinoPacket.ServoType.AILERON);
@@ -109,7 +122,7 @@ public class ReceiverCalibrationFragment extends Fragment {
         resetServoCalibrationTextViews(ArduinoPacket.ServoType.CUTOVER);
     }
 
-    //When calibration is stopped, change the calibration button text
+    /** When calibration is stopped, change the calibration button text based on the input boolean */
     public void calibrationStopped(boolean isCalibrated) {
         if (isCalibrated) {
             mCalibrationButton.setText(getString(R.string.button_recalibrate));
@@ -118,7 +131,7 @@ public class ReceiverCalibrationFragment extends Fragment {
         }
     }
 
-    //Displays the receiver input min and max values in the corresponding TextViews
+    /** Displays the receiver input min and max values in the corresponding TextViews */
     public void showCalibrationRange(ArduinoPacket.ServoType servoType, long inputMin,
                                      long inputMax) {
         TextView calibrationMinTextView = getCalibrationMinTextView(servoType);
@@ -133,7 +146,7 @@ public class ReceiverCalibrationFragment extends Fragment {
         }
     }
 
-    //Shows a warning dialog informing the user that the receiver inputs have not been calibrated
+    /** Shows a warning dialog informing the user that the receiver inputs need to be calibrated */
     public void showNotCalibratedWarningDialog() {
         new AlertDialog.Builder(getActivity())
                 .setTitle("Calibration required!")
@@ -147,7 +160,7 @@ public class ReceiverCalibrationFragment extends Fragment {
                 .show();
     }
 
-    //Shows a warning dialog informing the user that no USB device is connected
+    /** Shows a warning dialog informing the user that no USB device is connected */
     public void showNoUsbDeviceCalibrationWarningDialog() {
         new AlertDialog.Builder(getActivity())
                 .setTitle("No USB device connected!")
@@ -160,7 +173,7 @@ public class ReceiverCalibrationFragment extends Fragment {
                 .show();
     }
 
-    //Shows a warning dialog informing the user that no USB device is connected
+    /** Shows a warning dialog informing the user that no USB device is connected */
     public void showNoUsbDeviceTransmitterWarningDialog() {
         new AlertDialog.Builder(getActivity())
                 .setTitle("No USB device connected!")
@@ -173,7 +186,7 @@ public class ReceiverCalibrationFragment extends Fragment {
                 .show();
     }
 
-    //Shows a warning dialog before sending transmitter calibration settings to Arduino
+    /** Shows a warning dialog before sending calibrated receiver input data to Arduino */
     public void showTransmitterWarningDialog() {
         AlertDialog.Builder alertDialogBuilder =
                 new AlertDialog.Builder(getActivity());
@@ -267,19 +280,4 @@ public class ReceiverCalibrationFragment extends Fragment {
                 return null;
         }
     }
-
-    /**
-     * This is the callback class for ReceiverCalibrationFragment
-     */
-    public interface Callback {
-        //Called when the calibration button is pressed
-        void calibrationButtonPressed(boolean calibrationMode);
-
-        //Called when transmitter action bar icon is pressed
-        void transmitterIconPressed(boolean enableTransmitter);
-
-        //Triggers the loading of the receiver input calibration values
-        void loadCalibrationValues();
-    }
-
 }

@@ -31,8 +31,8 @@ import android.util.Log;
  * UsbSerialService communicates with the CDC-ACM USB Serial Controller (e.g. Arduino) using USB-OTG
  * In this case, configuration & servo commands are sent to this service from other parts of the app
  *
- * File created by Ryan on 11/12/15.
- * Much of this code was originally taken from: https://github.com/felHR85/SerialPortExample
+ * A good chunk of this code was originally taken from: https://github.com/felHR85/SerialPortExample
+ * File created by Ryan Staatz on 11/12/15.
  */
 
 public class UsbSerialService extends Service {
@@ -140,7 +140,7 @@ public class UsbSerialService extends Service {
         super.onDestroy();
     }
 
-    //Returns a pre-configured intent for starting UsbSerialService
+    /** Returns a pre-configured intent that can be used to start UsbSerialService */
     public static Intent getConfiguredIntent(Context context) {
         Intent configuredIntent = new Intent(context, UsbSerialService.class);
         configuredIntent.setAction(INTENT_ACTION_CONFIGURE_USB_SERIAL_SERVICE);
@@ -148,7 +148,10 @@ public class UsbSerialService extends Service {
         return configuredIntent;
     }
 
-    //Returns a pre-configured intent for starting UsbSerialService and also set the baud rate
+    /** Returns a pre-configured intent for starting UsbSerialService and also set the baud rate
+     * @param context the application context from the activity invoking this method
+     * @param baudRate the baud rate in bytes per second (e.g. 115200, 9600, etc)
+     */
     public static Intent getConfiguredIntent(Context context, int baudRate) {
         Intent configuredIntent = new Intent(context, UsbSerialService.class);
         configuredIntent.setAction(INTENT_ACTION_CONFIGURE_USB_SERIAL_SERVICE);

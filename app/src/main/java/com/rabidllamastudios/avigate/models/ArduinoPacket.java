@@ -15,19 +15,20 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Created by Ryan on 11/30/15.
  * A data model class to communicate data to and from the Arduino
  * Can be constructed from a Bundle and converted into an Intent
  * This class stores Arduino configuration and commands as a JSON object & can return a JSON string
+ * Created by Ryan Staatz on 11/30/15.
  **/
 public class ArduinoPacket {
     private static final String PACKAGE_NAME = AvigateApplication.class.getPackage().getName();
 
-    //Intent actions
+    /** Intent action denoting that the ArduinoPacket is to be sent to the Arduino */
     public static final String INTENT_ACTION_INPUT = PACKAGE_NAME + ".action.ARDUINO_INPUT";
+    /** Intent action denoting that the ArduinoPacket was created from data sent from the Arduino */
     public static final String INTENT_ACTION_OUTPUT = PACKAGE_NAME + ".action.ARDUINO_OUTPUT";
 
-    //Key for the entire root JSON String of the ArduinoPacket (value) when stored as an Intent extra
+    //Key for the root JSON String of the ArduinoPacket when stored as a String Intent extra
     private static final String KEY_ROOT = "json";
 
     //JSON keys for key value pairs
@@ -44,14 +45,14 @@ public class ArduinoPacket {
     private static final String KEY_STATUS = "status";
     private static final String KEY_VALUE ="value";
 
-    //JSON value(s) for key value pairs
+    //preset JSON value(s) for key value pairs
     private static final String VALUE_STATUS_READY = "ready";
 
-    //Denotes the type of servo
+    /** Denotes the type of servo on the craft. Cutover can refer to a transmitter gear switch */
     public enum ServoType {
         AILERON, ELEVATOR, RUDDER, THROTTLE, CUTOVER;
 
-        //Returns the corresponding JSON String key
+        /** Returns the corresponding String for the defined ServoType */
         public String getStringValue() {
             switch (this) {
                 case AILERON:
@@ -75,7 +76,7 @@ public class ArduinoPacket {
         rootJson = new JSONObject();
     }
 
-    //Creates a ArduinoPacket from a JSON String
+    /** Constructor that takes a JSON String. Use toIntent or toJsonString methods to export data */
     public ArduinoPacket(String jsonString) {
         rootJson = new JSONObject();
         try {
@@ -85,7 +86,7 @@ public class ArduinoPacket {
         }
     }
 
-    //Creates a ArduinoPacket from a bundle (e.g. Intent Extra)
+    /** Constructor that takes a bundle */
     public ArduinoPacket(Bundle bundle) {
         rootJson = new JSONObject();
         try {
@@ -95,26 +96,29 @@ public class ArduinoPacket {
         }
     }
 
-    //Returns an Intent with the ArduinoPacket contents as an Intent Extra
+    /** Returns an Intent with the ArduinoPacket contents packaged as an Intent Extra */
     public Intent toIntent(String intentAction) {
         Intent intent = new Intent(intentAction);
         intent.putExtra(KEY_ROOT, rootJson.toJSONString());
         return intent;
     }
 
-    //Returns the stored JSON data as a string
+    /** Returns the stored JSON data as a string */
     public String toJsonString() {
         return rootJson.toJSONString();
     }
 
-    //Adds an arduino status request to the rootJson object
+    /** Adds an Arduino status request to the JSON store */
     @SuppressWarnings("unchecked")
     public void addStatusRequest() {
         rootJson.put(KEY_REQUEST, KEY_STATUS);
     }
 
 
-    //Takes a ArduinoPacket and compares configurations with the rootJson object
+    /** Compares this ArduinoPacket with another ArduinoPacket
+     * @param arduinoPacketObject the ArduinoPacket to compare
+     * @return true if both ArduinoPackets have the same contents (JSON order does not matter)
+     */
     @Override
     public boolean equals(Object arduinoPacketObject) {
         if (arduinoPacketObject == null) return false;
@@ -135,9 +139,11 @@ public class ArduinoPacket {
                 && servoEquals(otherRootJson, ServoType.CUTOVER);
     }
 
-    //Returns a JSON String containing all config values
-    //Takes a boolean that determines whether to include the input min and max for that servo
-    //Returns null if no configuration for that servo exists
+    /** Returns a JSON String containing the configuration values for the input ServoType
+     * @param servoType the ServoType to retrieve the config JSON for
+     * @param includeInputRanges determines whether the input min and max are included in the output
+     * @return a JSON String with the config values. Returns null if no config exists.
+     */
     @SuppressWarnings("unchecked")
     public String getConfigJson(ServoType servoType, boolean includeInputRanges) {
         if (rootJson.containsKey(servoType.getStringValue())) {
@@ -186,14 +192,16 @@ public class ArduinoPacket {
         return null;
     }
 
-    //Retrieves any error message if present
+    /** Retrieves any error message if present. Error messages only originate from the Arduino. */
     public String getErrorMessage() {
         if (rootJson.containsKey(KEY_ERROR)) return (String) rootJson.get(KEY_ERROR);
         return null;
     }
 
-    //Returns a JsonObject that contains the min and max receiver input values for a given ServoType
-    //Returns null if no min and max values for that ServoType exists
+    /** Returns a JSONObject that contains the receiver input range for the input ServoType
+     * @param servoType the
+     * @return a JSONObject with the min and max receiver inputs. Returns null if no range exists.
+     */
     @SuppressWarnings("unchecked")
     public String getInputRangeJson(ServoType servoType) {
         if (rootJson.containsKey(servoType.getStringValue())) {
@@ -215,55 +223,49 @@ public class ArduinoPacket {
         return null;
     }
 
-    //Returns the max receiver input value for a given ServoType
-    //Returns -1 if said value does not exist
+    /** Gets the max receiver input value for the input ServoType. Returns -1 if no value exists */
     public int getInputMax(ServoType servoType) {
         Number inputMax = (Number) getInputConfigValue(servoType, KEY_MAX);
         if (inputMax == null) return -1;
         return inputMax.intValue();
     }
 
-    //Returns the min receiver input value for a given ServoType
-    //Returns -1 if said value does not exist
+    /** Gets the min receiver input value for the input ServoType. Returns -1 if no value exists */
     public int getInputMin(ServoType servoType) {
         Number inputMin = (Number) getInputConfigValue(servoType, KEY_MIN);
         if (inputMin == null) return -1;
         return inputMin.intValue();
     }
 
-    //Returns the input pin
-    //Returns -1 if said value does not exist
+    /** Gets the input pin for the input ServoType. Returns -1 if no value exists */
     public int getInputPin(ServoType servoType) {
         Number inputPin = (Number) getInputConfigValue(servoType, KEY_PIN);
         if (inputPin == null) return -1;
         return inputPin.intValue();
     }
 
-    //Returns the max servo output value for a given ServoType
-    //Returns -1 if said value does not exist
+    /** Gets the max servo output value for the input ServoType. Returns -1 if no value exists */
     public int getOutputMax(ArduinoPacket.ServoType servoType) {
         Number outputMax = getOutputConfigValue(servoType, KEY_MAX);
         if (outputMax == null) return -1;
         return outputMax.intValue();
     }
 
-    //Returns the min servo output value for a given ServoType
-    //Returns -1 if said value does not exist
+    /** Gets the min servo output value for the input ServoType. Returns -1 if no value exists */
     public int getOutputMin(ArduinoPacket.ServoType servoType) {
         Number outputMin = getOutputConfigValue(servoType, KEY_MIN);
         if (outputMin == null) return -1;
         return outputMin.intValue();
     }
 
-    //Returns the input pin of a given ServoType
-    //Returns -1 if said value does not exist
+    /** Gets the servo output pin for the input ServoType. Returns -1 if no value exists */
     public int getOutputPin(ServoType servoType) {
         Number outputPin =  getOutputConfigValue(servoType, KEY_PIN);
         if (outputPin == null) return -1;
         return outputPin.intValue();
     }
 
-    //Returns the value of a given ServoType
+    /** Gets the position value in degrees) of a given ServoType. Returns -1 if no value exists */
     public int getServoValue(ServoType servoType) {
         //Returns -1 if said value does not exist
         if (rootJson.containsKey(servoType.getStringValue())) {
@@ -276,12 +278,12 @@ public class ArduinoPacket {
         return -1;
     }
 
-    //Checks whether rootJson contains the calibrationMode JSON key
+    /** Returns true if the JSON store contains the calibrationMode JSON key */
     public boolean hasCalibrationMode() {
         return rootJson.containsKey(KEY_CALIBRATION_MODE);
     }
 
-    //Checks whether rootJson contains duplicate pin numbers (input and output)
+    /** Returns true if the JSON store contains duplicate pin numbers (input and output) */
     public boolean hasDuplicatePins() {
         List<Integer> pinList = new ArrayList<>();
         //Add output pin values
@@ -302,58 +304,59 @@ public class ArduinoPacket {
         return pinSet.size() < pinList.size();
     }
 
-    //Checks whether rootJson contains the error JSON key
+    /** Returns true if the JSON store contains an error. Errors only originate from the Arduino */
     public boolean hasErrorMessage() {
         return rootJson.containsKey(KEY_ERROR);
     }
 
-    //Checks whether rootJson contains a receiver input max value for a given ServoType
+    /** Returns true if the JSON store contains a receiver input max for the input ServoType */
     public boolean hasInputMax(ServoType servoType) {
         return hasInputConfigValue(servoType, KEY_MAX);
     }
 
-    //Checks whether rootJson contains a receiver input min value for a given ServoType
+    /** Returns true if the JSON store contains a receiver input min for the input ServoType */
     public boolean hasInputMin(ServoType servoType) {
         return hasInputConfigValue(servoType, KEY_MIN);
     }
 
-    //Checks whether rootJson contains a receiver input pin for a given ServoType
+    /** Returns true if the JSON store contains a receiver input pin for the input ServoType */
     public boolean hasInputPin(ServoType servoType) {
         return hasInputConfigValue(servoType, KEY_PIN);
     }
 
-    //Checks whether rootJson contains all of the receiver input values set via calibration
+    /** Returns true if all of the receiver input values have been set via calibration */
     public boolean hasInputRanges() {
         return (hasInputRange(ServoType.AILERON) && hasInputRange(ServoType.CUTOVER)
                 && hasInputRange(ServoType.ELEVATOR) && hasInputRange(ServoType.RUDDER)
                 && hasInputRange(ServoType.THROTTLE));
     }
 
-    //Checks whether rootJson contains an output max value for a given ServoType
+    /** Returns true if the JSON store contains an output max value for the input ServoType */
     public boolean hasOutputMax(ServoType servoType) {
         return hasOutputConfigValue(servoType, KEY_MAX);
     }
 
-    //Checks whether rootJson contains an output min value for a given ServoType
+    /** Returns true if the JSON store contains an output min value for the input ServoType */
     public boolean hasOutputMin(ServoType servoType) {
         return hasOutputConfigValue(servoType, KEY_MIN);
     }
 
-    //Checks whether rootJson contains an output pin for a given ServoType
+    /** Returns true if the JSON store contains an output pin for the input ServoType */
     public boolean hasOutputPin(ServoType servoType) {
         return hasOutputConfigValue(servoType, KEY_PIN);
     }
 
-    //Checks whether rootJson contains the receiverControl JSON key
+    /** Returns true if the JSON store indicates that the Arduino will only accept receiver input */
     public boolean hasReceiverControl() {
         return rootJson.containsKey(KEY_RECEIVER_CONTROL);
     }
 
+    /** Returns true if the input ServoType has been configured to only accept receiver input */
     public boolean hasReceiverOnly(ServoType servoType) {
         return hasInputConfigValue(servoType, KEY_RECEIVER_ONLY);
     }
 
-    //Checks whether rootJson contains a value for a given ServoType
+    /** Returns true if the JSON store contains a servo position value for the input ServoType */
     public boolean hasServoValue(ServoType servoType) {
         if (rootJson.containsKey(servoType.getStringValue())) {
             JSONObject servoJson = (JSONObject) rootJson.get(servoType.getStringValue());
@@ -362,45 +365,52 @@ public class ArduinoPacket {
         return false;
     }
 
-    //Checks whether rootJson contains any servo output values
+    /** Returns true if the JSON store contains any servo output values */
     public boolean hasServoValue() {
         return (hasServoValue(ServoType.AILERON) || hasServoValue(ServoType.ELEVATOR)
                 || hasServoValue(ServoType.RUDDER) || hasServoValue(ServoType.THROTTLE));
     }
 
-    //Returns the value of the calibrationMode JSON key
-    //Use hasCalibrationMode method to determine whether to use this method
+    /** Returns true if the Arduino is now in calibration mode.
+     * Use hasCalibrationMode method to determine whether to use this method
+     * @return true if in calibration mode, false if in standard operating mode
+     */
     public boolean isCalibrationMode() {
         return (boolean) rootJson.get(KEY_CALIBRATION_MODE);
     }
 
-    //Returns the value of the receiverControl JSON key
-    //Use hasReceiverControl method to determine whether to use this method
+    /** Returns true if the Arduino is currently only accepting receiver input
+     * Use hasReceiverControl method to determine whether to use this method
+     * @return true if only accepting receiver input, false if accepting phone and receiver input
+     */
     public boolean isReceiverControl() {
         return (boolean) rootJson.get(KEY_RECEIVER_CONTROL);
     }
 
+    /** Returns true if the input servoType is only accepting receiver input, and not phone input */
     public boolean isReceiverOnly(ServoType servoType) {
         return (boolean) getInputConfigValue(servoType, KEY_RECEIVER_ONLY);
     }
 
-    //Returns true if the ready status key value pair is present in the stored JSON object
+    /** Returns true if the Arduino is ready to receive input from the phone */
     public boolean isStatusReady() {
         return rootJson.containsKey(KEY_STATUS)
                 && rootJson.get(KEY_STATUS).equals(VALUE_STATUS_READY);
     }
 
-    //Sets the calibrationMode JSON boolean via boolean parameter calibrationMode
-    //If calibrationMode is true, the USB device listens for receiver input to determine input range
-    //If calibrationMode is false, the USB device stops listening for input
+    /** Tells the Arduino whether it should enter or leave calibration mode
+     * Calibration mode is used to set the receiver input range for each configured servo
+     * @param calibrationMode if true, the Arduino enters calibration mode, if false, leaves it
+     */
     @SuppressWarnings("unchecked")
     public void setCalibrationMode(boolean calibrationMode) {
         rootJson.put(KEY_CALIBRATION_MODE, calibrationMode);
     }
 
-    //Sets the control type for the given ServoType based the value of the receiverOnly parameter
-    //If receiverOnly is true, only the transmitter/receiver can send commands to the servos
-    // If receiveronly is false, the phone and transmitter/receiver share control of the plane
+    /** Sets the input control type for the input ServoType based on the input receiverOnly boolean
+     * @param servoType the ServoType to set the input control property for
+     * @param receiverOnly if true, the Arduino only accepts receiver input for this ServoType
+     */
     @SuppressWarnings("unchecked")
     public void setInputControl(ServoType servoType, boolean receiverOnly) {
         JSONObject servoJson = new JSONObject();
@@ -416,7 +426,7 @@ public class ArduinoPacket {
         rootJson.put(servoType.getStringValue(), servoJson);
     }
 
-    //Sets the receiver input pin for the given ServoType
+    /** Sets the receiver input pin for the input ServoType */
     @SuppressWarnings("unchecked")
     public void setInputPin(ServoType servoType, int pinNumber) {
         JSONObject servoJson = new JSONObject();
@@ -432,9 +442,13 @@ public class ArduinoPacket {
         rootJson.put(servoType.getStringValue(), servoJson);
     }
 
-    //Sets the min and max receiver input values for the given ServoType (in microseconds)
+    /** Sets the min and max receiver input values (in microseconds) based on the input ServoType
+     * @param servoType the ServoType to set the input range for
+     * @param inputMin the calibrated receiver input minimum for the input ServoType (microseconds)
+     * @param inputMax the calibrated receiver input maximum for the input ServoType (microseconds)
+     */
     @SuppressWarnings("unchecked")
-    public void setInputRange(ServoType servoType, int intputMin, int inputMax) {
+    public void setInputRange(ServoType servoType, int inputMin, int inputMax) {
         JSONObject servoJson = new JSONObject();
         JSONObject inputConfigJson = new JSONObject();
         if (rootJson.containsKey(servoType.getStringValue())) {
@@ -444,12 +458,16 @@ public class ArduinoPacket {
             }
         }
         inputConfigJson.put(KEY_MAX, (long) inputMax);
-        inputConfigJson.put(KEY_MIN, (long) intputMin);
+        inputConfigJson.put(KEY_MIN, (long) inputMin);
         servoJson.put(KEY_INPUT_CONFIG, inputConfigJson);
         rootJson.put(servoType.getStringValue(), servoJson);
     }
 
-    //Sets the min and max output values for the given ServoType (in degrees)
+    /** Sets the min and max output values for the input ServoType (in degrees)
+     * @param servoType the ServoType to set the output range for
+     * @param outputMin the servo output minimum for the input ServoType (in degrees)
+     * @param outputMax the servo output maximum for the input ServoType (in degrees)
+     */
     @SuppressWarnings("unchecked")
     public void setOutputRange(ServoType servoType, int outputMin, int outputMax) {
         JSONObject servoJson = new JSONObject();
@@ -466,7 +484,7 @@ public class ArduinoPacket {
         rootJson.put(servoType.getStringValue(), servoJson);
     }
 
-    //Sets the servo output pin for the given ServoType
+    /** Sets the servo output pin number for the input ServoType */
     @SuppressWarnings("unchecked")
     public void setOutputPin(ServoType servoType, int pinNumber) {
         JSONObject servoJson = new JSONObject();
@@ -482,7 +500,7 @@ public class ArduinoPacket {
         rootJson.put(servoType.getStringValue(), servoJson);
     }
 
-    //Sets the output value of the servo (in degrees)
+    /** Sets the positional output value of the input ServoType (in degrees) */
     @SuppressWarnings("unchecked")
     public void setServoValue(ServoType servoType, int value) {
         JSONObject servoJson = new JSONObject();

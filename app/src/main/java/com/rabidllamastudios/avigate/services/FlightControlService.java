@@ -14,7 +14,8 @@ import com.rabidllamastudios.avigate.models.CraftStatePacket;
 
 /**
  * Service responsible for maintaining craft control and stability
- * Reads in sensor data via CraftStatePackets and broadcasts commands via ArduinoPackets
+ * Reads in sensor data via CraftStatePackets and broadcasts craft commands via ArduinoPackets
+ * Created by Ryan Staatz on 1/1/2016
  */
 public class FlightControlService extends Service {
 
@@ -30,7 +31,7 @@ public class FlightControlService extends Service {
     private boolean mReceiverControl = false;
     private boolean mUsbSerialIsReady = false;
 
-    //TODO empirically test differential gain constant
+    //TODO empirically test differential gain constants
     //Gain constant in degrees correction per error degrees/second
     private static final int DIFFERENTIAL_GAIN = -1;
     //Gain constant in degrees correction per error degrees
@@ -90,8 +91,10 @@ public class FlightControlService extends Service {
         return null;
     }
 
-    //Returns a configured Intent (minus the class/component) that can start FlightControlService
-    //Takes an ArduinoPacket that contains all the necessary Arduino configuration data
+    /** Returns a configured intent that can be used to start this service (FlightControlService)
+     * @param configArduinoPacket contains all the necessary Arduino configuration data
+     * @return a configured Intent (minus the class/component) that can start FlightControlService
+     */
     public static Intent getConfiguredIntent(ArduinoPacket configArduinoPacket){
         if (configArduinoPacket != null) {
             //Don't set class/component so that NetworkService can handle the intent

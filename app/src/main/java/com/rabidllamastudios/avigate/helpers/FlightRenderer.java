@@ -16,8 +16,8 @@ import org.rajawali3d.math.vector.Vector3;
 import org.rajawali3d.renderer.RajawaliRenderer;
 
 /**
- * TODO write javadoc stuff for future class
- * Created by Ryan on 11/5/15.
+ * Renders a 3D virtual image of a plane with respect to the input orientation (e.g. device sensors)
+ * Created by Ryan Staatz on 11/5/15.
  */
 public class FlightRenderer extends RajawaliRenderer {
 
@@ -27,6 +27,7 @@ public class FlightRenderer extends RajawaliRenderer {
 
     private static final double RADIUS = 40;
 
+    /** Constructor that takes an application context. Sets the framerate to 60 fps. */
     public FlightRenderer(Context context) {
         super(context);
         this.mContext = context;
@@ -84,6 +85,7 @@ public class FlightRenderer extends RajawaliRenderer {
         return objectLoader.getParsedObject();
     }
 
+    /** Sets the aircraft orientation to the device's raw sensor input orientation quaternion */
     public void setAircraftOrientationQuaternion(Quaternion inputQuaternion) {
         mAircraftOrientation.setAll(inputQuaternion);
     }
@@ -109,6 +111,7 @@ public class FlightRenderer extends RajawaliRenderer {
         getCurrentCamera().setLookAt(mAircraftObject.getPosition());
     }
 
+    /** Renders the virtual plane on the screen */
     @Override
     public void onRender(final long elapsedTime, final double deltaTime) {
         super.onRender(elapsedTime, deltaTime);

@@ -21,6 +21,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Service responsible for listening to and broadcasting sensor events
+ * Requires location permissions before starting
+ * Broadcasts CraftStatePackets containing sensor data. Broadcast rate is configurable upon start.
+ * Created by Ryan Staatz on 11/19/2015
+ */
 public class SensorService extends Service implements SensorEventListener {
 
     private static final String CLASS_NAME = SensorService.class.getSimpleName();
@@ -56,6 +62,10 @@ public class SensorService extends Service implements SensorEventListener {
 
     public SensorService() {}
 
+    /** Returns a configured Intent that can be used to start the service (SensorService)
+     * @param context the application context from the activity invoking this method
+     * @param broadcastRate the broadcast rate of CraftStatePackets in milliseconds (ms)
+     */
     public static Intent getConfiguredIntent(Context context, int broadcastRate) {
         Intent intent = new Intent(context, SensorService.class);
         intent.putExtra(BROADCAST_RATE, broadcastRate);

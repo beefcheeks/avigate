@@ -21,7 +21,11 @@ import com.rabidllamastudios.avigate.services.MasterFlightService;
 import com.rabidllamastudios.avigate.services.NetworkService;
 import com.rabidllamastudios.avigate.services.UsbSerialService;
 
-
+/**
+ * This activity is launched when an Arduino is connected over USB-OTG. Displays craft debug data.
+ * Responsible for starting the MasterFlightService foreground service that manages the flight.
+ * Created by Ryan Staatz on 11/11/2015
+ */
 public class CraftActivity extends AppCompatActivity {
 
     private static final String DEGREES = " °";

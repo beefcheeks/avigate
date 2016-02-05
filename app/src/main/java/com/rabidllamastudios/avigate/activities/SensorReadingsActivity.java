@@ -16,6 +16,10 @@ import com.rabidllamastudios.avigate.helpers.PermissionsChecker;
 import com.rabidllamastudios.avigate.models.CraftStatePacket;
 import com.rabidllamastudios.avigate.services.SensorService;
 
+/**
+ * Displays raw sensor data in labeled text fields on the screen
+ * Created by Ryan Staatz on 11/2/2015
+ */
 public class SensorReadingsActivity extends AppCompatActivity {
 
     private Intent mSensorService = null;

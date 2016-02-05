@@ -8,21 +8,26 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by Ryan on 12/19/15.
- * This FragmentPagerAdapter class configures any number of Tab Title and Fragment pairs
+ * Configures any number of Tab Title and Fragment pairs inside a TabFragmentPagerAdapter
  * This class is intended for use with the TabLayout class
+ * Created by Ryan Staatz on 12/19/15.
  */
 public class TabFragmentPagerAdapter extends FragmentPagerAdapter {
     private List<String> mTabTitles;
     private List<Fragment> mFragments;
 
+    /** Constructor that takes a Fragment Manager */
     public TabFragmentPagerAdapter(FragmentManager fragmentManager) {
         super(fragmentManager);
         mTabTitles = new ArrayList<>();
         mFragments = new ArrayList<>();
     }
 
-    //Adds a Tab Title and Fragment pair in a given position in the associated List instance var
+    /** Adds a Tab Title and Fragment pair at the input position (sequentially is left to right)
+     * @param position the unique position of the Tab Title and Fragment pair to store
+     * @param tabTitle the title of the Tab
+     * @param fragment the Fragment associated with the input Tab Title
+     */
     public void addEntry(int position, String tabTitle, Fragment fragment) {
         mTabTitles.add(position, tabTitle);
         mFragments.add(position, fragment);

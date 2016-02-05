@@ -20,6 +20,11 @@ import com.rabidllamastudios.avigate.models.CraftStatePacket;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Service responsible for managing all other services needed to manage the craft during flight
+ * Will eventually be able to remotely receive stop and start commands for specific services
+ * Created by Ryan Staatz on 1/18/2016
+ */
 public class MasterFlightService extends Service {
     private static final String CLASS_NAME = MasterFlightService.class.getSimpleName();
     private static final String PACKAGE_NAME = AvigateApplication.class.getPackage().getName();
@@ -34,7 +39,6 @@ public class MasterFlightService extends Service {
 
     //Unique foreground notification id
     private static final int NOTIFICATION_ID = 843;
-
     //Sensor broadcast rate in milliseconds (ms)
     private static final int SENSOR_BROADCAST_RATE = 100;
 
@@ -79,7 +83,7 @@ public class MasterFlightService extends Service {
         super.onDestroy();
     }
 
-    //Returns a configured Intent that can be used to start this service (MasterFlightService)
+    /** Returns a configured Intent that can be used to start this service (MasterFlightService) */
     public static Intent getConfiguredIntent(Context context){
         Intent intent = new Intent(context, MasterFlightService.class);
         intent.setAction(INTENT_ACTION_CONFIGURE_CRAFT_SERVICE);

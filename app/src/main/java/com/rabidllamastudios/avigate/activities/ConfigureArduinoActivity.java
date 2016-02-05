@@ -30,9 +30,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by Ryan Staatz
- * This activity is intended as a test for USB-OTG connected CDC-ACM devices (e.g. Arduino)
+ * This activity is intended as a flight configuration and test for USB-OTG connected Arduinos
  * Some code adapted from: https://github.com/felHR85/SerialPortExample
+ * Created by Ryan Staatz on 11/25/2015
  */
 public class ConfigureArduinoActivity extends AppCompatActivity {
 
@@ -534,5 +534,4 @@ public class ConfigureArduinoActivity extends AppCompatActivity {
         mMasterArduinoPacket.setInputRange(servoType, arduinoPacket.getInputMin(servoType),
                 arduinoPacket.getInputMax(servoType));
     }
-
 }

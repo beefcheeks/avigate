@@ -1,6 +1,5 @@
 package com.rabidllamastudios.avigate.services;
 
-import android.app.IntentService;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Intent;
@@ -20,12 +19,9 @@ import org.json.JSONException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * An {@link IntentService} subclass for handling asynchronous task requests in
- * a service on a separate handler thread.
- * <p/>
- * TODO: write javadoc for all methods
- * helper methods.
+/** Service responsible for network interactions. Uses MqttConnectionManager to manage connections.
+ * Before starting the service, it can be configured to listen for local and/or remote broadcasts
+ * Created by Ryan Staatz on 11/14/2015
  */
 public class NetworkService extends Service {
     private static final String CLASS_NAME = NetworkService.class.getSimpleName();
@@ -37,7 +33,7 @@ public class NetworkService extends Service {
     public static final String INTENT_ACTION_REQUEST_CONNECTION_STATUS =
             PACKAGE_NAME + ".action.REQUEST_CONNETION_STATUS";
 
-    //Strings used to retrieve IntentExtras
+    //Strings used to store and retrieve IntentExtras
     private static final String EXTRA_SUBSCRIPTIONS_LOCAL = PACKAGE_NAME + ".extra.LOCAL";
     private static final String EXTRA_SUBSCRIPTIONS_REMOTE = PACKAGE_NAME + ".extra.REMOTE";
     private static final String EXTRA_LOCAL_DEVICE_TYPE = PACKAGE_NAME + ".extra.TYPE";
@@ -69,8 +65,12 @@ public class NetworkService extends Service {
 
     public NetworkService() {}
 
-    //Returns the configured Intent needed to start an instance of NetworkService
-    //Takes a Context, a list of local and remote Intents to subscribe to, and a local DeviceType
+    /** Returns a Configured Intent that can be used to start this service (NetworkService)
+     * @param context the application context of the activity invoking this method
+     * @param localSubs a list of local subscriptions in the form of Intent actions (Strings)
+     * @param remoteSubs a list of remote subscriptions in the form of Intent actions (Strings)
+     * @param localDeviceType the type of device starting the service (e.g. craft or controller)
+     */
     public static Intent getConfiguredIntent(Context context, List<String> localSubs,
                                              List<String> remoteSubs, DeviceType localDeviceType) {
         Intent intent = new Intent(context, NetworkService.class);

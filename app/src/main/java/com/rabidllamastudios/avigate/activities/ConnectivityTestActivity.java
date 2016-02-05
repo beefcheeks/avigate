@@ -18,6 +18,10 @@ import com.rabidllamastudios.avigate.helpers.PermissionsChecker;
 
 import java.util.ArrayList;
 
+/**
+ * Used to test connectivity with an MQTT server
+ * Created by Ryan Staatz on 11/3/2015
+ */
 public class ConnectivityTestActivity extends AppCompatActivity {
 
     private static final String DEFAULT_SERVER = "test.mosquitto.org";
@@ -43,32 +47,35 @@ public class ConnectivityTestActivity extends AppCompatActivity {
         //Initialize the List of subscribed topics
         mSubscribedTopics = new ArrayList<>();
 
+        //Set the server text field to the default server URL
         EditText serverField = (EditText) findViewById(R.id.et_connect_hint_server);
         serverField.setText(DEFAULT_SERVER);
 
+        //Initialize the textview used for scrolling output
         mMessageOutput = (TextView) findViewById(R.id.tv_connect_value_messages);
         mMessageOutput.setMovementMethod(new ScrollingMovementMethod());
 
+        //Initialize the subscribe button
         final Button subscribeButton = (Button) findViewById(R.id.button_subscribe);
-        EditText topicFieldSubscribe = (EditText) findViewById(R.id.et_connect_hint_topic_subscribe);
+        EditText topicFieldSubscribe =
+                (EditText) findViewById(R.id.et_connect_hint_topic_subscribe);
 
         topicFieldSubscribe.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 if (mSubscribedTopics.contains(s.toString())) {
                     subscribeButton.setText(getString(R.string.button_unsubscribe));
-                } else if (subscribeButton.getText().toString().equals(getString(R.string.button_unsubscribe))) {
+                } else if (subscribeButton.getText().toString().equals(
+                        getString(R.string.button_unsubscribe))) {
                     subscribeButton.setText(getString(R.string.button_subscribe));
                 }
             }
 
             @Override
-            public void afterTextChanged(Editable s) {
-            }
+            public void afterTextChanged(Editable s) {}
         });
     }
 
@@ -111,13 +118,13 @@ public class ConnectivityTestActivity extends AppCompatActivity {
         public void connectionLost() {
             mMessageOutput.append("\n" + "Connection lost");
             mSubscribedTopics.clear();
-            setLayoutBasedOnConnectionStatus(false);
+            setLayout(false);
         }
 
         @Override
         public void onConnect() {
             mMessageOutput.append("\n" + "Client connected");
-            setLayoutBasedOnConnectionStatus(true);
+            setLayout(true);
         }
 
         @Override
@@ -131,15 +138,18 @@ public class ConnectivityTestActivity extends AppCompatActivity {
             Button connectionButton = (Button) findViewById(R.id.button_connect);
             if (connectionButton.getText().equals(getString(R.string.button_connect))) {
                 if (mMqttConnectionManager == null) {
-                    final EditText serverAddressField = (EditText) findViewById(R.id.et_connect_hint_server);
-                    mMqttConnectionManager = new MqttConnectionManager(this, mMqttConnectionManagerCallback, serverAddressField.getText().toString(), 1883);
+                    final EditText serverAddressField =
+                            (EditText) findViewById(R.id.et_connect_hint_server);
+                    mMqttConnectionManager = new MqttConnectionManager(this,
+                            mMqttConnectionManagerCallback,
+                            serverAddressField.getText().toString(), 1883);
                 }
                 mMqttConnectionManager.start();
             } else if (connectionButton.getText().equals(getString(R.string.button_disconnect))) {
                 mMqttConnectionManager.stop();
                 mMqttConnectionManager = null;
                 mMessageOutput.append("\n" + "Client disconnected");
-                setLayoutBasedOnConnectionStatus(false);
+                setLayout(false);
             }
         } else {
             mMessageOutput.append("Grant access to storage permissions to connect");
@@ -159,7 +169,8 @@ public class ConnectivityTestActivity extends AppCompatActivity {
     public void subscribeButtonPressed(View view) {
         Button subscribeButton = (Button) findViewById(R.id.button_subscribe);
         EditText topicFieldPublish = (EditText) findViewById(R.id.et_connect_hint_topic_publish);
-        EditText topicFieldSubscribe = (EditText) findViewById(R.id.et_connect_hint_topic_subscribe);
+        EditText topicFieldSubscribe =
+                (EditText) findViewById(R.id.et_connect_hint_topic_subscribe);
         String topicText = topicFieldSubscribe.getText().toString();
 
         if (subscribeButton.getText().toString().equals(getString(R.string.button_unsubscribe))) {
@@ -180,7 +191,8 @@ public class ConnectivityTestActivity extends AppCompatActivity {
         }
     }
 
-    private void setLayoutBasedOnConnectionStatus(boolean justConnected) {
+    //Sets the layout based on the connection status
+    private void setLayout(boolean justConnected) {
         Button connectionButton = (Button) findViewById(R.id.button_connect);
         Button publishButton = (Button) findViewById(R.id.button_publish);
         Button subscribeButton = (Button) findViewById(R.id.button_subscribe);
@@ -188,7 +200,8 @@ public class ConnectivityTestActivity extends AppCompatActivity {
         EditText serverAddressField = (EditText) findViewById(R.id.et_connect_hint_server);
         EditText topicFieldPublish = (EditText) findViewById(R.id.et_connect_hint_topic_publish);
         EditText messageField = (EditText) findViewById(R.id.et_connect_hint_message);
-        EditText topicFieldSubscribe = (EditText) findViewById(R.id.et_connect_hint_topic_subscribe);
+        EditText topicFieldSubscribe =
+                (EditText) findViewById(R.id.et_connect_hint_topic_subscribe);
 
         TextView serverInfo = (TextView) findViewById(R.id.tv_connect_value_server);
 

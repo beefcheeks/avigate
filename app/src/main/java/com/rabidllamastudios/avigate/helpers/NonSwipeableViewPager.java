@@ -6,9 +6,9 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 
 /**
- * Created by Ryan on 12/19/15.
  * Creates a ViewPager that disables the ability to use a horizontal swipe to navigate between tabs
  * Taken from StackOverflow post: http://stackoverflow.com/questions/9650265/
+ * File created by Ryan Staatz on 12/20/15.
  */
 public class NonSwipeableViewPager extends ViewPager {
 

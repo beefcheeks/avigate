@@ -15,21 +15,29 @@ import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import java.util.UUID;
 
 /**
- * TODO: write javadoc for class
- * Created by Ryan on 11/11/15.
+ * Manages the MQTT connection to the server. Responsible for sending and receiving messages.
+ * Created by Ryan Staatz on 11/11/15.
  */
 public class MqttConnectionManager {
 
-    //Reconnect interval in ms
+    //Reconnect interval in milliseconds (ms)
     private static final int RECONNECT_INTERVAL = 500;
     private MqttAndroidClient mMqttAndroidClient;
     private Callback mMqttConnectionManagerCallback;
     private int mMqttQoS=0;
     private Thread mReconnectThread;
 
-    public MqttConnectionManager(Context inputContext, Callback callback, String serverAddress, int portNumber) {
+    /** Constructor that takes a context, inner callback class, server Address, and port number
+     * @param context the application context from the activity invoking this method
+     * @param callback the configured callback of the Callback interface defined in this class
+     * @param serverAddress the MQTT server address excluding "http://" (e.g. "fly.craft.com")
+     * @param portNumber the port number to connect on for the input server address (URL)
+     */
+    public MqttConnectionManager(Context context, Callback callback, String serverAddress,
+                                 int portNumber) {
         String serverURL= "tcp://" + serverAddress + ":" + Integer.toString(portNumber);
-        mMqttAndroidClient = new MqttAndroidClient(inputContext, serverURL, UUID.randomUUID().toString(), new MemoryPersistence());
+        mMqttAndroidClient = new MqttAndroidClient(context, serverURL,
+                UUID.randomUUID().toString(), new MemoryPersistence());
         mMqttConnectionManagerCallback = callback;
     }
 
@@ -41,6 +49,62 @@ public class MqttConnectionManager {
         void onConnect();
         void connectionLost();
         void messageArrived(String topic, String message);
+    }
+
+    /** Publishes a message under a given topic (channel)
+     * @param topic the topic (channel) to publish the message on
+     * @param message the message to publish
+     */
+    public void publish(String topic, String message) {
+        if (mMqttAndroidClient.isConnected()) {
+            MqttMessage mqttMessage = new MqttMessage(message.getBytes());
+            mqttMessage.setQos(mMqttQoS);
+            try {
+                mMqttAndroidClient.publish(topic, mqttMessage);
+            } catch (MqttException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /** Opens a MQTT connection. Will automatically reconnect if the connection is lost hereafter */
+    public void start() {
+        connect();
+    }
+
+    /** Stops the MQTT connection cleanly */
+    public void stop() {
+        if (mMqttAndroidClient != null) {
+            if (mMqttAndroidClient.isConnected()) {
+                unsubscribeAll();
+                mMqttAndroidClient.close();
+            }
+            mMqttAndroidClient.unregisterResources();
+            mMqttAndroidClient = null;
+        }
+    }
+
+    /** Subscribes to a topic. Will notify the callback if a message is received on this topic. */
+    public void subscribe(String topic) {
+        try {
+            mMqttAndroidClient.subscribe(topic, mMqttQoS);
+        } catch (MqttException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /** Unsubscribes from a topic. Will no longer receive messages on this topic. */
+    public void unsubscribe(String topic) {
+        try {
+            mMqttAndroidClient.unsubscribe(topic);
+        } catch (MqttException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /** Unsubscribes from all topics */
+    public void unsubscribeAll() {
+        this.unsubscribe("#");
     }
 
     private void connect() {
@@ -70,53 +134,6 @@ public class MqttConnectionManager {
         } catch (MqttException e) {
             e.printStackTrace();
         }
-    }
-
-    public void publish(String topic, String message) {
-        if (mMqttAndroidClient.isConnected()) {
-            MqttMessage mqttMessage = new MqttMessage(message.getBytes());
-            mqttMessage.setQos(mMqttQoS);
-            try {
-                mMqttAndroidClient.publish(topic, mqttMessage);
-            } catch (MqttException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    public void start() {
-        connect();
-    }
-
-    public void stop() {
-        if (mMqttAndroidClient != null) {
-            if (mMqttAndroidClient.isConnected()) {
-                unsubscribeAll();
-                mMqttAndroidClient.close();
-            }
-            mMqttAndroidClient.unregisterResources();
-            mMqttAndroidClient = null;
-        }
-    }
-
-    public void subscribe(String topic) {
-        try {
-            mMqttAndroidClient.subscribe(topic, mMqttQoS);
-        } catch (MqttException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void unsubscribe(String topic) {
-        try {
-            mMqttAndroidClient.unsubscribe(topic);
-        } catch (MqttException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void unsubscribeAll() {
-        this.unsubscribe("#");
     }
 
     private final MqttCallback mMqttCallback = new MqttCallback() {

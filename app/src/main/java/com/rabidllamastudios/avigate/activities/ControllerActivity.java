@@ -18,6 +18,11 @@ import com.rabidllamastudios.avigate.services.FlightControlService;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Remotely manages a flight over the network. Can be used to start, stop, and command a craft.
+ * Displays relevant flight data and debug info.
+ * Created by Ryan Staatz on 11/11/2015
+ */
 public class ControllerActivity extends AppCompatActivity {
 
     private Intent mNetworkService;
@@ -63,7 +68,6 @@ public class ControllerActivity extends AppCompatActivity {
         if (mNetworkService != null) stopService(mNetworkService);
         super.onDestroy();
     }
-
 
     //Broadcast receiver for output received from the Arduino
     private BroadcastReceiver mArduinoOutputReceiver = new BroadcastReceiver() {
@@ -111,5 +115,4 @@ public class ControllerActivity extends AppCompatActivity {
             }
         }
     }
-
 }

@@ -11,14 +11,16 @@ import java.util.Set;
 
 /**
  * This class is identical to a JSONObject, except it can convert between JSON and Bundle objects
- * Created by Ryan on 11/12/15.
+ * Created by Ryan Staatz on 11/12/15.
  */
 public class BundleableJsonObject extends JSONObject {
 
+    /** Identical constructor to JSONObject */
     public BundleableJsonObject(String json) throws JSONException {
         super(json);
     }
 
+    /** Constructor that takes a bundle. Use toBundle() method to export to a Bundle. */
     public BundleableJsonObject(Bundle bundle) {
         Set<String> keys = bundle.keySet();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
@@ -40,8 +42,9 @@ public class BundleableJsonObject extends JSONObject {
         }
     }
 
-    //TODO find less awful method implementation if there is one
+    /** Converts the BundleableJsonObject to a Bundle */
     public Bundle toBundle() {
+        //TODO find less awful method implementation if there is one
         Bundle bundle = new Bundle();
         Iterator<String> keys = this.keys();
         while (keys.hasNext()) {

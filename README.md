@@ -11,7 +11,7 @@ Note that this software not yet completed, but is actively being worked on. Plea
 
 * 2 Android devices (4.1+) with cellular data, one with [USB-OTG](https://www.androidpit.com/usb-otg-what-it-means-and-how-to-use-it) capability
 * 1 [Arduino](https://www.arduino.cc/en/Main/ArduinoBoardUno) (I use an Arduino Uno Rev3)
-* 1 fully functional RC plane with control surfaces, servos, a motor (prop), an electronic speed controller (ESC), and a battery. This plane should be sufficiently large enough to carry the Android device with [USB-OTG](https://www.androidpit.com/usb-otg-what-it-means-and-how-to-use-it) during flight. I recommend a wingspan of at least 4 feet (48 inches).
+* 1 fully functional RC plane with control surfaces, servos, a motor (prop), an electronic speed controller (ESC), and a battery. This plane should be sufficiently large enough to carry the Android device with a [USB-OTG](https://www.androidpit.com/usb-otg-what-it-means-and-how-to-use-it) connected [Arduino](https://www.arduino.cc/en/Main/ArduinoBoardUno) during flight. I recommend a wingspan of at least 4 feet (48 inches).
 * 1 radio controller and receiver with at least 5 channels
 * 1 [Arduino protoboard](https://www.adafruit.com/products/2077) (recommended and includes headers)
 * 1 [Micro-USB OTG cable](http://www.amazon.com/Cable-Matters-Micro-USB-Adapter-6-Inch/dp/B00GM0OZ4O/)
@@ -44,7 +44,7 @@ This is fairly straightforward, but may require some finanging with wiring the s
 4. Connect the 3 servos and the ESC to the remaining 3-pin headers at the center of the [protoboard](https://www.adafruit.com/products/2077). 
 5. Document which servo / ESC is connected to which Digital I/O pin on the [protoboard](https://www.adafruit.com/products/2077).
 
-#### Programming the [Arduino]()
+#### Programming the Arduino
 
 All you gotta do is plug in the [Arduino](https://www.arduino.cc/en/Main/ArduinoBoardUno) and upload the sketch.
 

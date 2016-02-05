@@ -7,6 +7,11 @@ import android.view.View;
 
 import com.rabidllamastudios.avigate.R;
 
+/**
+ * Currently displays a list of buttons that launch various activities
+ * TODO: create more user-friendly app home screen
+ * Created by Ryan Staatz on 11/2/2015
+ */
 public class MainActivity extends AppCompatActivity {
 
     @Override
@@ -44,5 +49,4 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(this, FlightVisualizerActivity.class);
         startActivity(intent);
     }
-
 }

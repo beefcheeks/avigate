@@ -18,8 +18,8 @@ import com.rabidllamastudios.avigate.R;
 import com.rabidllamastudios.avigate.models.ArduinoPacket;
 
 /**
- * Created by Ryan on 12/19/15.
  * This Fragment class sets the layout and UI logic for configuring the servo inputs
+ * Created by Ryan Staatz on 12/19/15.
  */
 public class ServoInputFragment extends Fragment implements NumberPicker.OnValueChangeListener {
 
@@ -43,19 +43,35 @@ public class ServoInputFragment extends Fragment implements NumberPicker.OnValue
         return mRootView;
     }
 
-    //Set the callback for ServoInputFragment
-    //Enables the Fragment to communicate with the activity
-    public void setCallback(Callback callback) {
-        mCallback = callback;
+    @Override
+    public void onValueChange(NumberPicker picker, int oldVal, int newVal) {
+        //Required method for implementing the NumberPicker class
     }
 
-    //Loads the servo input configuration into the fragment UI from the masterArduinoPacket parameter
+    /** Callback class used to communicate from this Fragment to the parent activity */
+    public interface Callback {
+        /** Triggers the loading of the servo input configuration */
+        void loadInputConfiguration();
+
+        /** Sets the control type for the input ServoType (e.g. shared control or receiver only) */
+        void setControlType(ArduinoPacket.ServoType servoType, boolean receiverOnly);
+
+        /** Sets the receiver input pin number for the input ServoType */
+        void setServoInputPin(ArduinoPacket.ServoType servoType, int pinValue);
+    }
+
+    /** Loads the input configuration into the fragment UI from the masterArduinoPacket parameter */
     public void loadInputConfiguration(ArduinoPacket masterArduinoPacket) {
         loadServoInputConfig(masterArduinoPacket, ArduinoPacket.ServoType.AILERON);
         loadServoInputConfig(masterArduinoPacket, ArduinoPacket.ServoType.ELEVATOR);
         loadServoInputConfig(masterArduinoPacket, ArduinoPacket.ServoType.RUDDER);
         loadServoInputConfig(masterArduinoPacket, ArduinoPacket.ServoType.THROTTLE);
         loadServoInputConfig(masterArduinoPacket, ArduinoPacket.ServoType.CUTOVER);
+    }
+
+    /** Sets the callback for this Fragment. Enables communication with the parent activity */
+    public void setCallback(Callback callback) {
+        mCallback = callback;
     }
 
     //Loads the input pin and receiverOnly value from a ArduinoPacket for a given ServoType
@@ -192,24 +208,5 @@ public class ServoInputFragment extends Fragment implements NumberPicker.OnValue
             default:
                 return null;
         }
-    }
-
-    @Override
-    public void onValueChange(NumberPicker picker, int oldVal, int newVal) {
-        //Required method for implementing the NumberPicker class
-    }
-
-    /**
-     * This is the callback class for ServoInputFragment
-     */
-    public interface Callback {
-        //Triggers the loading of the servo input configuration
-        void loadInputConfiguration();
-
-        //Sets the control type for a given ServoType (e.g. shared control or receiver only)
-        void setControlType(ArduinoPacket.ServoType servoType, boolean receiverOnly);
-
-        //Sets the receiver input pin number for a given ServoType
-        void setServoInputPin(ArduinoPacket.ServoType servoType, int pinValue);
     }
 }
