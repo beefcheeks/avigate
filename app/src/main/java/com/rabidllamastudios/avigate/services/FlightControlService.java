@@ -33,9 +33,9 @@ public class FlightControlService extends Service {
 
     //TODO empirically test differential gain constants
     //Gain constant in degrees correction per error degrees/second
-    private static final int DIFFERENTIAL_GAIN = -1;
+    private static final double DIFFERENTIAL_GAIN = -0.5;
     //Gain constant in degrees correction per error degrees
-    private static final int PROPORTIONAL_GAIN = -2;
+    private static final int PROPORTIONAL_GAIN = -3;
 
     private BroadcastReceiver mArduinoOutputReceiver = null;
     private BroadcastReceiver mCraftStateReceiver = null;

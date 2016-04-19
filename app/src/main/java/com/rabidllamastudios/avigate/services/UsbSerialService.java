@@ -175,26 +175,31 @@ public class UsbSerialService extends Service {
 
     //Attempts to open the first encountered usb device connected, excluding usb root hubs
     private void findSerialPortDevice() {
-        HashMap<String, UsbDevice> usbDevices = mUsbManager.getDeviceList();
-        if (!usbDevices.isEmpty()) {
-            boolean deviceChosen = false;
-            for(Map.Entry<String, UsbDevice> entry : usbDevices.entrySet()) {
-                mUsbDevice = entry.getValue();
-                //If there is a USB device connected, try to open it as a Serial port.
-                if (mUsbDevice.getVendorId() != 0x1d6b) {
-                    requestUserPermission();
-                    deviceChosen = true;
-                    break;
-                } else {
-                    mUsbConnection = null;
-                    mUsbDevice = null;
+        try {
+            HashMap<String, UsbDevice> usbDevices = mUsbManager.getDeviceList();
+            if (!usbDevices.isEmpty()) {
+                boolean deviceChosen = false;
+                for (Map.Entry<String, UsbDevice> entry : usbDevices.entrySet()) {
+                    mUsbDevice = entry.getValue();
+                    //If there is a USB device connected, try to open it as a Serial port.
+                    if (mUsbDevice.getVendorId() != 0x1d6b) {
+                        requestUserPermission();
+                        deviceChosen = true;
+                        break;
+                    } else {
+                        mUsbConnection = null;
+                        mUsbDevice = null;
+                    }
                 }
+                //If there are no USB devices chosen, send notify other app components
+                if (!deviceChosen) sendBroadcast(new Intent(INTENT_ACTION_NO_USB));
+            } else {
+                //If there are no USB devices connected, notify other app components
+                sendBroadcast(new Intent(INTENT_ACTION_NO_USB));
             }
-            //If there are no USB devices chosen, send out an intent to notify other app components
-            if (!deviceChosen) sendBroadcast(new Intent(INTENT_ACTION_NO_USB));
-        //If there are no USB devices connected, send out an intent to notify other app components
-        } else {
-            sendBroadcast(new Intent(INTENT_ACTION_NO_USB));
+        //Catch statement to make it possible to run the app in an emulator (no USB)
+        } catch (NullPointerException e) {
+            e.printStackTrace();
         }
     }
 
