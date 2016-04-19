@@ -26,9 +26,9 @@ dependencies {
     testCompile 'junit:junit:4.12'
 
     //Android dependencies
-    compile 'com.android.support:appcompat-v7:23.1.1'
-    compile 'com.android.support:cardview-v7:23.1.1'
-    compile 'com.android.support:design:23.1.1'
+    compile 'com.android.support:appcompat-v7:23.3.0'
+    compile 'com.android.support:cardview-v7:23.3.0'
+    compile 'com.android.support:design:23.3.0'
 
     //3rd party dependencies
     compile 'com.github.felHR85:UsbSerial:3.3'
